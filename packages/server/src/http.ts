@@ -113,7 +113,13 @@ export function createHttpServer(options: HttpOptions): Server {
     const root = options.staticDir;
     if (root === null) throw new HttpError(404, 'Not found');
     // Paths are resolved inside the static root only; anything else falls back to the SPA entry
-    const candidate = normalize(join(root, decodeURIComponent(pathname)));
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(pathname);
+    } catch {
+      throw new HttpError(400, 'Malformed path');
+    }
+    const candidate = normalize(join(root, decoded));
     const inside = candidate.startsWith(root.endsWith(sep) ? root : root + sep);
     const file = inside && existsSync(candidate) && statSync(candidate).isFile() ? candidate : join(root, 'index.html');
     if (!existsSync(file)) throw new HttpError(404, 'Not found');
