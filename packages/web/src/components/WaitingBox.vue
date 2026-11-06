@@ -44,16 +44,12 @@ function openTask(id: string) {
 <style scoped>
 .waiting-box {
   background: var(--you-soft); border-radius: 6px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;
-  /* A strong flash when the wait appears or changes, then a steady pulse of the outline (none with reduced motion, see base.css) */
-  animation: wait-flash 1.2s ease-out, wait-pulse 2.4s ease-in-out 1.2s infinite;
-}
-@keyframes wait-flash {
-  0%, 30% { box-shadow: 0 0 0 4px var(--you); background: color-mix(in srgb, var(--you) 35%, var(--you-soft)); }
-  100% { box-shadow: 0 0 0 0 transparent; }
+  /* A few pulses when the wait appears or changes (the box is keyed by the wait), then still; none with reduced motion */
+  animation: wait-pulse .8s ease-in-out 3;
 }
 @keyframes wait-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--you) 0%, transparent); }
-  50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--you) 45%, transparent); }
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 4px var(--you); background: color-mix(in srgb, var(--you) 30%, var(--you-soft)); }
 }
 .waiting-box strong { color: var(--you); }
 .tool { display: inline-flex; gap: 6px; align-items: center; }

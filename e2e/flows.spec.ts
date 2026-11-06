@@ -175,11 +175,14 @@ test('notifications stay off when the browser blocks them, and say why', async (
   await expect(settings.getByText(/Notifications are blocked for this page/)).toBeVisible();
 });
 
-test('a session waiting on the user pulses, unless the system asks for reduced motion', async ({ page }) => {
+test('a session waiting on the user pulses a few times when the wait appears, unless the system asks for reduced motion', async ({ page }) => {
   await page.goto('/s/7b4c4db1/tree');
   const box = page.locator('.waiting-box').first();
   await expect(box).toBeVisible();
+  // Scoped styles add a hash to the keyframes name
   expect(await box.evaluate(el => getComputedStyle(el).animationName)).toContain('wait-pulse');
+  // A few pulses, not an endless one
+  expect(await box.evaluate(el => getComputedStyle(el).animationIterationCount)).toBe('3');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   expect(await box.evaluate(el => getComputedStyle(el).animationName)).toBe('none');
 });
