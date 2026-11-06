@@ -1,5 +1,5 @@
 import {
-  buildPrompt, descendants, inherited, isClosed, issueNumber, newSessionCommand, splitCommit, targetSessions, unusualTransition,
+  buildPrompt, canRun, descendants, inherited, isSessionOpen, issueNumber, newSessionCommand, splitCommit, targetSessions, unusualTransition,
   type Blocker, type PromptKind, type Question, type Session, type Task, type TaskStatus, type TaskType,
 } from '@ainstorm/core';
 import { useI18n } from 'vue-i18n';
@@ -46,6 +46,11 @@ export function useTaskActions() {
 
   const projectName = (task: Task) => map.project(task.projectKey)?.name ?? task.projectKey;
   const targetsFor = (task: Task) => targetSessions(map.index, task, map.snapshot.sessions);
+  /** The session that asked the question, while it is still open */
+  const askingSession = (question: Question) => {
+    const session = question.sessionId ? map.session(question.sessionId) : undefined;
+    return session && isSessionOpen(session) ? session : null;
+  };
 
   /** One prompt per open session working on the task; without one, a project-wide prompt (or a command that starts a session). */
   function preparePrompts(spec: ChangeSpec, changeId: number): PreparedPrompt[] {
@@ -123,6 +128,18 @@ export function useTaskActions() {
 
   const toggleDone = (task: Task) => setStatus(task, task.status === 'done' ? 'todo' : 'done');
 
+  /** A status list or done checkbox changed: the change may wait for confirmation, so the control shows the real status until it is applied */
+  function onStatusInput(task: Task, e: Event) {
+    const control = e.target as HTMLSelectElement | HTMLInputElement;
+    if (control instanceof HTMLInputElement) {
+      void toggleDone(task);
+      control.checked = task.status === 'done';
+    } else {
+      void setStatus(task, control.value as TaskStatus);
+      control.value = task.status;
+    }
+  }
+
   function remove(task: Task) {
     const subtasks = descendants(map.index, task.id).length;
     return perform({
@@ -165,12 +182,11 @@ export function useTaskActions() {
   }
 
   function answer(task: Task, question: Question, text: string) {
-    const session = question.sessionId ? map.session(question.sessionId) ?? null : null;
     return perform({
       action: 'answer', task, prompt: { kind: 'answer', task, question: question.text, answer: text },
       command: () => ({ type: 'answerQuestion', taskId: task.id, questionId: question.id, answer: text }),
       title: t('dialog.answerTitle', { id: task.id }), confirmLabel: t('question.send'),
-      doneText: t('toast.answered'), session: session && session.archivedAt === null && session.status !== 'ended' ? session : null,
+      doneText: t('toast.answered'), session: askingSession(question),
     });
   }
 
@@ -179,7 +195,7 @@ export function useTaskActions() {
     return perform({
       action: 'decide', task, prompt: { kind: 'decide', task, approve, note },
       command: notify => ({ type: 'decideTask', taskId: task.id, approve, note, notify }),
-      title: t(approve ? 'decide.yesTitle' : 'decide.noTitle', { id: task.id }),
+      title: t(approve ? 'decide.yesTitle' : 'dialog.dropTitle', { id: task.id }),
       confirmLabel: t(approve ? 'decide.yes' : 'decide.no'), danger: !approve,
       doneText: t(approve ? 'toast.handedOver' : 'toast.dropped', { id: task.id }),
     });
@@ -206,13 +222,12 @@ export function useTaskActions() {
 
   /** Claude checks whether the question still applies: it confirms it, or closes it and fixes the task status. */
   function recheck(task: Task, question: Question) {
-    const session = question.sessionId ? map.session(question.sessionId) ?? null : null;
     return perform({
       action: 'recheck', task, prompt: { kind: 'recheck', task, question: question.text },
       command: notify => ({ type: 'recheckQuestion', taskId: task.id, questionId: question.id, notify }),
       title: t('dialog.recheckTitle', { id: task.id }), description: t('dialog.recheckHelp'),
       confirmLabel: t('question.recheck'), doneText: t('toast.rechecked', { id: task.id }),
-      session: session && session.archivedAt === null && session.status !== 'ended' ? session : null,
+      session: askingSession(question),
     });
   }
 
@@ -241,56 +256,58 @@ export function useTaskActions() {
     });
   }
 
-  /** Bulk status change (Drop included) of tasks ticked in the tree: one change, one Undo. */
-  function setStatusMany(all: Task[], to: TaskStatus) {
-    const tasks = all.filter(x => x.status !== to);
+  /**
+   * A change of the tasks ticked in the tree, as one change with one Undo. Only the tasks it changes take part
+   * (`changes`); when none does, nothing happens.
+   */
+  function performMany(all: Task[], changes: (task: Task) => boolean, spec: (tasks: Task[], ids: string[]) => Omit<ChangeSpec, 'task' | 'tasks'>) {
+    const tasks = all.filter(changes);
     if (tasks.length === 0) return Promise.resolve();
+    return perform({ ...spec(tasks, tasks.map(x => x.id)), task: tasks[0]!, tasks });
+  }
+
+  /** Bulk status change (Drop included). */
+  function setStatusMany(all: Task[], to: TaskStatus) {
     const statusTo = t(`status.${to}`);
     const dropping = to === 'dropped';
-    return perform({
-      action: dropping ? 'drop' : 'status', task: tasks[0]!, tasks, prompt: { kind: 'statusMany', tasks, to },
-      command: notify => ({ type: 'setStatusMany', taskIds: tasks.map(x => x.id), to, notify }),
+    return performMany(all, x => x.status !== to, (tasks, taskIds) => ({
+      action: dropping ? 'drop' : 'status', prompt: { kind: 'statusMany', tasks, to },
+      command: notify => ({ type: 'setStatusMany', taskIds, to, notify }),
       title: t('bulk.statusTitle', { n: tasks.length, status: statusTo }), description: dropping ? t('dialog.staysCrossed') : '',
       confirmLabel: dropping ? t('dialog.drop') : t('unusual.confirm', { status: statusTo }), danger: dropping,
       doneText: t('bulk.statusDone', { n: tasks.length, status: statusTo }),
-    });
+    }));
   }
 
   function setTypeMany(all: Task[], type: TaskType | null) {
-    const tasks = all.filter(x => x.type !== type);
-    if (tasks.length === 0) return Promise.resolve();
     const label = type ?? t('bulk.noType');
-    return perform({
-      action: 'status', task: tasks[0]!, tasks, prompt: { kind: 'typeMany', tasks, type },
-      command: notify => ({ type: 'setTypeMany', taskIds: tasks.map(x => x.id), taskType: type, notify }),
+    return performMany(all, x => x.type !== type, (tasks, taskIds) => ({
+      action: 'type', prompt: { kind: 'typeMany', tasks, type },
+      command: notify => ({ type: 'setTypeMany', taskIds, taskType: type, notify }),
       title: t('bulk.typeTitle', { n: tasks.length, type: label }), confirmLabel: t('bulk.setType'),
       doneText: t('bulk.typeDone', { n: tasks.length, type: label }),
-    });
+    }));
   }
 
   /** Add an area (one the project knows) to the ticked tasks, or remove it from them. */
   function setAreaMany(all: Task[], area: string, on: boolean) {
-    const tasks = all.filter(x => x.areas.includes(area) !== on);
-    if (tasks.length === 0) return Promise.resolve();
-    return perform({
-      action: 'status', task: tasks[0]!, tasks, prompt: { kind: 'areaMany', tasks, area, on },
-      command: notify => ({ type: 'setAreaMany', taskIds: tasks.map(x => x.id), area, on, notify }),
+    return performMany(all, x => x.areas.includes(area) !== on, (tasks, taskIds) => ({
+      action: 'area', prompt: { kind: 'areaMany', tasks, area, on },
+      command: notify => ({ type: 'setAreaMany', taskIds, area, on, notify }),
       title: t(on ? 'bulk.areaAddTitle' : 'bulk.areaRemoveTitle', { n: tasks.length, area }),
       confirmLabel: t(on ? 'bulk.areaAdd' : 'bulk.areaRemove'),
       doneText: t(on ? 'bulk.areaAdded' : 'bulk.areaRemoved', { n: tasks.length, area }),
-    });
+    }));
   }
 
   function moveMany(all: Task[], parent: Task | null) {
-    const tasks = all.filter(x => x.parentId !== (parent?.id ?? null));
-    if (tasks.length === 0) return Promise.resolve();
     const to = parent ? parent.id : t('move.topLevel');
-    return perform({
-      action: 'move', task: tasks[0]!, tasks, prompt: { kind: 'moveMany', tasks, to: parent },
-      command: notify => ({ type: 'moveMany', taskIds: tasks.map(x => x.id), parentId: parent?.id ?? null, notify }),
+    return performMany(all, x => x.parentId !== (parent?.id ?? null), (tasks, taskIds) => ({
+      action: 'move', prompt: { kind: 'moveMany', tasks, to: parent },
+      command: notify => ({ type: 'moveMany', taskIds, parentId: parent?.id ?? null, notify }),
       title: t('bulk.moveTitle', { n: tasks.length, to }), confirmLabel: t('move.confirm'),
       doneText: t('bulk.moveDone', { n: tasks.length, to }),
-    });
+    }));
   }
 
   /**
@@ -298,16 +315,14 @@ export function useTaskActions() {
    * on each task. Tasks of the user's, closed or deferred are left out.
    */
   function runMany(all: Task[], session: Session, onDone?: () => void) {
-    const tasks = all.filter(x => x.owner === 'claude' && !isClosed(x.status) && x.status !== 'deferred');
-    if (tasks.length === 0) return Promise.resolve();
-    const target = session.archivedAt === null && session.status !== 'ended' ? session : null;
-    return perform({
-      action: 'run', task: tasks[0]!, tasks, prompt: { kind: 'runMany', tasks },
-      command: () => ({ type: 'requestRunMany', taskIds: tasks.map(x => x.id), sessionId: target?.id ?? null }),
+    const target = isSessionOpen(session) ? session : null;
+    return performMany(all, canRun, (tasks, taskIds) => ({
+      action: 'run', prompt: { kind: 'runMany', tasks },
+      command: () => ({ type: 'requestRunMany', taskIds, sessionId: target?.id ?? null }),
       title: t('bulk.runTitle', { n: tasks.length }), confirmLabel: t('dialog.copyAndRecord'),
-      doneText: target ? t('bulk.runCopied', { n: tasks.length, session: target.title }) : t('toast.newSessionCopied', { id: tasks.map(x => x.id).join(', ') }),
+      doneText: target ? t('bulk.runCopied', { n: tasks.length, session: target.title }) : t('toast.newSessionCopied', { id: taskIds.join(', ') }),
       copyNow: true, session: target, ...(onDone ? { onDone } : {}),
-    });
+    }));
   }
 
   /** Focus and session archiving stay in the app; they are not sent to Claude, so no dialog. */
@@ -330,5 +345,5 @@ export function useTaskActions() {
     toasts.show(t(archived ? 'toast.archived' : 'toast.restored', { session: session.title }), undoAction(changeId));
   }
 
-  return { targetsFor, setStatus, toggleDone, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, runMany, requestIssue, requestSession, setFocus, clearFocus, setSessionArchived };
+  return { targetsFor, setStatus, toggleDone, onStatusInput, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, runMany, requestIssue, requestSession, setFocus, clearFocus, setSessionArchived };
 }

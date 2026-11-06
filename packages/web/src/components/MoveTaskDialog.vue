@@ -6,6 +6,7 @@ import { useScopedIndex } from '../composables/useScopedIndex.ts';
 import { useTaskActions } from '../composables/useTaskActions.ts';
 import AppModal from './AppModal.vue';
 import StatusPill from './StatusPill.vue';
+import TaskIdLabel from './TaskIdLabel.vue';
 
 // Pick a new parent within the session; the tasks themselves and their subtasks are never offered.
 // Several tasks (ticked in the tree) move together, in one change.
@@ -37,7 +38,7 @@ function pick(parent: Task | null) {
 <template>
   <AppModal :title="many ? $t('bulk.moveDialogTitle', { n: tasks.length }) : $t('move.title', { id: task.id })" :width="640" @close="emit('close')">
     <label class="sr-only" for="move-search">{{ $t('move.search') }}</label>
-    <input id="move-search" v-model="query" type="search" class="search" :placeholder="$t('move.search')" autocomplete="off" autofocus>
+    <input id="move-search" v-model="query" type="search" class="input search" :placeholder="$t('move.search')" autocomplete="off" autofocus>
     <p class="help">{{ $t('move.help') }}</p>
     <ul class="list">
       <li v-if="!query">
@@ -48,7 +49,7 @@ function pick(parent: Task | null) {
       </li>
       <li v-for="c in candidates" :key="c.id">
         <button type="button" class="option" :disabled="c.id === currentParent" @click="pick(c)">
-          <span class="tid">{{ c.id }}</span>
+          <TaskIdLabel :id="c.id" />
           <span class="title">{{ c.title }}<span v-if="pathOf(c)" class="path">{{ pathOf(c) }}</span></span>
           <span v-if="c.id === currentParent" class="current">{{ $t('move.current') }}</span>
           <StatusPill :status="c.status" />
@@ -60,7 +61,7 @@ function pick(parent: Task | null) {
 </template>
 
 <style scoped>
-.search { width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--panel); }
+.search { width: 100%; }
 .help { margin: 0; font-size: var(--fs-s); color: var(--muted); }
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .option {

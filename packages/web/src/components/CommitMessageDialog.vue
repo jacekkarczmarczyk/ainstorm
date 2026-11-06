@@ -41,11 +41,11 @@ async function save() {
       <label class="label" :for="`${id}-msg`">{{ $t('commit.label') }}</label>
       <div class="field">
         <textarea
-          v-if="multi" :id="`${id}-msg`" ref="input" v-model="text" rows="6" spellcheck="false" autofocus
+          v-if="multi" :id="`${id}-msg`" ref="input" v-model="text" class="input" rows="6" spellcheck="false" autofocus
           :placeholder="$t('commit.placeholder')" @keydown.ctrl.enter="save"
         ></textarea>
         <input
-          v-else :id="`${id}-msg`" ref="input" v-model="text" type="text" spellcheck="false" autofocus
+          v-else :id="`${id}-msg`" ref="input" v-model="text" class="input" type="text" spellcheck="false" autofocus
           :placeholder="$t('commit.placeholder')" @keydown.enter.prevent="save"
         >
         <button
@@ -74,10 +74,7 @@ async function save() {
 <style scoped>
 p { margin: 0; }
 .field { display: flex; gap: 4px; align-items: flex-start; }
-.field input, .field textarea {
-  flex: 1; min-width: 0; padding: 5px 8px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--panel);
-  font-family: var(--f-mono); font-size: var(--fs-s);
-}
+.field .input { flex: 1; min-width: 0; font-family: var(--f-mono); font-size: var(--fs-s); }
 .field textarea { resize: vertical; }
 .icon-btn {
   flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 5px;

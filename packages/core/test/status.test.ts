@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import { canRun } from '../src/model.ts';
 import { needsUser, openDeps, openQuestions, unusualTransition } from '../src/status.ts';
 import { buildTaskIndex } from '../src/tree.ts';
 import { makeTask } from './factory.ts';
+
+describe('canRun', () => {
+  it('runs only open tasks of Claude that are not deferred', () => {
+    expect(canRun(makeTask('P-1'))).toBe(true);
+    expect(canRun(makeTask('P-1', { status: 'blocked' }))).toBe(true);
+    expect(canRun(makeTask('P-1', { owner: 'me' }))).toBe(false);
+    expect(canRun(makeTask('P-1', { status: 'deferred' }))).toBe(false);
+    expect(canRun(makeTask('P-1', { status: 'done' }))).toBe(false);
+    expect(canRun(makeTask('P-1', { status: 'dropped' }))).toBe(false);
+  });
+});
 
 const commit = { sha: 'abc1234', message: 'fix', state: 'live' as const, intoSha: null, note: null };
 const question = (answered: boolean) => ({

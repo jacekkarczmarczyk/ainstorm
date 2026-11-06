@@ -36,7 +36,7 @@ const answer = computed(() => [...picked.value, text.value.trim()].filter(Boolea
         </label>
       </fieldset>
       <label class="sr-only" :for="`${question.id}-text`">{{ $t('question.answer') }}</label>
-      <textarea :id="`${question.id}-text`" v-model="text" rows="2" :placeholder="question.options ? $t('question.comment') : $t('question.answer')"></textarea>
+      <textarea :id="`${question.id}-text`" v-model="text" class="input" rows="2" :placeholder="question.options ? $t('question.comment') : $t('question.answer')"></textarea>
       <div class="send">
         <span class="hint">{{ question.multi ? $t('question.pickAny') : question.options ? $t('question.pickOne') : '' }}</span>
         <span class="buttons">
@@ -57,7 +57,7 @@ const answer = computed(() => [...picked.value, text.value.trim()].filter(Boolea
 .options { border: 0; margin: 0; padding: 0; display: grid; gap: 4px; }
 .option { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
 .option input { margin-top: 4px; accent-color: var(--you); }
-textarea { width: 100%; padding: 6px 8px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--panel); resize: vertical; }
+textarea { width: 100%; resize: vertical; }
 .send { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .hint { font-size: var(--fs-s); color: var(--muted); }
 .buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }

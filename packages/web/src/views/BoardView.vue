@@ -3,6 +3,7 @@ import { inherited, openDeps, openQuestions, pathTo, progress, TASK_STATUSES, ta
 import { GitBranch, Hourglass, ListTree } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import OwnerBadge from '../components/OwnerBadge.vue';
 import RunIndicator from '../components/RunIndicator.vue';
 import TaskIdLabel from '../components/TaskIdLabel.vue';
 import QueuedTag from '../components/QueuedTag.vue';
@@ -45,17 +46,17 @@ const parentPath = (task: Task) => pathTo(scoped.value, task.id).slice(0, -1).ma
           v-for="task in column.tasks" :key="task.id" class="card" :class="{ selected: task.id === taskId, mine: task.owner === 'me' }"
           tabindex="0" @click="selectTask(task.id)" @keydown.enter="selectTask(task.id)"
         >
-          <span class="path">{{ parentPath(task) || $t('board.topLevel') }}</span>
+          <span class="path">{{ parentPath(task) || $t('move.topLevel') }}</span>
           <span class="title-line">
             <RunIndicator v-if="map.marks.get(task.id)" :mark="map.marks.get(task.id)!" />
             <span><TaskIdLabel :id="task.id" /> <span :class="`t-${task.status}`">{{ task.title }}</span></span>
           </span>
           <span class="meta">
-            <span v-if="task.owner === 'me'" class="you">{{ $t('task.you', { ask: task.ask ? $t(`ask.${task.ask}`) : '' }) }}</span>
-            <span v-if="openQuestions(task).length" class="question">? {{ openQuestions(task).length }}</span>
+            <OwnerBadge :task="task" />
+            <span v-if="openQuestions(task).length" class="badge-question">? {{ openQuestions(task).length }}</span>
             <TypeChip v-if="inherited(map.index, task.id, 'type')" :type="inherited(map.index, task.id, 'type')!.value" :inherited="!task.type" />
-            <span v-if="task.fromId && task.fromId !== task.parentId" class="tag from"><GitBranch :size="12" aria-hidden="true" /> {{ $t('detail.from') }} <TaskLink :id="task.fromId" /></span>
-            <span v-if="openDeps(task, map.task).length" class="tag dep">
+            <span v-if="task.fromId && task.fromId !== task.parentId" class="badge from"><GitBranch :size="12" aria-hidden="true" /> {{ $t('detail.from') }} <TaskLink :id="task.fromId" /></span>
+            <span v-if="openDeps(task, map.task).length" class="badge dep">
               <Hourglass :size="12" aria-hidden="true" /> {{ $t('task.waitsForLabel') }}
               <template v-for="(id, i) in openDeps(task, map.task)" :key="id"><template v-if="i">, </template><TaskLink :id="id" /></template>
             </span>
@@ -83,10 +84,6 @@ h3 .frac { margin-left: auto; }
 .path { font-family: var(--f-mono); font-size: var(--fs-xs); color: var(--muted); }
 .title-line { display: flex; gap: 6px; align-items: baseline; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.tag { font-size: var(--fs-xs); padding: 1px 6px; border-radius: 4px; background: var(--sunk); color: var(--muted); display: inline-flex; gap: 4px; align-items: center; }
-.tag.from { color: var(--s-deferred); }
-.tag.dep { color: var(--s-blocked); }
-.question { font-size: var(--fs-xs); font-weight: 700; padding: 1px 7px; border-radius: 10px; border: 1.5px solid var(--you); color: var(--you); background: var(--you-soft); }
 .tree-link { margin-left: auto; display: inline-flex; gap: 4px; align-items: center; text-decoration: none; }
 @media (max-width: 760px) {
   .board { scroll-snap-type: x mandatory; }

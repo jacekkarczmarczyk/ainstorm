@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { resumeCommand, type Session } from '@ainstorm/core';
+import { resumeCommand, sessionStatusKey, type Session } from '@ainstorm/core';
 import { Archive, ArchiveRestore, Copy, Pause, Play } from '@lucide/vue';
 import { computed } from 'vue';
 import { useClipboard } from '../composables/useClipboard.ts';
@@ -25,16 +25,16 @@ const { selectTask } = useSelection();
 const s = computed(() => props.session);
 const summary = computed(() => map.summaryById.get(s.value.id));
 const running = computed(() => (s.value.status === 'active' || s.value.status === 'paused' ? map.task(s.value.runningTaskId) : undefined));
-const statusKey = computed(() => (s.value.archivedAt ? 'archived' : s.value.status));
+const statusKey = computed(() => sessionStatusKey(s.value));
 // Resumes in the project folder; with the plugin folder from the settings while the plugin is not installed
 const resume = computed(() => resumeCommand(s.value.id, map.project(s.value.projectKey)?.paths[0] ?? null, ui.pluginDir));
 </script>
 
 <template>
-  <section class="strip" :class="statusKey">
+  <section class="strip" :class="`ses-${statusKey}`">
     <div class="line">
-      <span class="dot"></span>
-      <span class="status">{{ $t(`sessionStatus.${statusKey}`) }}</span>
+      <span class="ses-dot"></span>
+      <span class="ses-status">{{ $t(`sessionStatus.${statusKey}`) }}</span>
       <h1 :title="s.id">{{ s.title }}</h1>
       <span class="dates">{{ $t('sessions.started', { when: when(s.startedAt) }) }} · {{ $t('sessions.updated', { when: when(summary?.lastActivityAt ?? s.startedAt) }) }}</span>
     </div>
@@ -42,7 +42,7 @@ const resume = computed(() => resumeCommand(s.value.id, map.project(s.value.proj
       <span class="label">{{ $t('sessions.tasks') }}</span>
       <ProgressBar :ratio="summary?.ratio ?? 0" class="bar" />
       <span class="frac">{{ $t('sessions.closed', { closed: summary?.closed ?? 0, total: summary?.total ?? 0 }) }}</span>
-      <span v-if="summary?.forUser" class="you">{{ $t('sessions.forYou', { n: summary.forUser }) }}</span>
+      <span v-if="summary?.forUser" class="badge-you">{{ $t('sessions.forYou', { n: summary.forUser }) }}</span>
       <span class="spacer"></span>
       <button type="button" class="btn sm" :title="resume" @click="copy(resume)"><Copy :size="13" aria-hidden="true" /> {{ $t('session.copyResume') }}</button>
       <button v-if="!s.archivedAt && s.status !== 'active'" type="button" class="btn sm" @click="actions.setSessionArchived(s, true)"><Archive :size="13" aria-hidden="true" /> {{ $t('sessions.archive') }}</button>
@@ -61,11 +61,8 @@ const resume = computed(() => resumeCommand(s.value.id, map.project(s.value.proj
 
 <style scoped>
 .strip { display: grid; gap: 8px; padding-block: 12px 4px; }
-.waiting { --c: var(--you); } .active { --c: var(--s-in_progress); } .paused { --c: var(--s-deferred); }
-.idle { --c: var(--s-todo); } .ended, .archived { --c: var(--s-dropped); }
 .line { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
-.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
-.status { font-size: var(--fs-s); font-weight: 600; color: var(--c); }
+.ses-dot { width: 10px; height: 10px; }
 h1 { margin: 0; font-size: var(--fs-xl); line-height: 1.25; }
 .dates { font-size: var(--fs-s); color: var(--muted); }
 .bar { width: 200px; }

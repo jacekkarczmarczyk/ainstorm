@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures.ts';
+import { expect, row, test } from './fixtures.ts';
 
 const SHOP = '/s/ed08d5d7';
 
@@ -23,7 +23,7 @@ test('the project overview lists its session cards', async ({ page }) => {
   await expect(page.locator('article.session')).toHaveCount(1);
   await page.locator('article.session', { hasText: 'Cart and payments rework' }).locator('h2').click();
   await expect(page).toHaveURL(new RegExp(`${SHOP}/tree$`));
-  await expect(page.locator('#row-PRJ-1')).toBeVisible();
+  await expect(row(page, 'PRJ-1')).toBeVisible();
 });
 
 test('a link to a task opens it in its session', async ({ page }) => {

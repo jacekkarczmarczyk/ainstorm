@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {
-  effectiveAreas, inherited, isClosed, issueNumber, issueUrl, isWorking, openQuestions, pathTo, progress, splitCommit, TASK_STATUSES,
-  type Task, type TaskStatus,
+  canRun, effectiveAreas, inherited, isClosed, issueNumber, issueUrl, isWorking, openQuestions, pathTo, progress, splitCommit, TASK_STATUSES,
+  type Task,
 } from '@ainstorm/core';
 import { Crosshair, FolderTree, GitBranch, Hourglass, Pause, Play, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
@@ -16,8 +16,10 @@ import AreaTag from './AreaTag.vue';
 import CommitMessageField from './CommitMessageField.vue';
 import CopyText from './CopyText.vue';
 import DecisionBox from './DecisionBox.vue';
+import DoneCheckbox from './DoneCheckbox.vue';
 import IssueText from './IssueText.vue';
 import MoveTaskDialog from './MoveTaskDialog.vue';
+import OwnerBadge from './OwnerBadge.vue';
 import QueuedTag from './QueuedTag.vue';
 import ProgressBar from './ProgressBar.vue';
 import QuestionCard from './QuestionCard.vue';
@@ -69,17 +71,9 @@ const liveCommits = computed(() => t.value.commits.filter(c => c.state === 'live
 const oldCommits = computed(() => t.value.commits.filter(c => c.state !== 'live'));
 const events = computed(() => map.eventsFor(t.value.id));
 const isFocus = computed(() => map.project(t.value.projectKey)?.focusTaskId === t.value.id);
-const canRun = computed(() => t.value.owner === 'claude' && !isClosed(t.value.status) && t.value.status !== 'deferred');
 const runningSession = computed(() => (mark.value ? map.session(mark.value.sessionId) : undefined));
 const criteriaMet = computed(() => t.value.criteria.filter(c => c.done).length);
 const nextCriterion = computed(() => t.value.criteria.find(c => !c.done));
-
-function onStatus(e: Event) {
-  const select = e.target as HTMLSelectElement;
-  void actions.setStatus(t.value, select.value as TaskStatus);
-  // The change may wait for confirmation; the select shows the real status until it is applied
-  select.value = t.value.status;
-}
 const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 </script>
 
@@ -90,8 +84,8 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
     <div class="head">
       <CopyText :value="t.id" class="id"><TaskIdLabel :id="t.id" /></CopyText>
       <TypeChip v-if="type" :type="type.value" :inherited="type.fromId !== null" />
-      <span v-if="t.owner === 'me'" class="you">{{ $t('task.you', { ask: t.ask ? $t(`ask.${t.ask}`) : '' }) }}</span>
-      <span v-if="isFocus" class="focus-tag">
+      <OwnerBadge :task="t" />
+      <span v-if="isFocus" class="badge-focus focus-tag">
         <Crosshair :size="12" aria-hidden="true" /> {{ $t('detail.isFocus') }}
         <button type="button" class="unfocus" :title="$t('detail.clearFocus')" :aria-label="$t('detail.clearFocus')" @click="clearingFocus = true"><X :size="12" aria-hidden="true" /></button>
       </span>
@@ -110,12 +104,12 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
     <div class="controls">
       <label for="task-status" class="label">{{ $t('detail.status') }}</label>
-      <select id="task-status" :value="t.status" @change="onStatus">
+      <select id="task-status" class="input" :value="t.status" @change="actions.onStatusInput(t, $event)">
         <option v-for="s in TASK_STATUSES" :key="s" :value="s">{{ $t(`status.${s}`) }}</option>
       </select>
       <button v-if="mark?.self && isWorking(mark)" type="button" class="btn" @click="actions.requestSession('pause', t, runningSession)"><Pause :size="14" /> {{ $t('detail.pause') }}</button>
       <button v-else-if="mark?.self && mark.paused" type="button" class="btn primary" @click="actions.requestSession('run', t, runningSession)"><Play :size="14" /> {{ $t('detail.resume') }}</button>
-      <button v-else-if="canRun && session" type="button" class="btn primary" @click="actions.requestSession('run', t, session)"><Play :size="14" /> {{ $t('detail.run') }}</button>
+      <button v-else-if="canRun(t) && session" type="button" class="btn primary" @click="actions.requestSession('run', t, session)"><Play :size="14" /> {{ $t('detail.run') }}</button>
       <button v-if="!isFocus" type="button" class="btn sm" @click="actions.setFocus(t)"><Crosshair :size="14" /> {{ $t('detail.setFocus') }}</button>
     </div>
     <p v-if="mark" class="run-line"><RunIndicator :mark="mark" /> <SessionLabel :session-id="mark.sessionId" /></p>
@@ -155,7 +149,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
         <dt>{{ $t('detail.plan') }}</dt>
         <dd>
           <CopyText :value="plan.value" :label="$t('detail.copyPathOf', { path: plan.value })"><code>{{ fileName(plan.value) }}</code></CopyText>
-          <span v-if="t.planRef" class="tag">§ {{ t.planRef }}</span>
+          <span v-if="t.planRef" class="badge">§ {{ t.planRef }}</span>
           <span class="muted">· {{ $t('detail.planMarker', { id: t.id }) }}</span>
         </dd>
       </template>
@@ -201,11 +195,11 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
       <h3 class="label row-head">{{ $t('detail.subtasks') }} <span class="frac">{{ prog.closed }}/{{ prog.total }}</span><ProgressBar :ratio="prog.ratio" class="grow" /></h3>
       <ul class="list">
         <li v-for="c in children" :key="c.id">
-          <input type="checkbox" class="box" :checked="c.status === 'done'" :aria-label="$t('task.markDone', { id: c.id })" @change="actions.toggleDone(c); ($event.target as HTMLInputElement).checked = c.status === 'done'">
+          <DoneCheckbox :task="c" />
           <RunIndicator v-if="map.marks.get(c.id)" :mark="map.marks.get(c.id)!" />
-          <span class="tid">{{ c.id }}</span>
+          <TaskIdLabel :id="c.id" />
           <button type="button" class="link item-title" :class="`t-${c.status}`" @click="selectTask(c.id)">{{ c.title }}</button>
-          <span v-if="c.owner === 'me'" class="you">{{ $t('owner.me') }}</span>
+          <OwnerBadge :task="c" />
           <StatusPill :status="c.status" />
         </li>
       </ul>
@@ -214,23 +208,23 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
     <section v-if="deps.length || blocks.length" class="block">
       <h3 class="label">{{ $t('detail.dependencies') }}</h3>
       <div v-if="waitsFor.length" class="rel"><span class="muted rel-label"><Hourglass :size="14" aria-hidden="true" /> {{ $t('detail.waitsFor') }}</span>
-        <button v-for="x in waitsFor" :key="x.id" type="button" class="rel-link" @click="selectTask(x.id)"><StatusPill :status="x.status" /><span class="tid">{{ x.id }}</span>{{ x.title }}</button>
+        <button v-for="x in waitsFor" :key="x.id" type="button" class="rel-link" @click="selectTask(x.id)"><StatusPill :status="x.status" /><TaskIdLabel :id="x.id" />{{ x.title }}</button>
       </div>
       <div v-if="waitedFor.length" class="rel waited"><span class="muted">{{ $t('detail.waitedFor') }}</span>
-        <button v-for="x in waitedFor" :key="x.id" type="button" class="rel-link" @click="selectTask(x.id)"><StatusPill :status="x.status" /><span class="tid">{{ x.id }}</span><span :class="`t-${x.status}`">{{ x.title }}</span></button>
+        <button v-for="x in waitedFor" :key="x.id" type="button" class="rel-link" @click="selectTask(x.id)"><StatusPill :status="x.status" /><TaskIdLabel :id="x.id" /><span :class="`t-${x.status}`">{{ x.title }}</span></button>
       </div>
       <div v-if="blocks.length" class="rel"><span class="muted">{{ $t('detail.blocks') }}</span>
-        <button v-for="x in blocks" :key="x.id" type="button" class="rel-link" @click="selectTask(x.id)"><StatusPill :status="x.status" /><span class="tid">{{ x.id }}</span>{{ x.title }}</button>
+        <button v-for="x in blocks" :key="x.id" type="button" class="rel-link" @click="selectTask(x.id)"><StatusPill :status="x.status" /><TaskIdLabel :id="x.id" />{{ x.title }}</button>
       </div>
     </section>
 
     <section v-if="origin || found.length" class="block">
       <h3 class="label">{{ $t('detail.origin') }}</h3>
       <div v-if="origin" class="rel"><span class="muted rel-label"><GitBranch :size="14" aria-hidden="true" /> {{ $t('detail.foundDuring') }}</span>
-        <button type="button" class="rel-link" @click="selectTask(origin.id)"><span class="tid">{{ origin.id }}</span>{{ origin.title }}</button>
+        <button type="button" class="rel-link" @click="selectTask(origin.id)"><TaskIdLabel :id="origin.id" />{{ origin.title }}</button>
       </div>
       <div v-if="found.length" class="rel"><span class="muted">{{ $t('detail.foundHere') }}</span>
-        <button v-for="x in found" :key="x.id" type="button" class="rel-link" @click="selectTask(x.id)"><StatusPill :status="x.status" /><span class="tid">{{ x.id }}</span>{{ x.title }}</button>
+        <button v-for="x in found" :key="x.id" type="button" class="rel-link" @click="selectTask(x.id)"><StatusPill :status="x.status" /><TaskIdLabel :id="x.id" />{{ x.title }}</button>
       </div>
     </section>
 
@@ -299,7 +293,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 .head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .head .id { flex: none; }
 .spacer { flex: 1; }
-.focus-tag { display: inline-flex; gap: 4px; align-items: center; font-size: var(--fs-xs); padding: 1px 3px 1px 7px; border-radius: 4px; background: var(--accent); color: var(--on-strong); font-weight: 600; }
+.focus-tag { padding: 1px 3px 1px 7px; }
 .unfocus { border: 0; background: none; color: inherit; padding: 1px; border-radius: 3px; cursor: pointer; display: inline-grid; place-items: center; opacity: .8; }
 .unfocus:hover, .unfocus:focus-visible { opacity: 1; background: rgb(255 255 255 / .25); }
 .confirm-text { margin: 0; }
@@ -307,7 +301,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 h2 { font-size: var(--fs-xl); line-height: 1.3; margin: 6px 0 2px; text-wrap: balance; }
 .path { font-size: var(--fs-s); color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
-.controls select { font-size: var(--fs-m); padding: 4px 6px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--panel); }
+.controls select { font-size: var(--fs-m); }
 .run-line { display: flex; gap: 8px; align-items: center; margin: 6px 0 0; font-size: var(--fs-m); color: var(--muted); }
 .block { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .block > h3 { margin: 0; display: flex; gap: 8px; align-items: center; }
@@ -319,7 +313,6 @@ h2 { font-size: var(--fs-xl); line-height: 1.3; margin: 6px 0 2px; text-wrap: ba
 .kv dt { color: var(--muted); font-size: var(--fs-s); }
 .kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
 code { font-family: var(--f-mono); font-size: var(--fs-s); }
-.tag { font-size: var(--fs-xs); padding: 1px 6px; border-radius: 4px; background: var(--sunk); color: var(--muted); }
 .folds { margin-top: 14px; border-bottom: 1px solid var(--line); }
 .fold { border-top: 1px solid var(--line); }
 .fold summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 1px 6px; padding: 8px 0; }
@@ -338,7 +331,6 @@ code { font-family: var(--f-mono); font-size: var(--fs-s); }
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .list li { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
 .item-title { flex: 1; min-width: 0; text-decoration: none; }
-.box { margin: 0; accent-color: var(--s-done); width: 15px; height: 15px; }
 .rel { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .rel-label, .inherited { display: inline-flex; gap: 4px; align-items: center; flex-wrap: wrap; }
 /* Not ".chip": scoped styles also reach the root of child components such as TypeChip */

@@ -1,13 +1,8 @@
-import { MapSnapshot } from '@ainstorm/core';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { Daemon } from '../src/daemon.ts';
 import { openDatabase } from '../src/db.ts';
 import { loadSnapshot, saveSnapshot } from '../src/store.ts';
-
-const FIXTURE = join(import.meta.dirname, '..', '..', 'web', 'src', 'fixtures', 'map.json');
-const fixture = () => MapSnapshot.parse(JSON.parse(readFileSync(FIXTURE, 'utf8')));
+import { fixture } from './helpers.ts';
 
 describe('store', () => {
   it('migrates an empty database', () => {

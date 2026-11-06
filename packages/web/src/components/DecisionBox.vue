@@ -17,7 +17,7 @@ const decide = (approve: boolean) => actions.decide(props.task, approve, note.va
   <section class="decision" :aria-labelledby="`${id}-title`">
     <h3 :id="`${id}-title`" class="label">{{ $t('decide.title') }}</h3>
     <label class="sr-only" :for="`${id}-note`">{{ $t('decide.note') }}</label>
-    <textarea :id="`${id}-note`" v-model="note" rows="2" :placeholder="$t('decide.note')"></textarea>
+    <textarea :id="`${id}-note`" v-model="note" class="input" rows="2" :placeholder="$t('decide.note')"></textarea>
     <!-- Like the dialogs: aligned right, the main action last -->
     <div class="buttons">
       <button type="button" class="btn" @click="decide(false)"><X :size="14" aria-hidden="true" /> {{ $t('decide.no') }}</button>
@@ -32,7 +32,7 @@ const decide = (approve: boolean) => actions.decide(props.task, approve, note.va
   background: color-mix(in srgb, var(--you-soft) 45%, var(--panel));
 }
 .decision h3 { margin: 0; color: var(--you); }
-textarea { width: 100%; padding: 6px 8px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--panel); resize: vertical; }
+textarea { width: 100%; resize: vertical; }
 .buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .buttons .btn { display: inline-flex; gap: 6px; align-items: center; }
 </style>

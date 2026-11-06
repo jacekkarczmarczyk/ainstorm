@@ -33,10 +33,58 @@ input:not([type="checkbox"], [type="radio"]):focus-visible, textarea:focus-visib
 .empty { color: var(--muted); font-size: var(--fs-m); margin: 0; }
 .t-done { color: var(--muted); }
 .t-dropped { color: var(--muted); text-decoration: line-through; }
-.you {
-  font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 1px 7px;
-  border-radius: 4px; background: var(--you); color: var(--on-strong); white-space: nowrap;
+/* Badges next to titles. Prefixed names, so a component's own classes never pick up their colours */
+.badge, .badge-you, .badge-claude, .badge-focus {
+  display: inline-flex; gap: 4px; align-items: center; white-space: nowrap; font-size: var(--fs-xs); padding: 1px 6px; border-radius: 4px;
 }
+.badge { background: var(--sunk); color: var(--muted); }
+.badge.from { color: var(--s-deferred); }
+.badge.dep { color: var(--s-blocked); }
+.badge.sha { font-family: var(--f-mono); color: var(--s-done); }
+.badge-you { font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding-inline: 7px; background: var(--you); color: var(--on-strong); }
+.badge-claude { font-weight: 600; color: var(--claude); background: var(--claude-soft); }
+.badge-focus { font-weight: 600; background: var(--accent); color: var(--on-strong); }
+.badge-question {
+  font-size: var(--fs-xs); font-weight: 700; padding: 1px 7px; border-radius: 10px; white-space: nowrap;
+  border: 1.5px solid var(--you); color: var(--you); background: var(--you-soft);
+}
+/* The small ▶ / ❚❚ button next to a task */
+.btn-run {
+  width: 24px; height: 22px; border: 1px solid var(--line-strong); background: var(--panel); border-radius: 4px;
+  display: grid; place-items: center; cursor: pointer; color: var(--s-in_progress); padding: 0;
+}
+/* Text fields and lists outside a search box */
+.input { padding: 5px 8px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--panel); }
+/* A search field with its icon inside one frame */
+.search-box {
+  display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 0 8px;
+  background: var(--panel); color: var(--muted);
+}
+.search-box input { border: 0; outline: 0; background: none; width: 100%; padding: 5px 0; color: var(--ink); }
+.search-box:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* Dropdowns with a search box (filters, header pickers); each sets its own size and the phone layout */
+.dd-trigger {
+  border: 1px solid var(--line-strong); background: var(--panel); border-radius: 6px; padding: 4px 10px; font-size: var(--fs-m);
+  cursor: pointer; display: inline-flex; gap: 6px; align-items: center; color: var(--ink);
+}
+.dd-pop {
+  position: absolute; top: calc(100% + 4px); left: 0; display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: 0 8px 28px rgb(0 0 0 / .18);
+}
+/* Number tiles of the overviews */
+.stat-tile { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px; display: grid; gap: 2px; }
+.stat-tile .value { font-size: var(--fs-xxl); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat-tile .value small { font-size: var(--fs-base); color: var(--muted); font-weight: 500; }
+.stat-tile.alert { border-color: var(--you); }
+.stat-tile.alert .value { color: var(--you); }
+/* Session status colour (--c) by the key sessionStatusKey gives, e.g. ses-waiting */
+.ses-waiting { --c: var(--you); }
+.ses-active { --c: var(--s-in_progress); }
+.ses-paused { --c: var(--s-deferred); }
+.ses-idle { --c: var(--s-todo); }
+.ses-ended, .ses-archived { --c: var(--s-dropped); }
+.ses-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.ses-status { font-size: var(--fs-s); font-weight: 600; color: var(--c); }
 .flash { animation: flash 1.8s ease-out; }
 @keyframes flash { from { background-color: color-mix(in srgb, var(--s-deferred) 28%, var(--panel)); } }
 @media (prefers-reduced-motion: reduce) {

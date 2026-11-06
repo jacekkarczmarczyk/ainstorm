@@ -19,7 +19,7 @@ const tooltip = computed(() => {
   const prog = progress(map.index, x.id);
   return [
     `${x.id} · ${x.title}`,
-    [t(`status.${x.status}`), type, prog.total ? t('focus.closed', { closed: prog.closed, total: prog.total }) : null,
+    [t(`status.${x.status}`), type, prog.total ? t('sessions.closed', { closed: prog.closed, total: prog.total }) : null,
       x.owner === 'me' ? t('owner.me') : null].filter(Boolean).join(' · '),
   ].join('\n');
 });

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { cycleRule, facetCounts, matchesQuery, type Facet, type RuleSet, type Task } from '@ainstorm/core';
 import { Check, ChevronDown, X } from '@lucide/vue';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { usePopover } from '../composables/usePopover.ts';
 import { useMapStore } from '../stores/map.ts';
 import { areaHue, TYPE_HUE } from '../ui/colors.ts';
 import StatusPill from './StatusPill.vue';
@@ -12,10 +13,7 @@ const emit = defineEmits<{ change: [rules: RuleSet] }>();
 
 const map = useMapStore();
 const { t } = useI18n();
-const open = ref(false);
-const query = ref('');
-const root = ref<HTMLElement | null>(null);
-const search = ref<HTMLInputElement | null>(null);
+const { open, query, root, search, toggle } = usePopover();
 
 const label = (value: string) => (props.facet === 'status' ? t(`status.${value}`) : value);
 const counts = computed(() => facetCounts(props.tasks, props.facet, map.facets));
@@ -32,31 +30,17 @@ const summary = computed(() => {
   if (parts.length === 0) return name;
   return parts.length === 1 ? `${name}: ${parts[0]}` : t('filter.rules', { facet: name, n: parts.length });
 });
-
-async function toggle() {
-  open.value = !open.value;
-  query.value = '';
-  if (open.value) {
-    await nextTick();
-    search.value?.focus();
-  }
-}
-const onPointerDown = (e: PointerEvent) => {
-  if (open.value && root.value && !root.value.contains(e.target as Node)) open.value = false;
-};
-onMounted(() => document.addEventListener('pointerdown', onPointerDown));
-onBeforeUnmount(() => document.removeEventListener('pointerdown', onPointerDown));
 </script>
 
 <template>
   <div ref="root" class="dd" @keydown.esc="open = false">
-    <button type="button" class="trigger" :class="{ on: Object.keys(rules).length }" :aria-expanded="open" @click="toggle">
+    <button type="button" class="dd-trigger" :class="{ on: Object.keys(rules).length }" :aria-expanded="open" @click="toggle">
       <span class="summary">{{ summary }}</span><ChevronDown :size="14" aria-hidden="true" />
     </button>
-    <div v-if="open" class="pop" role="dialog" :aria-label="$t(`facet.${facet}`)">
+    <div v-if="open" class="dd-pop pop" role="dialog" :aria-label="$t(`facet.${facet}`)">
       <div class="head">
         <label class="sr-only" :for="`dd-search-${facet}`">{{ $t('filter.find') }}</label>
-        <input :id="`dd-search-${facet}`" ref="search" v-model="query" type="search" :placeholder="$t('filter.find')" autocomplete="off">
+        <input :id="`dd-search-${facet}`" ref="search" v-model="query" class="input" type="search" :placeholder="$t('filter.find')" autocomplete="off">
         <p class="help">{{ $t('filter.help') }}</p>
       </div>
       <div class="list">
@@ -85,18 +69,12 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onPointerDown)
 
 <style scoped>
 .dd { position: relative; }
-.trigger {
-  border: 1px solid var(--line-strong); background: var(--panel); border-radius: 6px; padding: 4px 10px; font-size: var(--fs-m);
-  cursor: pointer; display: inline-flex; gap: 6px; align-items: center; max-width: 280px; color: var(--ink);
-}
-.trigger.on { border-color: var(--accent); background: var(--accent-soft); }
+.dd-trigger { max-width: 280px; }
+.dd-trigger.on { border-color: var(--accent); background: var(--accent-soft); }
 .summary { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.pop {
-  position: absolute; z-index: 15; top: calc(100% + 4px); left: 0; width: 290px; max-height: 420px; display: flex; flex-direction: column;
-  background: var(--panel); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: 0 8px 28px rgb(0 0 0 / .18);
-}
+.pop { z-index: 15; width: 290px; max-height: 420px; }
 .head { padding: 8px 8px 0; }
-.head input { width: 100%; padding: 5px 8px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--panel); font-size: var(--fs-m); }
+.head .input { width: 100%; font-size: var(--fs-m); }
 .help { font-size: var(--fs-xs); color: var(--muted); margin: 6px 4px; }
 /* Only the list scrolls; search and the Clear/Done footer stay in place */
 .list { overflow: auto; flex: 1; min-height: 0; padding: 0 8px; display: grid; gap: 2px; align-content: start; }

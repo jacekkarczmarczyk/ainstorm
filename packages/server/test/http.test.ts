@@ -1,43 +1,20 @@
-import { MapSnapshot } from '@ainstorm/core';
-import { readFileSync } from 'node:fs';
-import { request, type Server } from 'node:http';
-import { join } from 'node:path';
+import type { MapSnapshot } from '@ainstorm/core';
+import type { Server } from 'node:http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Daemon } from '../src/daemon.ts';
 import { openDatabase } from '../src/db.ts';
 import { createHttpServer } from '../src/http.ts';
 import { listenLoopback } from '../src/index.ts';
 import { saveSnapshot } from '../src/store.ts';
+import { call as callPort, fixture, type CallOptions } from './helpers.ts';
 
 const TOKEN = 'c'.repeat(64);
-const FIXTURE = join(import.meta.dirname, '..', '..', 'web', 'src', 'fixtures', 'map.json');
-
-interface Reply { status: number; headers: Record<string, string | string[] | undefined>; body: string }
 
 let server: Server;
 let port: number;
 let daemon: Daemon;
 
-function call(path: string, options: { method?: string; headers?: Record<string, string>; body?: unknown; form?: string } = {}): Promise<Reply> {
-  const body = options.form ?? (options.body === undefined ? undefined : JSON.stringify(options.body));
-  return new Promise((resolve, reject) => {
-    const req = request({
-      host: '127.0.0.1', port, path, method: options.method ?? 'GET',
-      headers: {
-        Host: `127.0.0.1:${port}`,
-        ...(options.form !== undefined ? { 'Content-Type': 'application/x-www-form-urlencoded' } : body ? { 'Content-Type': 'application/json' } : {}),
-        ...options.headers,
-      },
-    }, res => {
-      let text = '';
-      res.setEncoding('utf8');
-      res.on('data', chunk => { text += chunk; });
-      res.on('end', () => resolve({ status: res.statusCode!, headers: res.headers, body: text }));
-    });
-    req.on('error', reject);
-    req.end(body);
-  });
-}
+const call = (path: string, options?: CallOptions) => callPort(port, path, options);
 const auth = { Authorization: `Bearer ${TOKEN}` };
 
 async function newCode(): Promise<string> {
@@ -54,7 +31,7 @@ async function uiCookie(): Promise<string> {
 
 beforeEach(async () => {
   const db = openDatabase(':memory:');
-  saveSnapshot(db, MapSnapshot.parse(JSON.parse(readFileSync(FIXTURE, 'utf8'))));
+  saveSnapshot(db, fixture());
   daemon = new Daemon(db);
   server = createHttpServer({ daemon, token: TOKEN, staticDir: null });
   port = await listenLoopback(server, 0);

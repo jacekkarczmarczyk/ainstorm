@@ -1,9 +1,25 @@
-import { isClosed, type MapEvent, type Session, type Task } from './model.ts';
+import { isClosed, type MapEvent, type Session, type SessionStatus, type Task } from './model.ts';
 import { needsUser } from './status.ts';
 import { matchesQuery } from './text.ts';
 import { pathTo, type TaskIndex } from './tree.ts';
 
 export const isSessionOpen = (s: Session) => s.archivedAt === null && s.status !== 'ended';
+
+/** The status shown for a session: an archived one shows that instead of its last status */
+export const sessionStatusKey = (s: Pick<Session, 'archivedAt' | 'status'>): SessionStatus | 'archived' => (s.archivedAt ? 'archived' : s.status);
+
+/** Overview numbers of a project; archived sessions and tasks are left out (the index holds no archived tasks). */
+export function projectStats(index: TaskIndex, sessions: readonly Session[], projectKey: string) {
+  const open = sessions.filter(s => s.projectKey === projectKey && isSessionOpen(s));
+  const tasks = [...index.byId.values()].filter(t => t.projectKey === projectKey);
+  const closed = tasks.filter(t => isClosed(t.status)).length;
+  return {
+    open: open.length,
+    waiting: open.filter(s => s.status === 'waiting').length,
+    deferred: tasks.filter(t => t.status === 'deferred').length,
+    closed, total: tasks.length, ratio: tasks.length ? closed / tasks.length : 0,
+  };
+}
 
 /** Latest map change touching the session (via MCP, a hook or the UI); with no changes, the session start. */
 export function lastActivityAt(session: Session, events: readonly MapEvent[]): string {

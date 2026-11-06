@@ -1,5 +1,5 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { request, type Server } from 'node:http';
+import type { Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -7,6 +7,7 @@ import { Daemon } from '../src/daemon.ts';
 import { openDatabase } from '../src/db.ts';
 import { createHttpServer } from '../src/http.ts';
 import { listenLoopback } from '../src/index.ts';
+import { call } from './helpers.ts';
 
 // The built UI is served without a login, so no path may reach a file outside its folder
 const SECRET = 'SECRET-CONTENT';
@@ -14,19 +15,7 @@ let base: string;
 let server: Server;
 let port: number;
 
-/** A raw request: the path goes out exactly as written (no URL normalisation by a client) */
-function get(path: string): Promise<{ status: number; body: string }> {
-  return new Promise((resolve, reject) => {
-    const req = request({ host: '127.0.0.1', port, path, headers: { Host: `127.0.0.1:${port}` } }, res => {
-      let body = '';
-      res.setEncoding('utf8');
-      res.on('data', chunk => { body += chunk; });
-      res.on('end', () => resolve({ status: res.statusCode!, body }));
-    });
-    req.on('error', reject);
-    req.end();
-  });
-}
+const get = (path: string) => call(port, path);
 
 beforeAll(async () => {
   base = mkdtempSync(join(tmpdir(), 'ainstorm-static-'));

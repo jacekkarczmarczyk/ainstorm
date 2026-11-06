@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { focusView, isClosed, openQuestions, progress } from '@ainstorm/core';
+import { canRun, focusView, openQuestions, progress } from '@ainstorm/core';
 import { Crosshair, GitBranch, Play } from '@lucide/vue';
 import { computed } from 'vue';
+import DoneCheckbox from '../components/DoneCheckbox.vue';
+import OwnerBadge from '../components/OwnerBadge.vue';
 import ProgressBar from '../components/ProgressBar.vue';
 import RunIndicator from '../components/RunIndicator.vue';
 import SessionLabel from '../components/SessionLabel.vue';
 import StatusPill from '../components/StatusPill.vue';
+import TaskIdLabel from '../components/TaskIdLabel.vue';
 import TaskLink from '../components/TaskLink.vue';
 import { useScopedIndex } from '../composables/useScopedIndex.ts';
 import { useSelection } from '../composables/useSelection.ts';
@@ -38,7 +41,6 @@ function toggleDetails() {
 }
 // A session works on it now or has it paused; what an idle session last worked on can be run again
 const busy = (id: string) => { const mark = map.marks.get(id); return mark !== undefined && !mark.idle; };
-const canRun = (status: string, owner: string) => owner === 'claude' && !isClosed(status as never) && status !== 'deferred';
 </script>
 
 <template>
@@ -57,7 +59,7 @@ const canRun = (status: string, owner: string) => owner === 'claude' && !isClose
           <span v-if="i" class="sep" aria-hidden="true">›</span>
           <button type="button" class="link crumb" @click="selectTask(t.id)">
             <RunIndicator v-if="map.marks.get(t.id)" :mark="map.marks.get(t.id)!" />
-            <span class="tid">{{ t.id }}</span> {{ t.title }}
+            <TaskIdLabel :id="t.id" /> {{ t.title }}
           </button>
         </template>
       </nav>
@@ -66,15 +68,15 @@ const canRun = (status: string, owner: string) => owner === 'claude' && !isClose
         <div class="eyebrow">
           <Crosshair :size="14" aria-hidden="true" />
           <span>{{ $t('focus.yourFocus', { project: project?.name ?? '' }) }}</span>
-          <span class="tid">{{ view.focus.id }}</span>
+          <TaskIdLabel :id="view.focus.id" />
           <StatusPill :status="view.focus.status" />
-          <span v-if="view.focus.owner === 'me'" class="you">{{ $t('task.you', { ask: view.focus.ask ? $t(`ask.${view.focus.ask}`) : '' }) }}</span>
+          <OwnerBadge :task="view.focus" />
           <RunIndicator v-if="map.marks.get(view.focus.id)" :mark="map.marks.get(view.focus.id)!" />
         </div>
         <h2 :class="`t-${view.focus.status}`">{{ view.focus.title }}</h2>
         <p v-if="view.focus.description" class="desc">{{ view.focus.description }}</p>
         <div class="actions">
-          <button v-if="canRun(view.focus.status, view.focus.owner) && !busy(view.focus.id)" type="button" class="btn primary" @click="session && actions.requestSession('run', view.focus, session)">
+          <button v-if="canRun(view.focus) && !busy(view.focus.id)" type="button" class="btn primary" @click="session && actions.requestSession('run', view.focus, session)">
             <Play :size="14" /> {{ $t('detail.run') }}
           </button>
           <button type="button" class="btn" :aria-pressed="detailsShown" @click="toggleDetails">{{ detailsShown ? $t('focus.hideDetails') : $t('focus.details') }}</button>
@@ -84,15 +86,15 @@ const canRun = (status: string, owner: string) => owner === 'claude' && !isClose
           <div class="sub-head"><span class="label">{{ $t('focus.subtasks') }}</span><span class="frac">{{ view.progress.closed }}/{{ view.progress.total }}</span><ProgressBar :ratio="view.progress.ratio" class="grow" /></div>
           <ul class="subtasks">
             <li v-for="t in view.subtasks" :key="t.id" :class="{ running: busy(t.id) }">
-              <input type="checkbox" class="box" :checked="t.status === 'done'" :aria-label="$t('task.markDone', { id: t.id })" @change="actions.toggleDone(t); ($event.target as HTMLInputElement).checked = t.status === 'done'">
+              <DoneCheckbox :task="t" />
               <RunIndicator v-if="map.marks.get(t.id)" :mark="map.marks.get(t.id)!" />
-              <span class="tid">{{ t.id }}</span>
+              <TaskIdLabel :id="t.id" />
               <button type="button" class="link title" :class="`t-${t.status}`" @click="selectTask(t.id)">{{ t.title }}</button>
               <span v-if="scoped.children(t.id).length" class="frac">{{ progress(scoped, t.id).closed }}/{{ progress(scoped, t.id).total }}</span>
-              <span v-if="openQuestions(t).length" class="question">? {{ openQuestions(t).length }}</span>
-              <span v-if="t.owner === 'me'" class="you">{{ $t('owner.me') }}</span>
+              <span v-if="openQuestions(t).length" class="badge-question">? {{ openQuestions(t).length }}</span>
+              <OwnerBadge :task="t" />
               <StatusPill :status="t.status" />
-              <button v-if="canRun(t.status, t.owner) && !busy(t.id)" type="button" class="run-btn" :aria-label="$t('task.run', { id: t.id })" :title="$t('task.run', { id: t.id })" @click="session && actions.requestSession('run', t, session)"><Play :size="12" /></button>
+              <button v-if="canRun(t) && !busy(t.id)" type="button" class="btn-run" :aria-label="$t('task.run', { id: t.id })" :title="$t('task.run', { id: t.id })" @click="session && actions.requestSession('run', t, session)"><Play :size="12" /></button>
             </li>
           </ul>
         </template>
@@ -112,9 +114,9 @@ const canRun = (status: string, owner: string) => owner === 'claude' && !isClose
           <h3>{{ $t('focus.forYou') }} <span class="frac">{{ view.forUser.length }}</span></h3>
           <ul class="mini">
             <li v-for="t in view.forUser" :key="t.id" @click="selectTask(t.id)">
-              <span class="tid">{{ t.id }}</span><span class="title">{{ t.title }}</span>
-              <span v-if="openQuestions(t).length" class="question">? {{ openQuestions(t).length }}</span>
-              <span v-if="t.owner === 'me'" class="you">{{ t.ask ? $t(`ask.${t.ask}`) : $t('owner.me') }}</span>
+              <TaskIdLabel :id="t.id" /><span class="title">{{ t.title }}</span>
+              <span v-if="openQuestions(t).length" class="badge-question">? {{ openQuestions(t).length }}</span>
+              <OwnerBadge :task="t" />
             </li>
           </ul>
         </div>
@@ -124,18 +126,18 @@ const canRun = (status: string, owner: string) => owner === 'claude' && !isClose
             <li v-for="s in view.sessions" :key="s.id" @click="openSession(s.id)">
               <RunIndicator v-if="s.runningTaskId && map.marks.get(s.runningTaskId)" :mark="map.marks.get(s.runningTaskId)!" />
               <SessionLabel :session-id="s.id" />
-              <span class="tid">{{ s.runningTaskId }}</span>
+              <TaskIdLabel v-if="s.runningTaskId" :id="s.runningTaskId" />
             </li>
           </ul>
         </div>
         <div v-for="level in view.levels" :key="level.task.id" class="card">
-          <h3><span class="tid">{{ level.task.id }}</span> {{ $t('focus.leftIn', { title: level.task.title }) }}</h3>
-          <div class="level-progress"><span class="frac">{{ $t('focus.closed', { closed: level.progress.closed, total: level.progress.total }) }}</span><ProgressBar :ratio="level.progress.ratio" class="grow" /></div>
+          <h3><TaskIdLabel :id="level.task.id" /> {{ $t('focus.leftIn', { title: level.task.title }) }}</h3>
+          <div class="level-progress"><span class="frac">{{ $t('sessions.closed', { closed: level.progress.closed, total: level.progress.total }) }}</span><ProgressBar :ratio="level.progress.ratio" class="grow" /></div>
           <ul v-if="level.open.length" class="mini">
             <li v-for="t in level.open" :key="t.id" @click="selectTask(t.id)">
               <RunIndicator v-if="map.marks.get(t.id)" :mark="map.marks.get(t.id)!" />
-              <span class="tid">{{ t.id }}</span><span class="title">{{ t.title }}</span>
-              <span v-if="t.owner === 'me'" class="you">{{ $t('owner.me') }}</span>
+              <TaskIdLabel :id="t.id" /><span class="title">{{ t.title }}</span>
+              <OwnerBadge :task="t" />
               <StatusPill :status="t.status" />
             </li>
           </ul>
@@ -146,7 +148,7 @@ const canRun = (status: string, owner: string) => owner === 'claude' && !isClose
           <p class="muted small">{{ $t('focus.parkedHelp', { id: view.path[0]!.id }) }}</p>
           <ul class="mini">
             <li v-for="t in view.parked" :key="t.id" @click="selectTask(t.id)">
-              <span class="tid">{{ t.id }}</span><span class="title">{{ t.title }} <span class="muted small from"><GitBranch :size="12" aria-hidden="true" /> {{ $t('detail.from') }} <TaskLink :id="t.fromId!" /></span></span>
+              <TaskIdLabel :id="t.id" /><span class="title">{{ t.title }} <span class="muted small from"><GitBranch :size="12" aria-hidden="true" /> {{ $t('detail.from') }} <TaskLink :id="t.fromId!" /></span></span>
             </li>
           </ul>
         </div>
@@ -173,9 +175,6 @@ h2 { margin: 0; font-size: var(--fs-xxl); line-height: 1.25; text-wrap: balance;
 .subtasks li:hover { background: var(--sunk); }
 .subtasks li.running { background: color-mix(in srgb, var(--s-in_progress) 10%, transparent); }
 .subtasks .title { flex: 1; min-width: 0; text-decoration: none; }
-.box { margin: 0; accent-color: var(--s-done); width: 15px; height: 15px; }
-.run-btn { width: 24px; height: 22px; border: 1px solid var(--line-strong); background: var(--panel); border-radius: 4px; display: grid; place-items: center; cursor: pointer; color: var(--s-in_progress); padding: 0; }
-.question { font-size: var(--fs-xs); font-weight: 700; padding: 1px 7px; border-radius: 10px; border: 1.5px solid var(--you); color: var(--you); background: var(--you-soft); }
 .alert {
   border: 1px solid color-mix(in srgb, var(--s-blocked) 45%, transparent); background: color-mix(in srgb, var(--s-blocked) 8%, var(--panel));
   border-radius: var(--r); padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;

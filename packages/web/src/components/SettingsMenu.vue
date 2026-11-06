@@ -62,11 +62,11 @@ async function toggleNotifications(e: Event) {
       </section>
       <section v-else-if="section === 'sessions'" class="section">
         <label class="field" for="plugin-dir">{{ $t('settings.pluginDir') }}
-          <input id="plugin-dir" v-model.trim="ui.pluginDir" type="text" placeholder="C:/…/ainstorm/plugin" autocomplete="off" spellcheck="false">
+          <input id="plugin-dir" v-model.trim="ui.pluginDir" class="input" type="text" placeholder="C:/…/ainstorm/plugin" autocomplete="off" spellcheck="false">
         </label>
         <p class="help">{{ $t('settings.pluginDirHelp') }}</p>
         <label class="field" for="prompt-language">{{ $t('settings.promptLanguage') }}
-          <select id="prompt-language" v-model="ui.promptLanguage">
+          <select id="prompt-language" v-model="ui.promptLanguage" class="input">
             <option v-for="lang in PROMPT_LANGUAGES" :key="lang" :value="lang">{{ PROMPT_PHRASES[lang].name }}</option>
           </select>
         </label>
@@ -102,8 +102,8 @@ async function toggleNotifications(e: Event) {
 .help.warn { color: var(--s-blocked); }
 .row { display: flex; gap: 8px; align-items: center; cursor: pointer; font-size: var(--fs-m); }
 .field { display: grid; gap: 4px; font-size: var(--fs-m); }
-.field select { justify-self: start; padding: 4px 8px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--panel); }
-.field input { width: 100%; padding: 4px 8px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--panel); font-family: var(--f-mono); font-size: var(--fs-s); }
+.field select { justify-self: start; }
+.field input { width: 100%; font-family: var(--f-mono); font-size: var(--fs-s); }
 .actions { display: flex; justify-content: flex-end; }
 /* Phones: the sections become tabs above the content */
 @media (max-width: 760px) {

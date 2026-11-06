@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { sessionStatusKey } from '@ainstorm/core';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useFormat } from '../composables/useFormat.ts';
@@ -14,7 +15,7 @@ const summary = computed(() => map.summaryById.get(props.sessionId));
 const tooltip = computed(() => {
   const s = summary.value;
   if (!s) return props.sessionId;
-  const status = s.session.archivedAt ? t('sessionStatus.archived') : t(`sessionStatus.${s.session.status}`);
+  const status = t(`sessionStatus.${sessionStatusKey(s.session)}`);
   return `${props.sessionId}\n${t('sessions.tooltip', {
     title: s.session.title, status, started: when(s.session.startedAt), updated: when(s.lastActivityAt), closed: s.closed, total: s.total,
   })}`;

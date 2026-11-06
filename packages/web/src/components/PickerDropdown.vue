@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { matchesQuery } from '@ainstorm/core';
 import { Check, ChevronDown } from '@lucide/vue';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue';
+import { computed, ref, useId } from 'vue';
+import { usePopover } from '../composables/usePopover.ts';
 
 /**
  * Single choice with a search box, in the style of the filter dropdowns: the header's project and session pickers.
@@ -21,25 +22,16 @@ const props = defineProps<{ label: string; items: readonly PickerItem[]; modelVa
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
 
 const id = useId();
-const open = ref(false);
-const query = ref('');
 const active = ref(0);
-const root = ref<HTMLElement | null>(null);
-const search = ref<HTMLInputElement | null>(null);
 const list = ref<HTMLElement | null>(null);
+// Opens on the current item
+const { open, query, root, search, toggle } = usePopover(() => {
+  active.value = Math.max(0, shown.value.findIndex(i => i.value === props.modelValue));
+  scrollToActive();
+});
 
 const current = computed(() => props.items.find(i => i.value === props.modelValue));
 const shown = computed(() => props.items.filter(i => matchesQuery(query.value, i.label, i.keywords ?? '', i.hint ?? '')));
-
-async function toggle() {
-  open.value = !open.value;
-  query.value = '';
-  if (!open.value) return;
-  active.value = Math.max(0, shown.value.findIndex(i => i.value === props.modelValue));
-  await nextTick();
-  search.value?.focus();
-  scrollToActive();
-}
 
 function pick(item: PickerItem | undefined) {
   if (!item) return;
@@ -63,24 +55,18 @@ function onKey(e: KeyboardEvent) {
     pick(shown.value[active.value]);
   }
 }
-
-const onPointerDown = (e: PointerEvent) => {
-  if (open.value && root.value && !root.value.contains(e.target as Node)) open.value = false;
-};
-onMounted(() => document.addEventListener('pointerdown', onPointerDown));
-onBeforeUnmount(() => document.removeEventListener('pointerdown', onPointerDown));
 </script>
 
 <template>
   <div ref="root" class="picker" @keydown.esc="open = false">
-    <button type="button" class="trigger" :aria-label="`${label}: ${current?.label ?? ''}`" aria-haspopup="listbox" :aria-expanded="open" @click="toggle">
+    <button type="button" class="dd-trigger trigger" :aria-label="`${label}: ${current?.label ?? ''}`" aria-haspopup="listbox" :aria-expanded="open" @click="toggle">
       <span v-if="current?.attention" class="dot" aria-hidden="true"></span>
       <span class="current">{{ current?.label ?? label }}</span><ChevronDown :size="14" aria-hidden="true" />
     </button>
-    <div v-if="open" class="pop" :style="{ width: `${width ?? 320}px` }">
+    <div v-if="open" class="dd-pop pop" :style="{ width: `${width ?? 320}px` }">
       <label class="sr-only" :for="`${id}-search`">{{ placeholder }}</label>
       <input
-        :id="`${id}-search`" ref="search" v-model="query" type="search" :placeholder="placeholder" autocomplete="off"
+        :id="`${id}-search`" ref="search" v-model="query" class="input" type="search" :placeholder="placeholder" autocomplete="off"
         role="combobox" :aria-controls="`${id}-list`" aria-expanded="true" :aria-activedescendant="shown[active] ? `${id}-${active}` : undefined"
         @input="active = 0" @keydown="onKey"
       >
@@ -103,19 +89,13 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onPointerDown)
 
 <style scoped>
 .picker { position: relative; min-width: 0; }
-.trigger {
-  border: 1px solid var(--line-strong); background: var(--panel); border-radius: 6px; padding: 4px 10px; font-size: var(--fs-m);
-  cursor: pointer; display: inline-flex; gap: 6px; align-items: center; max-width: 360px; color: var(--ink);
-}
+.trigger { max-width: 360px; }
 .current { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--you); flex: none; display: inline-block; margin-right: 6px; }
 .trigger .dot { margin-right: 0; }
-.pop {
-  position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; max-width: calc(100vw - 32px); max-height: 440px;
-  display: flex; flex-direction: column; gap: 6px; padding: 8px;
-  background: var(--panel); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: 0 8px 28px rgb(0 0 0 / .18);
-}
-.pop input { width: 100%; padding: 5px 8px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--panel); font-size: var(--fs-m); }
+/* Above the header and the filter dropdowns */
+.pop { z-index: 30; max-width: calc(100vw - 32px); max-height: 440px; gap: 6px; padding: 8px; }
+.pop .input { width: 100%; font-size: var(--fs-m); }
 .list { list-style: none; margin: 0; padding: 0; overflow: auto; min-height: 0; display: grid; gap: 1px; }
 .option { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 6px; padding: 5px 6px; border-radius: 5px; cursor: pointer; font-size: var(--fs-m); }
 .option.active { background: var(--sunk); }

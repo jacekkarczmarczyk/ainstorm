@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures.ts';
+import { clipboardText, expect, row, rowTitle, settingsDialog, shopPrompt, taskPanel, test } from './fixtures.ts';
 
 const SHOP = '/s/ed08d5d7';
 
@@ -11,7 +11,6 @@ test.beforeEach(async ({ page }) => {
 
 const dialog = (page: Page) => page.getByRole('dialog', { name: /\?$/ });
 const toast = (page: Page) => page.locator('.toast').last();
-const row = (page: Page, id: string) => page.locator(`#row-${id}`);
 const openSettings = async (page: Page, section: string) => {
   await page.getByRole('button', { name: 'Open settings' }).click();
   await page.getByRole('navigation', { name: 'Settings sections' }).getByRole('button', { name: section }).click();
@@ -26,9 +25,9 @@ test('marking a task done asks for confirmation, applies it and can be undone', 
   await expect(dialog(page)).toBeVisible();
   await expect(dialog(page).locator('pre')).toContainText('[ainstorm #');
   await dialog(page).getByRole('button', { name: /Mark as Done/ }).click();
-  await expect(row(page, 'PRJ-44').locator('.title')).toHaveClass(/t-done/);
+  await expect(rowTitle(page, 'PRJ-44')).toHaveClass(/t-done/);
   await toast(page).getByRole('button', { name: 'Undo' }).click();
-  await expect(row(page, 'PRJ-44').locator('.title')).not.toHaveClass(/t-done/);
+  await expect(rowTitle(page, 'PRJ-44')).not.toHaveClass(/t-done/);
 });
 
 test('an action without confirmation applies at once and offers "Always ask"', async ({ page }) => {
@@ -37,7 +36,7 @@ test('an action without confirmation applies at once and offers "Always ask"', a
   await page.getByLabel('Status changes').uncheck();
   await page.keyboard.press('Escape');
   await markDone(page, 'PRJ-44');
-  await expect(row(page, 'PRJ-44').locator('.title')).toHaveClass(/t-done/);
+  await expect(rowTitle(page, 'PRJ-44')).toHaveClass(/t-done/);
   await expect(dialog(page)).toBeHidden();
   await toast(page).getByRole('button', { name: 'Always ask' }).click();
   await markDone(page, 'PRJ-45');
@@ -50,7 +49,7 @@ test('"Don’t ask again" in the dialog turns confirmation off for that action',
   await dialog(page).getByLabel('Don’t ask again for this action').check();
   await dialog(page).getByRole('button', { name: /Mark as Done/ }).click();
   await markDone(page, 'PRJ-45');
-  await expect(row(page, 'PRJ-45').locator('.title')).toHaveClass(/t-done/);
+  await expect(rowTitle(page, 'PRJ-45')).toHaveClass(/t-done/);
   await expect(dialog(page)).toBeHidden();
 });
 
@@ -62,17 +61,17 @@ test('ticked tasks get bulk actions: one dialog and one Undo for all, Run in the
   await row(page, 'PRJ-44').getByRole('checkbox', { name: 'Select PRJ-44' }).check();
   await expect(bar.getByText('2 selected')).toBeVisible();
   // Ticking selects only: the tasks stay open
-  await expect(row(page, 'PRJ-44').locator('.title')).not.toHaveClass(/t-done/);
+  await expect(rowTitle(page, 'PRJ-44')).not.toHaveClass(/t-done/);
 
   await bar.getByRole('button', { name: 'Drop' }).click();
   await expect(dialog(page).locator('.tasks li')).toHaveCount(2);
   await expect(dialog(page).locator('pre').first()).toContainText('PRJ-45');
   await dialog(page).getByRole('button', { name: 'Drop', exact: true }).click();
-  await expect(row(page, 'PRJ-44').locator('.title')).toHaveClass(/t-dropped/);
-  await expect(row(page, 'PRJ-45').locator('.title')).toHaveClass(/t-dropped/);
+  await expect(rowTitle(page, 'PRJ-44')).toHaveClass(/t-dropped/);
+  await expect(rowTitle(page, 'PRJ-45')).toHaveClass(/t-dropped/);
   await toast(page).getByRole('button', { name: 'Undo' }).click();
-  await expect(row(page, 'PRJ-44').locator('.title')).not.toHaveClass(/t-dropped/);
-  await expect(row(page, 'PRJ-45').locator('.title')).not.toHaveClass(/t-dropped/);
+  await expect(rowTitle(page, 'PRJ-44')).not.toHaveClass(/t-dropped/);
+  await expect(rowTitle(page, 'PRJ-45')).not.toHaveClass(/t-dropped/);
 
   // Type for all ticked tasks: one dialog, one change
   await bar.getByLabel('Type…').selectOption('docs');
@@ -86,8 +85,8 @@ test('ticked tasks get bulk actions: one dialog and one Undo for all, Run in the
   await bar.getByRole('button', { name: 'Run (2)' }).click();
   await expect(dialog(page).getByText(/not sent automatically/)).toBeVisible();
   await dialog(page).getByRole('button', { name: 'Copy and record' }).click();
-  const prompt = await page.evaluate(() => navigator.clipboard.readText());
-  expect(prompt).toMatch(/^\[ainstorm #\d+ · session ed08d5d7 · shop\]\r?\nStart working on these tasks in order:\r?\n1\. PRJ-45 .*\r?\n2\. PRJ-23 /);
+  const prompt = await clipboardText(page);
+  expect(prompt).toMatch(shopPrompt(String.raw`Start working on these tasks in order:\r?\n1\. PRJ-45 .*\r?\n2\. PRJ-23 `));
   await expect(bar).toHaveCount(0);
   // Sent: the tasks say they wait in the session's queue, and how many open tasks come first
   await expect(row(page, 'PRJ-45').getByText('Queued in session · next')).toBeVisible();
@@ -105,7 +104,7 @@ test('deleting without automatic notification requires copying the prompt', asyn
   await expect(confirm).toBeEnabled();
   // Copied is not done: the dialog says the change still has to be confirmed
   await expect(dialog(page).getByText(/the change is not saved yet: click “Delete”/)).toBeVisible();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^\[ainstorm #\d+ · session ed08d5d7 · shop\]/);
+  expect(await clipboardText(page)).toMatch(shopPrompt());
   await confirm.click();
   await expect(row(page, 'PRJ-45')).toHaveCount(0);
 });
@@ -116,7 +115,7 @@ test('answering a question closes the decision', async ({ page }) => {
   await page.getByRole('button', { name: 'Send answer' }).click();
   await dialog(page).getByRole('button', { name: 'Send answer' }).click();
   await expect(page.getByText('Your answer:')).toBeVisible();
-  await expect(row(page, 'PRJ-30').locator('.title')).toHaveClass(/t-done/);
+  await expect(rowTitle(page, 'PRJ-30')).toHaveClass(/t-done/);
 });
 
 test('"Still relevant?" sends a recheck prompt and leaves the question open', async ({ page }) => {
@@ -143,7 +142,7 @@ const stubNotifications = (page: Page, answer: 'granted' | 'denied') => page.add
 test('settings show one section at a time and keep their size', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await page.getByRole('button', { name: 'Open settings' }).click();
-  const settings = page.getByRole('dialog', { name: 'Settings' });
+  const settings = settingsDialog(page);
   const sections = settings.getByRole('navigation', { name: 'Settings sections' });
   await expect(sections.getByRole('button', { name: 'Display' })).toHaveAttribute('aria-current', 'page');
   await expect(settings.getByLabel('Status changes')).toHaveCount(0);
@@ -157,7 +156,7 @@ test('notifications are an option in the settings, off until turned on', async (
   await stubNotifications(page, 'granted');
   await page.goto(`${SHOP}/tree`);
   await openSettings(page, 'Notifications');
-  const box = page.getByRole('dialog', { name: 'Settings' }).getByLabel('Notify me when a session waits on me');
+  const box = settingsDialog(page).getByLabel('Notify me when a session waits on me');
   await expect(box).not.toBeChecked();
   await box.click();
   await expect(box).toBeChecked();
@@ -169,7 +168,7 @@ test('notifications stay off when the browser blocks them, and say why', async (
   await stubNotifications(page, 'denied');
   await page.goto(`${SHOP}/tree`);
   await openSettings(page, 'Notifications');
-  const settings = page.getByRole('dialog', { name: 'Settings' });
+  const settings = settingsDialog(page);
   await settings.getByLabel('Notify me when a session waits on me').click();
   await expect(settings.getByLabel('Notify me when a session waits on me')).not.toBeChecked();
   await expect(settings.getByText(/Notifications are blocked for this page/)).toBeVisible();
@@ -190,7 +189,7 @@ test('a session waiting on the user pulses a few times when the wait appears, un
 test('prompts follow the prompt language from the settings', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await openSettings(page, 'Claude sessions');
-  const settings = page.getByRole('dialog', { name: 'Settings' });
+  const settings = settingsDialog(page);
   await settings.getByLabel('Prompt language').selectOption('pl');
   await settings.getByRole('button', { name: 'Close' }).click();
   await row(page, 'PRJ-44').getByRole('button', { name: 'Run PRJ-44 in a Claude session' }).click();
@@ -201,24 +200,24 @@ test('▶ in a row runs the task at once', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await row(page, 'PRJ-44').getByRole('button', { name: 'Run PRJ-44 in a Claude session' }).click();
   await dialog(page).getByRole('button', { name: 'Copy and record' }).click();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^\[ainstorm #\d+ · session ed08d5d7 · shop\]\r?\nStart working on PRJ-44/);
+  expect(await clipboardText(page)).toMatch(shopPrompt('Start working on PRJ-44'));
 });
 
 test('Run says the prompt must be pasted, and copies it on confirm', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-45`);
-  const panel = page.getByRole('complementary', { name: 'Task details' });
+  const panel = taskPanel(page);
   await panel.getByRole('button', { name: 'Run', exact: true }).click();
   await expect(dialog(page).getByText(/not sent automatically/)).toBeVisible();
   await expect(dialog(page).getByText(/records only that you asked/)).toBeVisible();
   await expect(dialog(page).getByLabel('Notify session automatically')).toHaveCount(0);
   await dialog(page).getByRole('button', { name: 'Copy and record' }).click();
   await expect(dialog(page)).toBeHidden();
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^\[ainstorm #\d+ · session ed08d5d7 · shop\]\r?\nStart working on PRJ-45/);
+  expect(await clipboardText(page)).toMatch(shopPrompt('Start working on PRJ-45'));
 });
 
 test('the commit message is edited in the panel and in the run dialog, as one line or several', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-45`);
-  const panel = page.getByRole('complementary', { name: 'Task details' });
+  const panel = taskPanel(page);
   const editor = page.getByRole('dialog', { name: 'Change the commit message of PRJ-45' });
   const field = editor.getByRole('textbox', { name: 'Commit message' });
   const save = editor.getByRole('button', { name: 'Save', exact: true });
@@ -254,7 +253,7 @@ test('the commit message is edited in the panel and in the run dialog, as one li
 
 test('#1234 links to the project\'s GitHub issue; Create issue sends Claude a request', async ({ page }) => {
   await page.goto('/s/7b4c4db1/tree/PP-42');
-  const panel = page.getByRole('complementary', { name: 'Task details' });
+  const panel = taskPanel(page);
   const link = panel.getByRole('heading', { level: 2 }).getByRole('link', { name: '#3812' });
   await expect(link).toHaveAttribute('href', 'https://github.com/example/bookkeeping/issues/3812');
   await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
@@ -274,14 +273,14 @@ test('a decision of the user\'s hands the task to Claude, who can then run it', 
   await expect(dialog(page).locator('pre')).toContainText('Notes: remove them');
   await dialog(page).getByRole('button', { name: 'Yes, hand to Claude' }).click();
   await expect(page.getByRole('button', { name: 'Yes, hand to Claude' })).toHaveCount(0);
-  await expect(page.getByRole('complementary', { name: 'Task details' }).getByRole('button', { name: 'Run', exact: true })).toBeVisible();
+  await expect(taskPanel(page).getByRole('button', { name: 'Run', exact: true })).toBeVisible();
 });
 
 test('a decision of no drops the task', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-52`);
   await page.getByRole('button', { name: 'No, drop it' }).click();
   await dialog(page).getByRole('button', { name: 'No, drop it' }).click();
-  await expect(row(page, 'PRJ-52').locator('.title')).toHaveClass(/t-dropped/);
+  await expect(rowTitle(page, 'PRJ-52')).toHaveClass(/t-dropped/);
 });
 
 test('a task moves under another parent, never under its own subtask', async ({ page }) => {
@@ -302,9 +301,9 @@ test('a task moves under another parent, never under its own subtask', async ({ 
 
 test('the details panel shows only with a task selected', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
-  await expect(page.getByRole('complementary', { name: 'Task details' })).toHaveCount(0);
-  await row(page, 'PRJ-44').locator('.title').click();
-  await expect(page.getByRole('complementary', { name: 'Task details' })).toBeVisible();
+  await expect(taskPanel(page)).toHaveCount(0);
+  await rowTitle(page, 'PRJ-44').click();
+  await expect(taskPanel(page)).toBeVisible();
 });
 
 test('releasing the mouse over the backdrop does not close the dialog', async ({ page }) => {
@@ -348,7 +347,7 @@ test('filters live in the URL and survive a reload', async ({ page }) => {
 
 test('the panel lists only other sessions of the task', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-45`);
-  const panel = page.getByRole('complementary', { name: 'Task details' });
+  const panel = taskPanel(page);
   await expect(panel.getByRole('heading', { level: 2, name: 'Inventory: refactoring' })).toBeVisible();
   await expect(panel.getByText('Also in other sessions')).toHaveCount(0);
   await expect(panel.getByText('Claude sessions')).toHaveCount(0);
@@ -356,9 +355,9 @@ test('the panel lists only other sessions of the task', async ({ page }) => {
 
 test('top-level titles are bold, but not while a filter is on', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
-  await expect(row(page, 'PRJ-1').locator('.title')).toHaveCSS('font-weight', '600');
+  await expect(rowTitle(page, 'PRJ-1')).toHaveCSS('font-weight', '600');
   await page.getByRole('button', { name: 'Open', exact: true }).click();
-  await expect(row(page, 'PRJ-1').locator('.title')).toHaveCSS('font-weight', '400');
+  await expect(rowTitle(page, 'PRJ-1')).toHaveCSS('font-weight', '400');
 });
 
 test('quick filter "Open" hides done and dropped tasks and toggles off', async ({ page }) => {
@@ -393,12 +392,12 @@ test('focus belongs to the project and shows where it lives', async ({ page }) =
 test('the resume command goes to the project folder and uses the plugin folder from the settings', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await openSettings(page, 'Claude sessions');
-  const settings = page.getByRole('dialog', { name: 'Settings' });
+  const settings = settingsDialog(page);
   await settings.getByLabel('Plugin folder (until the plugin is installed)').fill('C:\\Dev\\ainstorm\\plugin');
   await settings.getByRole('button', { name: 'Close' }).click();
   await expect(settings).toBeHidden();
   await page.getByRole('button', { name: 'Copy resume command' }).click();
-  expect(await page.evaluate(() => navigator.clipboard.readText()))
+  expect(await clipboardText(page))
     .toBe('cd ~/dev/shop && claude --resume ed08d5d7-18da-4b7e-8239-87b2b703b793 --plugin-dir C:/Dev/ainstorm/plugin');
 });
 

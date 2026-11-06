@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { listSessions, shortId } from '@ainstorm/core';
+import { listSessions, sessionStatusKey, shortId } from '@ainstorm/core';
 import { Contrast } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -54,7 +54,7 @@ const sessionItems = computed<PickerItem[]>(() => [
   { value: '', label: t('header.overview') },
   ...sessions.value.map(s => ({
     value: s.id, label: s.title, keywords: s.id, attention: s.status === 'waiting',
-    hint: `${shortId(s.id)} · ${t(`sessionStatus.${s.status}`)} · ${when(map.summaryById.get(s.id)?.lastActivityAt ?? s.startedAt)}`,
+    hint: `${shortId(s.id)} · ${t(`sessionStatus.${sessionStatusKey(s)}`)} · ${when(map.summaryById.get(s.id)?.lastActivityAt ?? s.startedAt)}`,
   })),
 ]);
 

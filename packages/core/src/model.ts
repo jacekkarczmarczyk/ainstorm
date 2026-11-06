@@ -185,3 +185,6 @@ export const MapSnapshot = z.object({
 export type MapSnapshot = z.infer<typeof MapSnapshot>;
 
 export const isClosed = (status: TaskStatus): boolean => status === 'done' || status === 'dropped';
+
+/** Run applies to Claude's open tasks only: not the user's, closed or deferred ones */
+export const canRun = (task: Pick<Task, 'owner' | 'status'>): boolean => task.owner === 'claude' && !isClosed(task.status) && task.status !== 'deferred';

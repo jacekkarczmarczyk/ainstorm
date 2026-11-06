@@ -9,7 +9,7 @@ export const enGB = {
   status: { todo: 'To do', in_progress: 'In progress', blocked: 'Blocked', deferred: 'Deferred', done: 'Done', dropped: 'Dropped' },
   sessionStatus: { waiting: 'Waiting on you', active: 'Working', paused: 'Paused', idle: 'Idle', ended: 'Ended', archived: 'Archived' },
   ask: { action: 'action', decision: 'decision', proposal: 'proposal' },
-  owner: { me: 'You', claude: 'Claude' },
+  owner: { me: 'You' },
   facet: { type: 'Type', status: 'Status', area: 'Area' },
   commitState: { squashed: 'squashed into', amended: 'amended as', rebased: 'rebased as', removed: 'removed from history' },
   event: {
@@ -25,7 +25,7 @@ export const enGB = {
   time: { today: 'Today {time}', yesterday: 'Yesterday {time}' },
   header: {
     findProject: 'Find a project…', findSession: 'Find a session by title or id…',
-    project: 'Project', views: 'Views', allProjects: 'All projects', session: 'Session', overview: 'Project overview', waitingOnYou: '{n} session waiting on you | {n} sessions waiting on you', forYou: '{n} task for you | {n} tasks for you',
+    project: 'Project', views: 'Views', session: 'Session', overview: 'Project overview', waitingOnYou: '{n} session waiting on you | {n} sessions waiting on you', forYou: '{n} task for you | {n} tasks for you',
     theme: { auto: 'Auto', light: 'Light', dark: 'Dark' }, themeLabel: 'Theme: {theme}. Click to change.',
   },
   filter: {
@@ -38,7 +38,7 @@ export const enGB = {
   },
   tree: { hideClosed: 'Hide closed branches', empty: 'Nothing matches these filters.', expand: 'Expand {id}', collapse: 'Collapse {id}' },
   task: {
-    markDone: 'Mark {id} as done', select: 'Select {id}', changeStatus: 'Status of {id}', you: 'You · {ask}', from: 'from {id}', waitsFor: 'waits for {ids}', waitsForLabel: 'waits for', focus: 'focus',
+    markDone: 'Mark {id} as done', select: 'Select {id}', changeStatus: 'Status of {id}', you: 'You · {ask}', waitsForLabel: 'waits for', focus: 'focus',
     proposal: 'Claude · proposal', proposalHelp: 'Claude presents an opinion and options first; then it becomes your decision.',
     run: 'Run {id} in a Claude session', pause: 'Pause the session', question: 'Claude has a question for you',
   },
@@ -52,12 +52,12 @@ export const enGB = {
     setFocus: 'Set as project focus', isFocus: 'Project focus', clearFocus: 'Clear project focus',
     clearFocusTitle: 'Clear the project focus?', clearFocusText: '{id} stops being the focus of {project}. The project will have no focus until you set one.', showMore: 'Show full description', showLess: 'Show less',
     owner: 'Owner', ownerMe: 'You ({ask})', ownerClaude: 'Claude', ownerClaudeProposal: 'Claude, proposal first (then your decision)', project: 'Project', areas: 'Areas', branch: 'Branch', plan: 'Plan',
-    planMarker: 'marked [{id}] in the plan', copyPath: 'Copy path', issue: 'Issue', pr: 'PR', from: 'from',
+    planMarker: 'marked [{id}] in the plan', issue: 'Issue', pr: 'PR', from: 'from',
     whyDeferred: 'Why deferred', doneWhen: 'Done when', allMet: 'All met', next: 'Next: {text}', decisions: 'Decisions', latest: 'Latest: {text}',
     subtasks: 'Subtasks', dependencies: 'Dependencies', waitsFor: 'Waits for', waitedFor: 'Waited for (done)', blocks: 'Blocks', origin: 'Origin', foundDuring: 'From',
     foundHere: 'Found while working on this', commits: 'Commits', earlier: 'Earlier versions ({n}): squashed, amended or removed',
-    copy: 'Copy', sessions: 'Claude sessions', otherSessions: 'Also in other sessions', history: 'History', noEvents: 'No events yet.', inApp: 'in the app', inSession: 'session {id}',
-    drop: 'Drop…', delete: 'Delete…', questions: 'Questions from Claude', open: '{n} open', copyLink: 'Copy link', copyId: 'Copy {id}', copyPathOf: 'Copy the path {path}',
+    otherSessions: 'Also in other sessions', history: 'History', noEvents: 'No events yet.', inApp: 'in the app',
+    drop: 'Drop…', delete: 'Delete…', questions: 'Questions from Claude', open: '{n} open', copyId: 'Copy {id}', copyPathOf: 'Copy the path {path}',
   },
   question: {
     asked: 'Asked {when} ·', pickOne: 'Pick one, or write your own.', pickAny: 'Pick any that apply.',
@@ -65,15 +65,15 @@ export const enGB = {
     dismissed: 'Closed by Claude:', recheck: 'Still relevant?', recheckHint: 'Ask Claude whether this question still applies. If not, Claude closes it and updates the task status.',
   },
   focus: {
-    noProject: 'Pick a project to see its focus.', none: 'No focus in this project yet. Open a task and choose “Set as project focus”.',
-    yourFocus: 'Your focus in {project}', subtasks: 'Subtasks', leftIn: 'Left in {title}', closed: '{closed}/{total} closed',
+    none: 'No focus in this project yet. Open a task and choose “Set as project focus”.',
+    yourFocus: 'Your focus in {project}', subtasks: 'Subtasks', leftIn: 'Left in {title}',
     nothingLeft: 'Nothing else on this level.', forYou: 'For you in this work', parked: 'Parked on the way',
     parkedHelp: 'Found during {id} and waiting for their turn.', blocker: '{task} waits for {dep}, which is deferred.',
     blockerParent: '{parent} cannot be closed without it.', promote: 'Move {id} into the plan', working: 'Sessions working here',
     details: 'Details', hideDetails: 'Hide details',
     elsewhere: 'Your project focus is {id} “{title}”, which belongs to another session.', openSession: 'Open {session}',
   },
-  board: { topLevel: 'top level', showInTree: 'Show in tree' },
+  board: { showInTree: 'Show in tree' },
   bulk: {
     label: 'Selected tasks', count: '{n} selected', clear: 'Clear', move: 'Move…', drop: 'Drop', status: 'Set status…',
     run: 'Run ({n})', runHelp: 'Run in this session, in the order you ticked them. Tasks of yours, finished or deferred are left out.',
@@ -111,7 +111,7 @@ export const enGB = {
   },
   decide: {
     title: 'Your decision', note: 'Note for Claude (optional)…', yes: 'Yes, hand to Claude', no: 'No, drop it',
-    yesTitle: 'Hand {id} to Claude?', noTitle: 'Drop {id}?',
+    yesTitle: 'Hand {id} to Claude?',
   },
   move: {
     open: 'Move…', title: 'Move {id} under…', search: 'Find a task by number or title…', topLevel: 'top level',
@@ -131,10 +131,10 @@ export const enGB = {
     historyEmpty: 'No events in this session yet.',
   },
   sessions: {
-    search: 'Search by session id, title or task…', sortLast: 'Latest update first', sortStarted: 'Latest start first',
+    search: 'Search by session id, title or task…',
     count: '{n} session | {n} sessions', started: 'Started {when}', updated: 'Updated {when}', tasks: 'Tasks',
-    closed: '{closed}/{total} closed', forYou: '{n} for you', more: 'Show more ({n} left)', showArchived: 'Show archived ({n})',
-    hideArchived: 'Hide archived sessions', noMatch: 'No session matches “{query}”.', waitingOnYou: 'Waiting on you', askedFor: 'Last asked for',
+    closed: '{closed}/{total} closed', forYou: '{n} for you', showArchived: 'Show archived ({n})',
+    hideArchived: 'Hide archived sessions', noMatch: 'No session matches “{query}”.', askedFor: 'Last asked for',
     waitingFor: {
       decision: 'Waiting on your decision', action: 'Waiting on your action', start: 'Waiting for your approval',
       permission: 'Waiting on you in the terminal',
@@ -146,9 +146,7 @@ export const enGB = {
       permission: 'Claude asked for permission to run a tool. If you refused, it waits for your next message. Answer in the terminal of this session.',
     },
     since: 'since {when}', markDone: 'Mark as done', goAhead: 'Approve and start', answer: 'Answer',
-    startedLabel: 'Started', lastUpdate: 'Last update', focus: 'Focus', compactions: 'Compactions', mainTasks: 'Main tasks',
-    timeline: 'Timeline', noEvents: 'No events in this session yet.', archive: 'Archive session', restore: 'Restore session',
-    ready: 'Ready to archive', deferred: '{n} deferred', changes: 'Changes made in the app', tooltip: '{title} · {status} · started {started} · updated {updated} · tasks {closed}/{total} closed',
+    archive: 'Archive session', restore: 'Restore session', tooltip: '{title} · {status} · started {started} · updated {updated} · tasks {closed}/{total} closed',
   },
   toast: {
     statusChanged: '{id}: {from} → {to}.', undo: 'Undo', alwaysAsk: 'Always ask', copyPrompt: 'Copy prompt', copyFor: 'Copy for {session}', dismiss: 'Dismiss',
@@ -185,18 +183,18 @@ export const enGB = {
   resize: { label: 'Resize the details panel', hint: 'Drag to resize. Double-click to reset.' },
   settings: {
     title: 'Settings', open: 'Open settings', sections: 'Settings sections',
-    section: { display: 'Display', notifications: 'Notifications', sessions: 'Claude sessions', confirm: 'Confirm in a dialog' }, confirmHeading: 'Confirm in a dialog', display: 'Display', sessions: 'Claude sessions', close: 'Close',
+    section: { display: 'Display', notifications: 'Notifications', sessions: 'Claude sessions', confirm: 'Confirm in a dialog' }, close: 'Close',
     showOutline: 'Show outline position next to ids', showOutlineHelp: 'For orientation only, e.g. PRJ-49(1/3/2). Claude and links use the id alone.',
     pluginDir: 'Plugin folder (until the plugin is installed)',
     pluginDirHelp: 'Added as --plugin-dir to copied resume commands. Leave empty once the plugin is installed.',
-    notifications: 'Notifications', notifyWaiting: 'Notify me when a session waits on me',
+    notifyWaiting: 'Notify me when a session waits on me',
     notifyWaitingHelp: 'A system notification (on Windows: native) while this map is open, also in a background tab. Your browser asks for permission once.',
     notifyDenied: 'Notifications are blocked for this page. Allow them in the browser’s site settings, then tick again.',
     promptLanguage: 'Prompt language',
     promptLanguageHelp: 'Language of the prompts copied into Claude sessions. Claude answers in the language of your conversation anyway.',
     confirmHelp: 'Changes sent to Claude. Unticked actions are applied straight away, with Undo in the toast.',
     actions: {
-      status: 'Status changes', answer: 'Answers to questions', recheck: 'Asking whether a question still applies', decide: 'Your decisions (hand to Claude or drop)', promote: 'Moving a deferred task into the plan', move: 'Moving a task under another parent',
+      status: 'Status changes', type: 'Type changes', area: 'Adding or removing an area', answer: 'Answers to questions', recheck: 'Asking whether a question still applies', decide: 'Your decisions (hand to Claude or drop)', promote: 'Moving a deferred task into the plan', move: 'Moving a task under another parent',
       commit: 'Changing the commit message of a task', issue: 'Creating or closing a GitHub issue', run: 'Run', pause: 'Pause', goAhead: 'Approve a prepared plan and start', delete: 'Delete', drop: 'Drop',
     },
   },

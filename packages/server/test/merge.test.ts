@@ -1,19 +1,11 @@
-import { MapSnapshot, type Task } from '@ainstorm/core';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import type { MapSnapshot } from '@ainstorm/core';
 import { describe, expect, it } from 'vitest';
 import { openDatabase } from '../src/db.ts';
 import { planProjectImport } from '../src/merge.ts';
 import { clearProject, loadSnapshot, saveSnapshot } from '../src/store.ts';
+import { fixture, makeTask } from './helpers.ts';
 
-const FIXTURE = join(import.meta.dirname, '..', '..', 'web', 'src', 'fixtures', 'map.json');
-const fixture = () => MapSnapshot.parse(JSON.parse(readFileSync(FIXTURE, 'utf8')));
 const T0 = '2026-11-01T10:00:00.000Z';
-const task = (id: string, projectKey: string): Task => ({
-  id, projectKey, title: id, description: '', status: 'todo', type: null, areas: [], owner: 'claude', ask: null,
-  parentId: null, fromId: null, deps: [], planPath: null, planRef: null, branch: null, issue: null, pr: null, deferReason: null,
-  criteria: [], decisions: [], commits: [], sessionIds: [], questions: [], archivedAt: null, createdAt: T0, updatedAt: T0, version: 1,
-});
 
 function seeded() {
   const db = openDatabase(':memory:');
@@ -23,7 +15,7 @@ function seeded() {
       { key: 'PRJ', name: 'old', paths: [], focusTaskId: null, areas: [], repoUrl: null },
     ],
     sessions: [],
-    tasks: [task('AIN-1', 'AIN'), task('PRJ-999', 'PRJ')],
+    tasks: [makeTask('AIN-1', 'AIN'), makeTask('PRJ-999', 'PRJ')],
     events: [
       { id: 5, at: T0, sessionId: null, taskId: 'AIN-1', type: 'create', text: 'x', actor: 'claude', changeId: 1004, delivery: null },
       { id: 9, at: T0, sessionId: null, taskId: 'PRJ-999', type: 'create', text: 'old', actor: 'claude', changeId: null, delivery: null },

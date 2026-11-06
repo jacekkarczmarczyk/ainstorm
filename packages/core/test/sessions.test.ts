@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  isSessionOpen, isWorking, lastActivityAt, listSessions, queuedRuns, runMarks, sessionHighlights, sessionTasks, summarizeSession, targetSessions,
+  isSessionOpen, isWorking, lastActivityAt, listSessions, projectStats, queuedRuns, runMarks, sessionHighlights, sessionStatusKey, sessionTasks,
+  summarizeSession, targetSessions,
 } from '../src/sessions.ts';
 import { buildTaskIndex } from '../src/tree.ts';
 import { makeEvent, makeSession, makeTask } from './factory.ts';
@@ -132,5 +133,27 @@ describe('targetSessions', () => {
     const withChild = buildTaskIndex([...tasks, child]);
     expect(targetSessions(withChild, child, [s1, s2, s3]).map(s => s.id)).toEqual([s1.id]);
     expect(isSessionOpen(s2)).toBe(false);
+  });
+});
+
+describe('sessionStatusKey', () => {
+  it('shows archived sessions as archived, others by their status', () => {
+    expect([s1, s2, s3, s4].map(sessionStatusKey)).toEqual(['active', 'ended', 'archived', 'paused']);
+  });
+});
+
+describe('projectStats', () => {
+  it('counts open and waiting sessions and the tasks of the project', () => {
+    const sessions = [
+      makeSession({ projectKey: 'P', status: 'waiting' }),
+      makeSession({ projectKey: 'P', status: 'active' }),
+      makeSession({ projectKey: 'P', status: 'ended' }),
+      makeSession({ projectKey: 'P', status: 'waiting', archivedAt: '2026-11-02T00:00:00.000Z' }),
+      makeSession({ projectKey: 'K', status: 'waiting' }),
+    ];
+    const stats = projectStats(index, sessions, 'P');
+    expect(stats).toMatchObject({ open: 2, waiting: 1, deferred: 1, closed: 1, total: 5 });
+    expect(stats.ratio).toBeCloseTo(0.2);
+    expect(projectStats(index, [], 'X')).toMatchObject({ open: 0, total: 0, ratio: 0 });
   });
 });

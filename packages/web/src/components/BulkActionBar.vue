@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { isClosed, projectAreas, TASK_STATUSES, TASK_TYPES, type Session, type Task, type TaskStatus, type TaskType } from '@ainstorm/core';
+import { canRun, projectAreas, TASK_STATUSES, TASK_TYPES, type Session, type Task, type TaskStatus, type TaskType } from '@ainstorm/core';
 import { Ban, CornerDownRight, Play, SquareCheck, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useTaskActions } from '../composables/useTaskActions.ts';
@@ -15,7 +15,7 @@ const actions = useTaskActions();
 const moving = ref(false);
 
 const tasks = computed(() => picked.ids.map(id => map.task(id)).filter((t): t is Task => t !== undefined && t.archivedAt === null));
-const runnable = computed(() => tasks.value.filter(t => t.owner === 'claude' && !isClosed(t.status) && t.status !== 'deferred'));
+const runnable = computed(() => tasks.value.filter(canRun));
 
 // Ticks belong to the session being viewed
 watch(() => props.session.id, () => picked.clear());
@@ -26,26 +26,16 @@ const run = () => actions.runMany(tasks.value, props.session, () => picked.clear
 const knownAreas = computed(() => projectAreas(map.snapshot, props.session.projectKey));
 const usedAreas = computed(() => [...new Set(tasks.value.flatMap(t => t.areas))].sort((a, b) => a.localeCompare(b)));
 
-async function setType(e: Event) {
+// The lists work as menus: the picked value is read and the list goes back to its label
+function choice(e: Event) {
   const select = e.target as HTMLSelectElement;
   const value = select.value;
   select.value = '';
-  await actions.setTypeMany(tasks.value, value === '-' ? null : value as TaskType);
+  return value;
 }
-
-async function setArea(e: Event) {
-  const select = e.target as HTMLSelectElement;
-  const value = select.value;
-  select.value = '';
-  await actions.setAreaMany(tasks.value, value.slice(1), value.startsWith('+'));
-}
-
-async function setStatus(e: Event) {
-  const select = e.target as HTMLSelectElement;
-  const to = select.value as TaskStatus;
-  select.value = '';
-  await actions.setStatusMany(tasks.value, to);
-}
+const setType = (e: Event) => { const value = choice(e); return actions.setTypeMany(tasks.value, value === '-' ? null : value as TaskType); };
+const setArea = (e: Event) => { const value = choice(e); return actions.setAreaMany(tasks.value, value.slice(1), value.startsWith('+')); };
+const setStatus = (e: Event) => actions.setStatusMany(tasks.value, choice(e) as TaskStatus);
 </script>
 
 <template>

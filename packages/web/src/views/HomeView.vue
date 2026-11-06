@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { isClosed, isSessionOpen } from '@ainstorm/core';
+import { projectStats } from '@ainstorm/core';
 import { Crosshair } from '@lucide/vue';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -18,17 +18,12 @@ const { openSession } = useSelection();
 
 const projects = computed(() => map.snapshot.projects.map(project => {
   const summaries = map.summaries.filter(s => s.session.projectKey === project.key && s.session.archivedAt === null);
-  const tasks = [...map.index.byId.values()].filter(t => t.projectKey === project.key);
-  const closed = tasks.filter(t => isClosed(t.status)).length;
   const lastActivityAt = summaries.reduce((last, s) => (s.lastActivityAt > last ? s.lastActivityAt : last), '');
   return {
+    ...projectStats(map.index, map.snapshot.sessions, project.key),
     project,
     focus: project.focusTaskId ? map.task(project.focusTaskId) : undefined,
-    open: summaries.filter(s => isSessionOpen(s.session)).length,
-    waiting: summaries.filter(s => s.session.status === 'waiting').length,
     forYou: map.forUser.filter(t => t.projectKey === project.key).length,
-    deferred: tasks.filter(t => t.status === 'deferred').length,
-    closed, total: tasks.length, ratio: tasks.length ? closed / tasks.length : 0,
     lastActivityAt,
   };
 }).sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt) || a.project.name.localeCompare(b.project.name)));
@@ -49,14 +44,14 @@ const projectName = (key: string) => map.project(key)?.name ?? key;
   <section class="global">
     <h1>{{ $t('home.allProjects') }}</h1>
     <div class="stats">
-      <div class="stat"><span class="value">{{ totals.projects }}</span><span class="label">{{ $t('home.projects') }}</span></div>
-      <div class="stat"><span class="value">{{ totals.open }}</span><span class="label">{{ $t('home.openSessions') }}</span></div>
-      <div class="stat" :class="{ alert: totals.waiting }"><span class="value">{{ totals.waiting }}</span><span class="label">{{ $t('home.waiting') }}</span></div>
-      <div class="stat" :class="{ alert: totals.forYou }"><span class="value">{{ totals.forYou }}</span><span class="label">{{ $t('home.tasksForYou') }}</span></div>
+      <div class="stat-tile"><span class="value">{{ totals.projects }}</span><span class="label">{{ $t('home.projects') }}</span></div>
+      <div class="stat-tile"><span class="value">{{ totals.open }}</span><span class="label">{{ $t('home.openSessions') }}</span></div>
+      <div class="stat-tile" :class="{ alert: totals.waiting }"><span class="value">{{ totals.waiting }}</span><span class="label">{{ $t('home.waiting') }}</span></div>
+      <div class="stat-tile" :class="{ alert: totals.forYou }"><span class="value">{{ totals.forYou }}</span><span class="label">{{ $t('home.tasksForYou') }}</span></div>
     </div>
 
     <section v-if="waiting.length" class="block">
-      <h2 class="label you">{{ $t('home.waitingAnywhere') }}</h2>
+      <h2 class="label attention">{{ $t('home.waitingAnywhere') }}</h2>
       <article
         v-for="s in waiting" :key="s.id" class="card session" tabindex="0"
         @click="openSession(s.id)" @keydown.enter="openSession(s.id)"
@@ -89,8 +84,8 @@ const projectName = (key: string) => map.project(key)?.name ?? key;
           <p v-else class="focus muted">{{ $t('home.noFocus') }}</p>
           <ul class="numbers">
             <li>{{ $t('home.sessionsOpen', p.open) }}</li>
-            <li v-if="p.waiting" class="you">{{ $t('header.waitingOnYou', p.waiting) }}</li>
-            <li v-if="p.forYou" class="you">{{ $t('header.forYou', p.forYou) }}</li>
+            <li v-if="p.waiting" class="attention">{{ $t('header.waitingOnYou', p.waiting) }}</li>
+            <li v-if="p.forYou" class="attention">{{ $t('header.forYou', p.forYou) }}</li>
             <li v-if="p.deferred">{{ $t('home.deferredCount', p.deferred) }}</li>
           </ul>
           <div class="progress">
@@ -109,13 +104,9 @@ const projectName = (key: string) => map.project(key)?.name ?? key;
 .global { display: grid; gap: 14px; max-width: 1100px; }
 h1 { margin: 4px 0 0; font-size: var(--fs-xxl); }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-.stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px; display: grid; gap: 2px; }
-.stat .value { font-size: var(--fs-xxl); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.stat.alert { border-color: var(--you); }
-.stat.alert .value { color: var(--you); }
 .block { display: grid; gap: 8px; }
 .block > h2 { margin: 6px 0 0; }
-.label.you { color: var(--you); }
+.label.attention { color: var(--you); }
 .session { display: grid; gap: 8px; cursor: pointer; border-color: var(--you); box-shadow: inset 4px 0 0 var(--you); }
 .head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
 h3 { margin: 0; font-size: var(--fs-l); }
@@ -129,7 +120,7 @@ h3 { margin: 0; font-size: var(--fs-l); }
 .focus .link { text-align: left; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .focus .link:hover { text-decoration: underline; }
 .numbers { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--fs-s); }
-.numbers .you { color: var(--you); font-weight: 600; }
+.numbers .attention { color: var(--you); font-weight: 600; }
 .progress { display: flex; gap: 10px; align-items: center; }
 .grow { flex: 1; }
 .small { margin: 0; font-size: var(--fs-s); }

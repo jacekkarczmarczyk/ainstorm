@@ -22,7 +22,7 @@ const values = (facet: Facet): readonly string[] => (facet === 'type' ? TASK_TYP
 
 <template>
   <div class="filters">
-    <div class="search">
+    <div class="search-box search">
       <Search :size="15" aria-hidden="true" />
       <label class="sr-only" for="task-search">{{ $t('filter.searchLabel') }}</label>
       <input
@@ -49,9 +49,7 @@ const values = (facet: Facet): readonly string[] => (facet === 'type' ? TASK_TYP
 
 <style scoped>
 .filters { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
-.search { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 0 8px; background: var(--panel); color: var(--muted); }
-.search input { border: 0; outline: 0; background: none; width: 260px; max-width: 60vw; padding: 5px 0; font-size: var(--fs-m); color: var(--ink); }
-.search:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.search input { width: 260px; max-width: 60vw; font-size: var(--fs-m); }
 .quick { display: inline-flex; flex-wrap: wrap; gap: 6px; }
 .clear {
   border: 1px solid var(--line-strong); background: var(--panel); color: var(--accent); border-radius: 6px;

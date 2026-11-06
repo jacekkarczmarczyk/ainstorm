@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { listSessions, runMarks, sessionHighlights } from '@ainstorm/core';
+import { listSessions, projectStats, runMarks, sessionHighlights, sessionStatusKey } from '@ainstorm/core';
 import { ChevronLeft, ChevronRight, Search } from '@lucide/vue';
 import { computed, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import OwnerBadge from '../components/OwnerBadge.vue';
 import ProgressBar from '../components/ProgressBar.vue';
 import RunIndicator from '../components/RunIndicator.vue';
 import TaskIdLabel from '../components/TaskIdLabel.vue';
@@ -43,22 +44,12 @@ function highlights(sessionId: string) {
   const index = map.sessionIndex(sessionId);
   return sessionHighlights(index, runMarks(index, map.snapshot.sessions));
 }
-// Project overview numbers; archived sessions and tasks are left out
-const stats = computed(() => {
-  const sessions = map.snapshot.sessions.filter(s => s.projectKey === projectKey.value && s.archivedAt === null);
-  const tasks = [...map.index.byId.values()].filter(t => t.projectKey === projectKey.value);
-  const closed = tasks.filter(t => t.status === 'done' || t.status === 'dropped').length;
-  return {
-    open: sessions.filter(s => s.status !== 'ended').length,
-    waiting: sessions.filter(s => s.status === 'waiting').length,
-    forYou: map.forUser.filter(t => t.projectKey === projectKey.value).length,
-    deferred: tasks.filter(t => t.status === 'deferred').length,
-    closed, total: tasks.length, ratio: tasks.length ? closed / tasks.length : 0,
-  };
-});
+const stats = computed(() => ({
+  ...projectStats(map.index, map.snapshot.sessions, projectKey.value ?? ''),
+  forYou: map.forUser.filter(t => t.projectKey === projectKey.value).length,
+}));
 const goToPage = (n: number) => router.replace({ query: { ...route.query, page: n === 1 ? undefined : String(n) } });
 const toggleArchived = () => router.replace({ query: { ...route.query, archived: showArchived.value ? undefined : '1', page: undefined } });
-const statusKey = (s: { archivedAt: string | null; status: string }) => (s.archivedAt ? 'archived' : s.status);
 </script>
 
 <template>
@@ -69,18 +60,18 @@ const statusKey = (s: { archivedAt: string | null; status: string }) => (s.archi
     <template v-else>
     <h1 class="project-name">{{ map.project(projectKey)?.name }}</h1>
     <div class="stats">
-      <div class="stat"><span class="value">{{ stats.open }}</span><span class="label">{{ $t('home.openSessions') }}</span></div>
-      <div class="stat" :class="{ alert: stats.waiting }"><span class="value">{{ stats.waiting }}</span><span class="label">{{ $t('home.waiting') }}</span></div>
-      <div class="stat" :class="{ alert: stats.forYou }"><span class="value">{{ stats.forYou }}</span><span class="label">{{ $t('home.tasksForYou') }}</span></div>
-      <div class="stat"><span class="value">{{ stats.deferred }}</span><span class="label">{{ $t('home.deferred') }}</span></div>
-      <div class="stat wide">
+      <div class="stat-tile"><span class="value">{{ stats.open }}</span><span class="label">{{ $t('home.openSessions') }}</span></div>
+      <div class="stat-tile" :class="{ alert: stats.waiting }"><span class="value">{{ stats.waiting }}</span><span class="label">{{ $t('home.waiting') }}</span></div>
+      <div class="stat-tile" :class="{ alert: stats.forYou }"><span class="value">{{ stats.forYou }}</span><span class="label">{{ $t('home.tasksForYou') }}</span></div>
+      <div class="stat-tile"><span class="value">{{ stats.deferred }}</span><span class="label">{{ $t('home.deferred') }}</span></div>
+      <div class="stat-tile wide">
         <span class="value">{{ stats.closed }}<small>/{{ stats.total }}</small></span>
         <span class="label">{{ $t('home.tasksClosed') }}</span>
         <ProgressBar :ratio="stats.ratio" />
       </div>
     </div>
     <div class="tools">
-      <div class="search">
+      <div class="search-box search">
         <Search :size="15" aria-hidden="true" />
         <label class="sr-only" for="session-search">{{ $t('sessions.search') }}</label>
         <input id="session-search" v-model.lazy="query" type="search" :placeholder="$t('sessions.search')" autocomplete="off" @keydown.esc="query = ''">
@@ -92,12 +83,12 @@ const statusKey = (s: { archivedAt: string | null; status: string }) => (s.archi
     </div>
 
     <article
-      v-for="x in shown" :key="x.session.id" class="card session" :class="statusKey(x.session)" tabindex="0"
+      v-for="x in shown" :key="x.session.id" class="card session" :class="`ses-${sessionStatusKey(x.session)}`" tabindex="0"
       @click="openSession(x.session.id)" @keydown.enter="openSession(x.session.id)"
     >
       <header class="head">
-        <span class="dot"></span>
-        <span class="status">{{ $t(`sessionStatus.${statusKey(x.session)}`) }}</span>
+        <span class="ses-dot"></span>
+        <span class="ses-status">{{ $t(`sessionStatus.${sessionStatusKey(x.session)}`) }}</span>
         <h2>{{ x.session.title }}</h2>
         <span class="dates">{{ $t('sessions.started', { when: when(x.session.startedAt) }) }} · {{ $t('sessions.updated', { when: when(x.lastActivityAt) }) }}</span>
       </header>
@@ -126,8 +117,8 @@ const statusKey = (s: { archivedAt: string | null; status: string }) => (s.archi
             <li v-for="t in highlights(x.session.id).forUser.slice(0, HIGHLIGHTS)" :key="t.id">
               <button type="button" class="link item" @click.stop="openSession(x.session.id, 'tree', t.id)">
                 <TaskIdLabel :id="t.id" /> {{ t.title }}
-                <span v-if="t.owner === 'me'" class="you">{{ t.ask ? $t(`ask.${t.ask}`) : $t('owner.me') }}</span>
-                <span v-else class="question">?</span>
+                <OwnerBadge v-if="t.owner === 'me'" :task="t" />
+                <span v-else class="badge-question">?</span>
               </button>
             </li>
           </ul>
@@ -151,26 +142,16 @@ const statusKey = (s: { archivedAt: string | null; status: string }) => (s.archi
 .home { display: grid; gap: 12px; max-width: 1100px; }
 .project-name { margin: 4px 0 0; font-size: var(--fs-xxl); }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-.stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px; display: grid; gap: 2px; }
-.stat .value { font-size: var(--fs-xxl); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.stat .value small { font-size: var(--fs-base); color: var(--muted); font-weight: 500; }
-.stat.alert { border-color: var(--you); }
-.stat.alert .value { color: var(--you); }
-.stat.wide { grid-column: span 2; }
+.stat-tile.wide { grid-column: span 2; }
 .tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
-.search { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 0 8px; background: var(--panel); color: var(--muted); flex: 1 1 260px; max-width: 480px; }
-.search input { border: 0; outline: 0; background: none; width: 100%; padding: 5px 0; color: var(--ink); }
-.search:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.search { flex: 1 1 260px; max-width: 480px; }
 .session { display: grid; gap: 10px; cursor: pointer; }
 .session:hover { border-color: var(--line-strong); }
-.session.waiting { border-color: var(--you); box-shadow: inset 4px 0 0 var(--you); }
-.session.active { box-shadow: inset 4px 0 0 var(--s-in_progress); }
-.session.archived { opacity: .6; }
-.waiting { --c: var(--you); } .active { --c: var(--s-in_progress); } .paused { --c: var(--s-deferred); }
-.idle { --c: var(--s-todo); } .ended, .archived { --c: var(--s-dropped); }
+.session.ses-waiting { border-color: var(--you); box-shadow: inset 4px 0 0 var(--you); }
+.session.ses-active { box-shadow: inset 4px 0 0 var(--s-in_progress); }
+.session.ses-archived { opacity: .6; }
 .head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
-.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); align-self: center; }
-.status { font-size: var(--fs-s); font-weight: 600; color: var(--c); }
+.ses-dot { align-self: center; }
 h2 { margin: 0; font-size: var(--fs-l); flex: 1 1 300px; }
 .dates { font-size: var(--fs-s); color: var(--muted); }
 .progress { display: flex; gap: 10px; align-items: center; max-width: 560px; }
@@ -181,6 +162,5 @@ h2 { margin: 0; font-size: var(--fs-l); flex: 1 1 300px; }
 .item { display: inline-flex; gap: 6px; align-items: center; text-decoration: none; text-align: left; }
 .item:hover { text-decoration: underline; }
 .for-you .label { color: var(--you); }
-.question { font-size: var(--fs-xs); font-weight: 700; padding: 0 6px; border-radius: 10px; border: 1.5px solid var(--you); color: var(--you); }
 .pager { display: flex; gap: 4px; flex-wrap: wrap; }
 </style>
