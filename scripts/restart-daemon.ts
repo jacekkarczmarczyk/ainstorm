@@ -1,7 +1,9 @@
 // pnpm daemon:restart — stops the running ainstorm daemon and starts it again with the current code.
 // For work on ainstorm itself. Uses the plugin's own start-up (the entry point the daemon recorded in ~/.ainstorm).
 import { execFileSync } from 'node:child_process';
-import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { styleText } from 'node:util';
 import { createApi, DIR, ensureDaemon, healthy, PORT, readJsonFile } from '../plugin/scripts/lib.ts';
 
@@ -26,6 +28,31 @@ function daemonPid(): number | null {
 // The tools a session sees are listed once, when it starts: a change needs /reload-plugins
 const tools = () => createApi()<unknown>('GET', '/api/mcp/tools').then(JSON.stringify, () => null);
 
+// So do the plugin's files (commands, skill, hooks, MCP server). Their hash from the previous restart is kept in
+// ~/.ainstorm; the first run only records it.
+const PLUGIN = join(import.meta.dirname, '..', 'plugin');
+const PLUGIN_HASH = join(DIR, 'plugin.sha256');
+function pluginHash(): string {
+  const hash = createHash('sha256');
+  const files = readdirSync(PLUGIN, { recursive: true, encoding: 'utf8' })
+    .map(name => join(PLUGIN, name))
+    .filter(path => statSync(path).isFile() && !relative(PLUGIN, path).startsWith('test'))
+    .sort();
+  for (const path of files) hash.update(relative(PLUGIN, path)).update(readFileSync(path));
+  return hash.digest('hex');
+}
+function pluginChanged(): boolean {
+  let previous: string | null = null;
+  try {
+    previous = readFileSync(PLUGIN_HASH, 'utf8').trim();
+  } catch {
+    // First run: nothing to compare with
+  }
+  const current = pluginHash();
+  writeFileSync(PLUGIN_HASH, `${current}\n`, { mode: 0o600 });
+  return previous !== null && previous !== current;
+}
+
 const wasRunning = await healthy();
 const before = wasRunning ? await tools() : null;
 if (wasRunning) {
@@ -38,6 +65,8 @@ if (wasRunning) {
 if (!await ensureDaemon()) fail('The daemon did not start. Run it in the foreground to see why: pnpm daemon');
 const pid = readJsonFile<{ pid?: number }>(join(DIR, 'daemon.json'))?.pid;
 ok(`ainstorm ${wasRunning ? 'restarted' : 'started'}: http://127.0.0.1:${PORT}${pid ? ` (pid ${pid})` : ''}`);
-if (before !== null && before !== await tools()) {
-  note('The MCP tools changed: run /reload-plugins in each open Claude Code session.');
-}
+const reasons = [
+  ...(before !== null && before !== await tools() ? ['the MCP tools'] : []),
+  ...(pluginChanged() ? ['the plugin files'] : []),
+];
+if (reasons.length) note(`Changed since the last restart: ${reasons.join(' and ')}. Run /reload-plugins in each open Claude Code session.`);
