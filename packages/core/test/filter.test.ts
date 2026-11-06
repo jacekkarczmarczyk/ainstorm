@@ -132,7 +132,7 @@ describe('filter in the URL', () => {
 describe('quick filters', () => {
   it('turn a status preset on, recognise it, and clear it on a second click', () => {
     const open = toggleQuickFilter(EMPTY_FILTER, 'open');
-    expect(open.status).toEqual({ done: -1, dropped: -1 });
+    expect(open.status).toEqual({ todo: 1, in_progress: 1, blocked: 1, deferred: 1 });
     expect(isQuickFilterOn(open, 'open')).toBe(true);
     expect(isQuickFilterOn(open, 'inProgress')).toBe(false);
     expect(toggleQuickFilter(open, 'open').status).toEqual({});
@@ -140,6 +140,6 @@ describe('quick filters', () => {
   });
 
   it('is off once the status rules are refined by hand', () => {
-    expect(isQuickFilterOn(filter({ status: { done: -1, dropped: -1, deferred: -1 } }), 'open')).toBe(false);
+    expect(isQuickFilterOn(filter({ status: { todo: 1, in_progress: 1, blocked: 1 } }), 'open')).toBe(false);
   });
 });

@@ -362,7 +362,7 @@ test('filters live in the URL and survive a reload', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await page.getByRole('button', { name: 'Open', exact: true }).click();
   await page.getByLabel('Search tasks').fill('Inventory: refactor');
-  await expect(page).toHaveURL(/status=!done&status=!dropped/);
+  await expect(page).toHaveURL(/status=todo&status=in_progress&status=blocked&status=deferred/);
   await page.reload();
   await expect(page.getByRole('button', { name: 'Open', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByLabel('Search tasks')).toHaveValue('Inventory: refactor');
@@ -391,7 +391,7 @@ test('quick filter "Open" hides done and dropped tasks and toggles off', async (
   await open.click();
   await expect(open).toHaveAttribute('aria-pressed', 'true');
   await expect(row(page, 'PRJ-2')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /^Status: 2 rules/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Status: 4 rules/ })).toBeVisible();
   await open.click();
   await expect(open).toHaveAttribute('aria-pressed', 'false');
   await expect(row(page, 'PRJ-2')).toBeVisible();

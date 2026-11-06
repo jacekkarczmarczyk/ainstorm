@@ -34,7 +34,8 @@ export function cycleRule(rules: RuleSet, key: string): RuleSet {
 
 /** One-click presets of status rules; the status dropdown shows (and can refine) what they set. */
 export const QUICK_FILTERS = {
-  open: { done: -1, dropped: -1 },
+  // The statuses it shows are ticked, not the ones it hides
+  open: { todo: 1, in_progress: 1, blocked: 1, deferred: 1 },
   inProgress: { in_progress: 1, blocked: 1 },
 } as const satisfies Record<string, RuleSet>;
 export type QuickFilter = keyof typeof QUICK_FILTERS;

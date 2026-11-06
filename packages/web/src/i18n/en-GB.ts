@@ -35,7 +35,7 @@ export const enGB = {
     clear: 'Clear', done: 'Done', nothing: 'Nothing matches.', not: 'not {value}', rules: '{facet}: {n} rules',
     quick: 'Quick filters',
     quickLabel: { open: 'Open', inProgress: 'In progress' },
-    quickHelp: { open: 'Hide done and dropped tasks', inProgress: 'Only tasks in progress or blocked' },
+    quickHelp: { open: 'Only open tasks: to do, in progress, blocked or deferred', inProgress: 'Only tasks in progress or blocked' },
   },
   tree: { hideClosed: 'Hide closed branches', empty: 'Nothing matches these filters.', expand: 'Expand {id}', collapse: 'Collapse {id}' },
   task: {
