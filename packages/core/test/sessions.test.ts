@@ -106,8 +106,24 @@ describe('queuedRuns', () => {
     const working = new Map([['B', { sessionId: s1.id, self: true, paused: false, idle: false, runningTaskId: 'B' }]]);
     const q = queuedRuns(tasks, events, working);
     expect([...q].map(([id, x]) => [id, x.ahead])).toEqual([['C', 0]]);
-    // A single Run (not a queue) is not shown as queued
-    expect(queuedRuns([todo('X')], [makeEvent(9, { taskId: 'X', type: 'run', text: 'run', changeId: 2002 })], new Map()).size).toBe(0);
+  });
+
+  it('queues single Run prompts sent to a busy session in the order they were sent', () => {
+    const tasks = [todo('A'), todo('B'), todo('C')];
+    const events = [run(1, 'A', 'run', 2001), run(2, 'B', 'run', 2002), run(3, 'C', 'run', 2003)];
+    const working = new Map([['A', { sessionId: s1.id, self: true, paused: false, idle: false, runningTaskId: 'A' }]]);
+    expect([...queuedRuns(tasks, events, working)].map(([id, x]) => [id, x.ahead])).toEqual([['B', 0], ['C', 1]]);
+    // Several tasks in one prompt and single prompts share the session's queue
+    const mixed = [...events, run(4, 'D', 'run 1/2', 2004), run(5, 'E', 'run 2/2', 2004)];
+    const q = queuedRuns([...tasks, todo('D'), todo('E')], mixed, working);
+    expect([...q].map(([id, x]) => [id, x.ahead])).toEqual([['B', 0], ['C', 1], ['D', 2], ['E', 3]]);
+  });
+
+  it('a request is used up once the session starts the task, even if it is open again later', () => {
+    const started = makeEvent(2, { taskId: 'A', type: 'run', text: 'running', sessionId: s1.id, actor: 'claude' });
+    expect(queuedRuns([todo('A')], [run(1, 'A', 'run', 2001), started], new Map()).size).toBe(0);
+    // A new request after that queues it again
+    expect(queuedRuns([todo('A')], [run(1, 'A', 'run', 2001), started, run(3, 'A', 'run', 2002)], new Map()).size).toBe(1);
   });
 });
 

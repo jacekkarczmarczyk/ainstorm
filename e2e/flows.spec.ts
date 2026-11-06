@@ -203,6 +203,17 @@ test('▶ in a row runs the task at once', async ({ page }) => {
   expect(await clipboardText(page)).toMatch(shopPrompt('Start working on PRJ-44'));
 });
 
+test('Run prompts sent one after another queue up in the session, in the order sent', async ({ page }) => {
+  await page.goto(`${SHOP}/tree`);
+  for (const id of ['PRJ-44', 'PRJ-45']) {
+    await row(page, id).getByRole('button', { name: `Run ${id} in a Claude session` }).click();
+    await dialog(page).getByRole('button', { name: 'Copy and record' }).click();
+    await expect(dialog(page)).toBeHidden();
+  }
+  await expect(row(page, 'PRJ-44').getByText('Queued in session · next')).toBeVisible();
+  await expect(row(page, 'PRJ-45').getByText('Queued in session · 1 ahead')).toBeVisible();
+});
+
 test('Run says the prompt must be pasted, and copies it on confirm', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-45`);
   const panel = taskPanel(page);
