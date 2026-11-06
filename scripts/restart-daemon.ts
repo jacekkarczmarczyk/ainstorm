@@ -36,7 +36,8 @@ function pluginHash(): string {
   const hash = createHash('sha256');
   const files = readdirSync(PLUGIN, { recursive: true, encoding: 'utf8' })
     .map(name => join(PLUGIN, name))
-    .filter(path => statSync(path).isFile() && !relative(PLUGIN, path).startsWith('test'))
+    // node_modules holds only test dependencies (linked to the server and core sources); the plugin runs on Node built-ins
+    .filter(path => !/^(test|node_modules)/.test(relative(PLUGIN, path)) && statSync(path).isFile())
     .sort();
   for (const path of files) hash.update(relative(PLUGIN, path)).update(readFileSync(path));
   return hash.digest('hex');

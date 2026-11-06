@@ -58,6 +58,19 @@ test('a link asked for by a session opens that session', async ({ page, request 
   await expect(page.locator('#row-PRJ-1')).toBeVisible();
 });
 
+test('a task added in the UI is saved by the daemon', async ({ page, request }) => {
+  await page.goto(await openLink(request));
+  await page.getByRole('button', { name: 'Open the map' }).click();
+  await page.goto('/s/ed08d5d7/tree');
+  const title = `Added in e2e ${Date.now()}`;
+  await page.getByRole('button', { name: 'Add task' }).click();
+  await page.getByRole('dialog', { name: 'Add a task' }).getByLabel('Title').fill(title);
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  const titles = async () => ((await (await request.get('/api/snapshot', { headers: { Authorization: `Bearer ${token()}` } }))
+    .json()) as { tasks: { title: string; archivedAt: string | null }[] }).tasks.filter(t => t.archivedAt === null).map(t => t.title);
+  await expect.poll(titles).toContain(title);
+});
+
 test('a browser that loses its sign-in sees the sign-in screen instead of a stale map', async ({ page, request, context }) => {
   await page.goto(await openLink(request));
   await page.getByRole('button', { name: 'Open the map' }).click();
