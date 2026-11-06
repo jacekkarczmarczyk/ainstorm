@@ -51,3 +51,6 @@ Access must therefore stay local to this user. This document is the threat model
 
 - A process running as the same user can read the token. Same-user isolation is out of scope: such a process could
   already drive Claude Code directly.
+- `pnpm audit` (2026-11-06): two moderate findings, both in development tools only — `glob` (GHSA-3g3m-2fjr-6pw4, via
+  `@vue/test-utils` → `js-beautify`) and `minimatch` (GHSA-g3hv-75wg-m249, via eslint and typescript-eslint). Neither
+  ships in the daemon, the plugin or the built UI; they go away when those tools update. No high or critical findings.
