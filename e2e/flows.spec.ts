@@ -152,6 +152,15 @@ test('notifications stay off when the browser blocks them, and say why', async (
   await expect(settings.getByText(/Notifications are blocked for this page/)).toBeVisible();
 });
 
+test('a session waiting on the user pulses, unless the system asks for reduced motion', async ({ page }) => {
+  await page.goto('/s/7b4c4db1/tree');
+  const box = page.locator('.waiting-box').first();
+  await expect(box).toBeVisible();
+  expect(await box.evaluate(el => getComputedStyle(el).animationName)).toContain('wait-pulse');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await box.evaluate(el => getComputedStyle(el).animationName)).toBe('none');
+});
+
 test('prompts follow the prompt language from the settings', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await page.getByRole('button', { name: 'Open settings' }).click();

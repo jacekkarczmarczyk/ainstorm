@@ -5,6 +5,7 @@ import { computed } from 'vue';
 import { useFormat } from '../composables/useFormat.ts';
 import { useSelection } from '../composables/useSelection.ts';
 import { useTaskActions } from '../composables/useTaskActions.ts';
+import { waitKey } from '../composables/useWaitNotifications.ts';
 import { useMapStore } from '../stores/map.ts';
 import { describeWaiting } from '../ui/waiting.ts';
 import TaskIdLabel from './TaskIdLabel.vue';
@@ -25,7 +26,8 @@ function openTask(id: string) {
 </script>
 
 <template>
-  <div v-if="info" class="waiting-box" :class="{ compact }" @click.stop>
+  <!-- Keyed by what the session waits for: a new or changed wait mounts afresh and flashes once, then keeps pulsing -->
+  <div v-if="info" :key="waitKey(session) ?? ''" class="waiting-box" :class="{ compact }" @click.stop>
     <strong>{{ $t(`sessions.waitingFor.${info.kind}`) }}</strong>
     <span class="muted">{{ $t('sessions.since', { when: when(info.since) }) }}</span>
     <button v-if="info.task" type="button" class="link" @click="openTask(info.task.id)"><TaskIdLabel :id="info.task.id" /> {{ info.task.title }}</button>
@@ -40,7 +42,19 @@ function openTask(id: string) {
 </template>
 
 <style scoped>
-.waiting-box { background: var(--you-soft); border-radius: 6px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.waiting-box {
+  background: var(--you-soft); border-radius: 6px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;
+  /* A strong flash when the wait appears or changes, then a steady pulse of the outline (none with reduced motion, see base.css) */
+  animation: wait-flash 1.2s ease-out, wait-pulse 2.4s ease-in-out 1.2s infinite;
+}
+@keyframes wait-flash {
+  0%, 30% { box-shadow: 0 0 0 4px var(--you); background: color-mix(in srgb, var(--you) 35%, var(--you-soft)); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@keyframes wait-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--you) 0%, transparent); }
+  50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--you) 45%, transparent); }
+}
 .waiting-box strong { color: var(--you); }
 .tool { display: inline-flex; gap: 6px; align-items: center; }
 .tool code { font-family: var(--f-mono); font-size: var(--fs-s); }
