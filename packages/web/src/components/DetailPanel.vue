@@ -42,20 +42,21 @@ function sheetEnd() {
 </template>
 
 <style scoped>
-/* The padding variables let the task's header and action bar stick to the panel edges, across the padding */
+/* The panel does not scroll itself: the task inside keeps its header and action bar in place and scrolls its content.
+   The padding variables are the panel's edges, used by those three parts. */
 .detail {
   --pad-t: 16px; --pad-x: 18px; --pad-b: 16px;
-  min-height: 0; min-width: 0; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
-  padding: var(--pad-t) var(--pad-x) var(--pad-b);
+  min-height: 0; min-width: 0; overflow: hidden; display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
 }
 .sheet {
   --pad-t: 4px; --pad-x: max(18px, env(safe-area-inset-left, 0px)); --pad-b: calc(20px + env(safe-area-inset-bottom, 0px));
   position: fixed; z-index: 25; left: 0; right: 0; bottom: 0; max-height: 88vh; border-radius: 14px 14px 0 0; border-bottom: 0;
-  padding: var(--pad-t) var(--pad-x) var(--pad-b);
   transition: transform .25s ease; box-shadow: 0 -8px 30px rgb(0 0 0 / .25);
 }
+.empty { padding: var(--pad-t) var(--pad-x); }
 .sheet.closed { visibility: hidden; }
-.grab { padding: 6px 0 12px; touch-action: none; cursor: grab; }
+.grab { flex: none; padding: 10px 0 8px; touch-action: none; cursor: grab; }
 .grab span { display: block; width: 44px; height: 5px; border-radius: 3px; background: var(--line-strong); margin: 0 auto; }
 .backdrop { position: fixed; inset: 0; z-index: 24; background: rgb(10 14 20 / .4); }
 </style>

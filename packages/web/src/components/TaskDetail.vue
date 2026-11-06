@@ -102,6 +102,8 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
     </div>
     <h2 :class="`t-${t.status}`"><IssueText :text="t.title" :repo-url="repoUrl" /></h2>
     </div>
+    <!-- Only this part scrolls: the header above and the action bar below stay in place -->
+    <div class="scroll">
     <nav v-if="ancestors.length" class="path">
       <template v-for="(a, i) in ancestors" :key="a.id">
         <span v-if="i" aria-hidden="true">›</span>
@@ -266,8 +268,9 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
       </ol>
       <p v-else class="empty">{{ $t('detail.noEvents') }}</p>
     </section>
+    </div>
 
-    <!-- Pinned bar: adding a subtask, and editing with the rarer actions behind the arrow -->
+    <!-- Action bar: adding a subtask, and editing with the rarer actions behind the arrow -->
     <div class="actions-bar">
       <button v-if="session" type="button" class="btn" @click="addingSubtask = true"><Plus :size="14" aria-hidden="true" /> {{ $t('detail.addSubtask') }}</button>
       <SplitButton class="edit" :label="$t('detail.edit')" :menu-label="$t('detail.moreActions')" @main="editing = true">
@@ -293,13 +296,13 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 </template>
 
 <style scoped>
-/* One column that never grows past the panel: long unbreakable text is cut, not scrolled */
-.task-detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; min-width: 0; }
-/* Pinned to the top of the scrolling panel, edge to edge, like the action bar at the bottom */
-.pinned {
-  position: sticky; top: calc(-1 * var(--pad-t, 16px)); z-index: 1; display: grid; gap: 4px;
-  margin: calc(-1 * var(--pad-t, 16px)) calc(-1 * var(--pad-x, 18px)) 0; padding: var(--pad-t, 16px) var(--pad-x, 18px) 10px;
-  background: var(--panel); border-bottom: 1px solid var(--line);
+/* Header, content and action bar fill the panel; only the content scrolls, so its scrollbar never covers the other two */
+.task-detail { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+.pinned { flex: none; display: grid; gap: 4px; padding: var(--pad-t, 16px) var(--pad-x, 18px) 10px; border-bottom: 1px solid var(--line); }
+/* One column; long unbreakable text is cut, and what still does not fit scrolls sideways here only */
+.scroll {
+  flex: 1; min-height: 0; overflow: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; align-content: start;
+  padding: 4px var(--pad-x, 18px) 16px;
 }
 .head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .head .id { flex: none; }
@@ -363,9 +366,7 @@ code { font-family: var(--f-mono); font-size: var(--fs-s); }
 .delivery.delivered { color: var(--s-done); }
 /* Pinned to the bottom of the scrolling panel, edge to edge across its padding */
 .actions-bar {
-  display: flex; flex-wrap: wrap; gap: 8px; position: sticky; bottom: calc(-1 * var(--pad-b, 16px)); z-index: 1;
-  margin: 22px calc(-1 * var(--pad-x, 18px)) calc(-1 * var(--pad-b, 16px)); padding: 10px var(--pad-x, 18px) var(--pad-b, 16px);
-  background: var(--panel); border-top: 1px solid var(--line);
+  flex: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px var(--pad-x, 18px) var(--pad-b, 16px); border-top: 1px solid var(--line);
 }
 .actions-bar .edit { margin-left: auto; }
 </style>
