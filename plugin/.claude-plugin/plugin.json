@@ -1,0 +1,7 @@
+{
+  "name": "ainstorm",
+  "version": "0.1.0",
+  "description": "Keeps a map of the task graph of your Claude Code work: subtasks, side issues parked for later, plans, commits and questions, viewable and editable in a local web UI.",
+  "author": { "name": "Jacek Karczmarczyk" },
+  "license": "MIT"
+}

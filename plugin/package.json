@@ -1,0 +1,13 @@
+{
+  "name": "@ainstorm/plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Claude Code plugin: hooks, MCP proxy and skill. Its scripts use Node built-ins only, so the plugin runs from Claude Code's plugin cache.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@ainstorm/server": "workspace:*"
+  }
+}

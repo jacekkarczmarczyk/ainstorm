@@ -1,0 +1,12 @@
+{
+  "name": "ainstorm-local",
+  "owner": { "name": "Jacek Karczmarczyk" },
+  "metadata": { "description": "Local marketplace with the ainstorm plugin from this repository." },
+  "plugins": [
+    {
+      "name": "ainstorm",
+      "source": "./plugin",
+      "description": "Keeps a map of the task graph of your Claude Code work: subtasks, side issues parked for later, plans, commits and questions, viewable and editable in a local web UI."
+    }
+  ]
+}

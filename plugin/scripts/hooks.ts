@@ -1,0 +1,110 @@
+import type { Api } from './lib.ts';
+
+/**
+ * What each Claude Code hook does with the map. Pure apart from the injected API, so every case is tested
+ * without processes. Fail-open: any error means "do nothing"; only a mis-pasted ainstorm prompt is blocked.
+ */
+
+export interface HookInput {
+  hook_event_name: string;
+  session_id: string;
+  cwd?: string;
+  source?: string;
+  prompt?: string;
+  tool_name?: string;
+  tool_input?: Record<string, unknown>;
+  tool_response?: unknown;
+}
+
+export interface HookOutput {
+  decision?: 'block';
+  reason?: string;
+  systemMessage?: string;
+  hookSpecificOutput?: { hookEventName: string; additionalContext: string };
+}
+
+export interface HookDeps {
+  api: Api;
+  ensureDaemon(): Promise<boolean>;
+}
+
+const context = (event: string, text: string | null | undefined): HookOutput | null =>
+  text ? { hookSpecificOutput: { hookEventName: event, additionalContext: text } } : null;
+
+const NOT_REGISTERED = [
+  'ainstorm: this directory belongs to no project in the task map yet.',
+  'If the user wants this work tracked, ask them for a short project key (e.g. PRJ) and a name, then call project_create.',
+].join(' ');
+
+/** `[branch 1a2b3c4] message` printed by git commit */
+export function parseCommit(output: string): { sha: string; message: string } | null {
+  const match = /^\[[^\]\s]+(?: \([^)]*\))? ([0-9a-f]{7,40})\] (.*)$/m.exec(output);
+  return match ? { sha: match[1]!, message: match[2]!.slice(0, 500) } : null;
+}
+
+const responseText = (response: unknown): string => {
+  if (typeof response === 'string') return response;
+  if (response && typeof response === 'object') {
+    const r = response as Record<string, unknown>;
+    return [r.stdout, r.output, r.result].filter(v => typeof v === 'string').join('\n');
+  }
+  return '';
+};
+
+/** Short, single-line description of what a permission prompt is about (no file contents). */
+export function permissionDetail(tool: string, input: Record<string, unknown> | undefined): string {
+  const value = input?.command ?? input?.file_path ?? input?.url ?? input?.pattern ?? '';
+  return String(value).replace(/\s+/g, ' ').slice(0, 200);
+}
+
+export async function runHook(input: HookInput, deps: HookDeps): Promise<HookOutput | null> {
+  const { api } = deps;
+  const session = `/api/sessions/${input.session_id}`;
+  const op = (body: Record<string, unknown>) => api<Record<string, unknown>>('POST', `${session}/ops`, body);
+  const deliveries = async () => (await api<{ context: string | null }>('POST', `${session}/deliveries`, {})).context;
+  const event = input.hook_event_name;
+
+  switch (event) {
+    case 'SessionStart': {
+      if (!await deps.ensureDaemon()) return { systemMessage: 'ainstorm: the map service is not running; working without the task map.' };
+      const started = await op({ op: 'start', cwd: input.cwd ?? '', source: input.source ?? 'startup' });
+      if (started.project === null) return context(event, NOT_REGISTERED);
+      const [map, pending] = [(await api<{ context: string | null }>('GET', `${session}/context`)).context, await deliveries()];
+      return context(event, [map, pending].filter(Boolean).join('\n\n'));
+    }
+    case 'UserPromptSubmit': {
+      const { block } = await api<{ block: string | null }>('POST', `${session}/prompt`, { prompt: input.prompt ?? '' });
+      if (block) return { decision: 'block', reason: block };
+      await op({ op: 'active' });
+      return context(event, await deliveries());
+    }
+    case 'PostToolUse': {
+      await op({ op: 'active' });
+      if (input.tool_name === 'Bash' && /\bgit\b[^\n]*\bcommit\b/.test(String(input.tool_input?.command ?? ''))) {
+        const commit = parseCommit(responseText(input.tool_response));
+        if (commit) await op({ op: 'addCommit', ...commit });
+      }
+      return context(event, await deliveries());
+    }
+    case 'PermissionRequest': {
+      const tool = input.tool_name ?? 'a tool';
+      await op({ op: 'waitPermission', tool, detail: permissionDetail(tool, input.tool_input) });
+      // No decision: Claude Code shows its usual prompt to the user
+      return null;
+    }
+    // A refused permission ends the turn like an interrupt, without Stop; a failed or refused tool clears the wait
+    case 'PostToolUseFailure':
+      await op({ op: 'active' });
+      return null;
+    // Notification (permission_prompt) is not used: it arrives late, even after the prompt was answered and the
+    // turn ended, and would mark the session waiting again. PermissionRequest comes exactly when the prompt opens.
+    case 'Stop':
+      await op({ op: 'stop' });
+      return null;
+    case 'SessionEnd':
+      await op({ op: 'end' });
+      return null;
+    default:
+      return null;
+  }
+}

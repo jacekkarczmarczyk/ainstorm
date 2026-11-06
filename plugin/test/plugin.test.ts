@@ -1,0 +1,131 @@
+import { createHttpServer, Daemon, listenLoopback, openDatabase, saveSnapshot } from '@ainstorm/server';
+import type { Server } from 'node:http';
+import { PassThrough } from 'node:stream';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { parseCommit, permissionDetail, runHook, type HookDeps, type HookInput } from '../scripts/hooks.ts';
+import { createApi } from '../scripts/lib.ts';
+import { handle, serve, type McpOptions } from '../scripts/mcpServer.ts';
+
+const TOKEN = 'f'.repeat(64);
+const SESSION = '55555555-5555-4555-8555-555555555555';
+const OTHER = '66666666-6666-4666-8666-666666666666';
+
+let server: Server;
+let daemon: Daemon;
+let deps: HookDeps;
+let mcp: McpOptions;
+
+beforeEach(async () => {
+  const db = openDatabase(':memory:');
+  saveSnapshot(db, { projects: [{ key: 'PRJ', name: 'shop', paths: ['/work/shop'], focusTaskId: null, areas: [], repoUrl: null }], tasks: [], sessions: [], events: [] });
+  daemon = new Daemon(db);
+  server = createHttpServer({ daemon, token: TOKEN, staticDir: null });
+  const port = await listenLoopback(server, 0);
+  const api = createApi(TOKEN, port);
+  deps = { api, ensureDaemon: async () => true };
+  mcp = { api, sessionId: SESSION, instructions: 'i' };
+});
+afterEach(() => new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); }));
+
+const hook = (input: Partial<HookInput> & { hook_event_name: string }) => runHook({ session_id: SESSION, ...input }, deps);
+const start = () => hook({ hook_event_name: 'SessionStart', cwd: '/work/shop/api', source: 'startup' });
+const tool = async (name: string, args: unknown) =>
+  (await handle(mcp, { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } })) as { content: { text: string }[]; isError: boolean };
+
+describe('hooks', () => {
+  it('SessionStart registers the session and adds the map as fenced data', async () => {
+    const output = await start();
+    expect(output?.hookSpecificOutput?.additionalContext).toMatch(/^<ainstorm-map-data>/);
+    expect(daemon.snapshot().sessions[0]).toMatchObject({ id: SESSION, projectKey: 'PRJ', status: 'active' });
+  });
+
+  it('SessionStart outside any project suggests registering one, and says so when the daemon is down', async () => {
+    const output = await hook({ hook_event_name: 'SessionStart', cwd: '/elsewhere', source: 'startup' });
+    expect(output?.hookSpecificOutput?.additionalContext).toMatch(/belongs to no project/);
+    const down = await runHook({ hook_event_name: 'SessionStart', session_id: SESSION }, { ...deps, ensureDaemon: async () => false });
+    expect(down?.systemMessage).toMatch(/not running/);
+  });
+
+  it('UserPromptSubmit delivers UI changes once and blocks a prompt meant for another session', async () => {
+    await start();
+    await tool('task_create', { title: 'Zadanie' });
+    const { changeId } = daemon.execute({ type: 'setStatus', taskId: 'PRJ-1', to: 'done', notify: true });
+    const first = await hook({ hook_event_name: 'UserPromptSubmit', prompt: 'dalej' });
+    expect(first?.hookSpecificOutput?.additionalContext).toContain(`#${changeId} done PRJ-1`);
+    expect(await hook({ hook_event_name: 'UserPromptSubmit', prompt: 'dalej' })).toBeNull();
+    const blocked = await hook({ hook_event_name: 'UserPromptSubmit', prompt: `[ainstorm #${changeId} · session ${OTHER.slice(0, 8)} · shop]\nx` });
+    expect(blocked).toMatchObject({ decision: 'block' });
+    expect(blocked?.reason).toMatch(/another session/);
+  });
+
+  it('PostToolUse attaches a git commit to the running task', async () => {
+    await start();
+    await tool('task_create', { title: 'Poprawka' });
+    await tool('session_set_running', { taskId: 'PRJ-1' });
+    await hook({
+      hook_event_name: 'PostToolUse', tool_name: 'Bash', tool_input: { command: 'git commit -m "fix: x"' },
+      tool_response: { stdout: '[dev 1a2b3c4d] fix: x\n 1 file changed' },
+    });
+    expect(daemon.snapshot().tasks[0]!.commits).toMatchObject([{ sha: '1a2b3c4d', message: 'fix: x', state: 'live' }]);
+  });
+
+  it('a permission prompt marks the session waiting until it works again, and Stop/SessionEnd update it', async () => {
+    await start();
+    await hook({ hook_event_name: 'PermissionRequest', tool_name: 'Bash', tool_input: { command: 'git push origin dev' } });
+    expect(daemon.snapshot().sessions[0]!.waiting).toMatchObject({ kind: 'permission', tool: 'Bash', detail: 'git push origin dev' });
+    await hook({ hook_event_name: 'PostToolUse', tool_name: 'Bash', tool_input: { command: 'git push origin dev' } });
+    expect(daemon.snapshot().sessions[0]!.waiting).toBeNull();
+    // A refused prompt runs no tool; the failure hook clears the wait
+    await hook({ hook_event_name: 'PermissionRequest', tool_name: 'Write', tool_input: { file_path: 'C:/x.txt' } });
+    await hook({ hook_event_name: 'PostToolUseFailure', tool_name: 'Write' });
+    expect(daemon.snapshot().sessions[0]!.waiting).toBeNull();
+    await hook({ hook_event_name: 'Stop' });
+    expect(daemon.snapshot().sessions[0]!.status).toBe('idle');
+    await hook({ hook_event_name: 'SessionEnd' });
+    expect(daemon.snapshot().sessions[0]!.status).toBe('ended');
+  });
+
+  it('parses git commit output and describes permission prompts briefly', () => {
+    expect(parseCommit('[main (root-commit) abc1234] init')).toEqual({ sha: 'abc1234', message: 'init' });
+    expect(parseCommit('nothing to commit')).toBeNull();
+    expect(permissionDetail('Edit', { file_path: 'C:/a/b.ts', old_string: 'secret' })).toBe('C:/a/b.ts');
+  });
+});
+
+describe('MCP proxy', () => {
+  it('lists the daemon\'s tools and forwards calls for its own session', async () => {
+    await start();
+    const { tools } = await handle(mcp, { jsonrpc: '2.0', id: 1, method: 'tools/list' }) as { tools: { name: string; inputSchema: { properties?: object } }[] };
+    expect(tools.map(t => t.name)).toEqual(expect.arrayContaining(['context_get', 'task_create', 'task_tree', 'question_dismiss']));
+    expect(tools.find(t => t.name === 'task_create')!.inputSchema.properties).not.toHaveProperty('op');
+    expect(JSON.parse((await tool('task_create', { title: 'Pierwsze' })).content[0]!.text)).toEqual({ taskId: 'PRJ-1' });
+    expect((await tool('task_tree', {})).content[0]!.text).toBe('- PRJ-1 [todo] Pierwsze');
+  });
+
+  it('returns bad input and broken rules as tool errors', async () => {
+    await start();
+    const bad = await tool('task_create', { title: '' });
+    expect(bad.isError).toBe(true);
+    expect(bad.content[0]!.text).toMatch(/^Invalid input: title/);
+    expect((await tool('no_such_tool', {})).isError).toBe(true);
+  });
+
+  it('answers over stdio, ignoring notifications', async () => {
+    const input = new PassThrough();
+    const output = new PassThrough();
+    const done = serve(mcp, input, output);
+    const replies: unknown[] = [];
+    output.on('data', chunk => replies.push(...String(chunk).trim().split('\n').map(l => JSON.parse(l))));
+    input.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n');
+    input.write('{"jsonrpc":"2.0","id":7,"method":"initialize","params":{"protocolVersion":"2025-03-26"}}\n');
+    input.write('not json\n');
+    await new Promise(resolve => setTimeout(resolve, 50));
+    input.end();
+    await done;
+    expect(replies).toHaveLength(2);
+    expect(replies).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 7, result: expect.objectContaining({ protocolVersion: '2025-03-26' }) }),
+      { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } },
+    ]));
+  });
+});

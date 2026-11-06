@@ -1,0 +1,4343 @@
+{
+ "projects": [
+  {
+   "key": "PRJ",
+   "name": "shop",
+   "paths": [
+    "~/dev/shop"
+   ],
+   "focusTaskId": "PRJ-17",
+   "areas": [],
+   "repoUrl": "https://github.com/example/shop"
+  },
+  {
+   "key": "PP",
+   "name": "bookkeeping",
+   "paths": [
+    "~/dev/bookkeeping"
+   ],
+   "focusTaskId": "PP-44",
+   "areas": [],
+   "repoUrl": "https://github.com/example/bookkeeping"
+  }
+ ],
+ "tasks": [
+  {
+   "id": "PRJ-1",
+   "projectKey": "PRJ",
+   "title": "Discounts: input validation",
+   "description": "Example task for the demo: discounts: input validation. Fictional content.",
+   "status": "in_progress",
+   "type": "build",
+   "areas": [
+    "frontend"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": null,
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-cb49.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [
+    {
+     "at": "2026-10-22T12:00:00.000Z",
+     "summary": "Decision 1: the simpler option chosen",
+     "detail": "Fictional reasoning."
+    },
+    {
+     "at": "2026-10-28T12:00:00.000Z",
+     "summary": "Decision 2: the simpler option chosen",
+     "detail": "Fictional reasoning."
+    },
+    {
+     "at": "2026-11-05T12:00:00.000Z",
+     "summary": "Decision 3: the simpler option chosen",
+     "detail": "Fictional reasoning."
+    }
+   ],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-2",
+   "projectKey": "PRJ",
+   "title": "Sign-in: input validation",
+   "description": "Example task for the demo: sign-in: input validation. Fictional content.",
+   "status": "done",
+   "type": "chore",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:15:00.000Z",
+   "updatedAt": "2026-10-22T03:15:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-3",
+   "projectKey": "PRJ",
+   "title": "Orders: unit tests",
+   "description": "Example task for the demo: orders: unit tests. Fictional content.",
+   "status": "done",
+   "type": "security",
+   "areas": [
+    "backend"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-2",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:39:00.000Z",
+   "updatedAt": "2026-10-22T03:39:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-4",
+   "projectKey": "PRJ",
+   "title": "Reviews: unit tests",
+   "description": "Example task for the demo: reviews: unit tests. Fictional content.",
+   "status": "done",
+   "type": null,
+   "areas": [],
+   "owner": "me",
+   "ask": "action",
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-3",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-5",
+   "projectKey": "PRJ",
+   "title": "Search: error handling",
+   "description": "Example task for the demo: search: error handling. Fictional content.",
+   "status": "deferred",
+   "type": "test",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": null,
+   "deps": [
+    "PRJ-12"
+   ],
+   "planPath": null,
+   "planRef": "Step 6",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": {
+    "summary": "Parked for later, outside the current work",
+    "detail": ""
+   },
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T05:49:00.000Z",
+   "updatedAt": "2026-10-22T05:49:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-6",
+   "projectKey": "PRJ",
+   "title": "Sales reports: error handling",
+   "description": "Example task for the demo: sales reports: error handling. Fictional content.",
+   "status": "done",
+   "type": "chore",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": null,
+   "deps": [
+    "PRJ-2"
+   ],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-28T03:45:00.000Z",
+   "updatedAt": "2026-10-28T03:45:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-7",
+   "projectKey": "PRJ",
+   "title": "Payments: refactoring",
+   "description": "Example task for the demo: payments: refactoring. Fictional content.",
+   "status": "done",
+   "type": "chore",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": null,
+   "deps": [
+    "PRJ-2"
+   ],
+   "planPath": null,
+   "planRef": null,
+   "branch": "feature/demo-a2f0",
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "fcd9bbb7d",
+     "message": "chore: payments: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "b3d5c1910",
+     "message": "chore: payments: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "3e2242707",
+     "message": "chore: payments: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "286ec71b4",
+     "message": "chore: payments: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "20f0074b1",
+     "message": "chore: payments: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "bbe0c69e9",
+     "message": "chore: payments: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "a6bd09765",
+     "message": "chore: payments: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "7dab541ff",
+     "message": "chore: payments: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "ba77e9735",
+     "message": "chore: payments: refactoring",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-28T03:54:00.000Z",
+   "updatedAt": "2026-10-28T13:25:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-50",
+   "projectKey": "PRJ",
+   "title": "Sign-in: CSV export",
+   "description": "Example task for the demo: sign-in: csv export. Fictional content.",
+   "status": "done",
+   "type": "fix",
+   "areas": [
+    "database"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-7",
+   "fromId": "PRJ-6",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "a0bdc5e40",
+     "message": "fix: sign-in: csv export",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-8",
+   "projectKey": "PRJ",
+   "title": "Newsletter: refactoring",
+   "description": "Example task for the demo: newsletter: refactoring. Fictional content.",
+   "status": "done",
+   "type": null,
+   "areas": [
+    "infrastructure"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-7",
+   "fromId": "PRJ-6",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "5de8fbee1",
+     "message": "chore: newsletter: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "f69e2cbe6",
+     "message": "chore: newsletter: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "7bd0db6d2",
+     "message": "chore: newsletter: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    },
+    {
+     "sha": "13871c62d",
+     "message": "chore: newsletter: refactoring",
+     "state": "squashed",
+     "intoSha": "ba77e9735",
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-28T05:12:00.000Z",
+   "updatedAt": "2026-10-28T05:12:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-10",
+   "projectKey": "PRJ",
+   "title": "Shipping: list pagination",
+   "description": "",
+   "status": "done",
+   "type": null,
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-8",
+   "fromId": "PRJ-8",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [
+    {
+     "at": "2026-10-28T12:00:00.000Z",
+     "summary": "Decision 1: the simpler option chosen",
+     "detail": "Fictional reasoning."
+    }
+   ],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-9",
+   "projectKey": "PRJ",
+   "title": "Mobile API: refactoring",
+   "description": "Example task for the demo: mobile api: refactoring. Fictional content.",
+   "status": "done",
+   "type": "fix",
+   "areas": [
+    "infrastructure"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-8",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "94a908f1b",
+     "message": "fix: mobile api: refactoring",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-28T04:53:00.000Z",
+   "updatedAt": "2026-10-28T04:53:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-11",
+   "projectKey": "PRJ",
+   "title": "Returns: list pagination",
+   "description": "Example task for the demo: returns: list pagination. Fictional content.",
+   "status": "done",
+   "type": "chore",
+   "areas": [
+    "tests"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-6",
+   "deps": [
+    "PRJ-6"
+   ],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-12",
+   "projectKey": "PRJ",
+   "title": "Customer account: CSV export",
+   "description": "Example task for the demo: customer account: csv export. Fictional content.",
+   "status": "done",
+   "type": "build",
+   "areas": [
+    "payments",
+    "infrastructure"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-8",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "303add28f",
+     "message": "build: customer account: csv export",
+     "state": "amended",
+     "intoSha": "606ec92e8",
+     "note": null
+    },
+    {
+     "sha": "606ec92e8",
+     "message": "build: customer account: csv export",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "7a7c6d69a",
+     "message": "build: customer account: csv export",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-13",
+   "projectKey": "PRJ",
+   "title": "Inventory: CSV export",
+   "description": "Example task for the demo: inventory: csv export. Fictional content.",
+   "status": "done",
+   "type": "feat",
+   "areas": [
+    "emails"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-7",
+   "deps": [
+    "PRJ-7"
+   ],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [
+    {
+     "at": "2026-10-28T12:00:00.000Z",
+     "summary": "Decision 1: the simpler option chosen",
+     "detail": "Fictional reasoning."
+    }
+   ],
+   "commits": [
+    {
+     "sha": "faecfc295",
+     "message": "feat: inventory: csv export",
+     "state": "rebased",
+     "intoSha": "6d189c11a",
+     "note": null
+    },
+    {
+     "sha": "6d189c11a",
+     "message": "feat: inventory: csv export",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "a2cedf6b9",
+     "message": "feat: inventory: csv export",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "0e585680f",
+     "message": "feat: inventory: csv export",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "487cb592f",
+     "message": "feat: inventory: csv export",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "c3989af60",
+     "message": "feat: inventory: csv export",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "a1c266768",
+     "message": "feat: inventory: csv export",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "785a196af",
+     "message": "feat: inventory: csv export",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "7ccbe6bca",
+     "message": "feat: inventory: csv export",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-28T06:18:00.000Z",
+   "updatedAt": "2026-10-28T13:50:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-14",
+   "projectKey": "PRJ",
+   "title": "Product catalog: event logging",
+   "description": "Example task for the demo: product catalog: event logging. Fictional content.",
+   "status": "dropped",
+   "type": "idea",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-13",
+   "fromId": "PRJ-13",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-15",
+   "projectKey": "PRJ",
+   "title": "Admin panel: event logging",
+   "description": "Example task for the demo: admin panel: event logging. Fictional content.",
+   "status": "done",
+   "type": "fix",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-13",
+   "fromId": "PRJ-17",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "a2cedf6b9",
+     "message": "fix: admin panel: event logging",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-16",
+   "projectKey": "PRJ",
+   "title": "Cart: schema migration",
+   "description": "",
+   "status": "done",
+   "type": "chore",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-13",
+   "fromId": "PRJ-13",
+   "deps": [
+    "PRJ-13"
+   ],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "271769f63",
+     "message": "chore: cart: schema migration",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T00:58:00.000Z",
+   "updatedAt": "2026-10-30T00:58:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-17",
+   "projectKey": "PRJ",
+   "title": "Discounts: schema migration",
+   "description": "Example task for the demo: discounts: schema migration. Fictional content.",
+   "status": "in_progress",
+   "type": "chore",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": null,
+   "deps": [
+    "PRJ-6",
+    "PRJ-7"
+   ],
+   "planPath": null,
+   "planRef": null,
+   "branch": "feature/demo-7ee7",
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "c55ce809a",
+     "message": "chore: discounts: schema migration",
+     "state": "live",
+     "intoSha": null,
+     "note": "Fictional note."
+    },
+    {
+     "sha": "57d30af61",
+     "message": "chore: discounts: schema migration",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "6c10696c3",
+     "message": "chore: discounts: schema migration",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "4ed02db23",
+     "message": "chore: discounts: schema migration",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "2bff6274a",
+     "message": "chore: discounts: schema migration",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "79f56e2fd",
+     "message": "chore: discounts: schema migration",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-28T14:18:00.000Z",
+   "updatedAt": "2026-10-28T14:18:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-18",
+   "projectKey": "PRJ",
+   "title": "Sign-in: schema migration",
+   "description": "Example task for the demo: sign-in: schema migration. Fictional content.",
+   "status": "done",
+   "type": "fix",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": "PRJ-17",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "01ea090e4",
+     "message": "fix: sign-in: schema migration",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-28T14:53:00.000Z",
+   "updatedAt": "2026-10-28T14:53:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-19",
+   "projectKey": "PRJ",
+   "title": "Orders: permission checks",
+   "description": "Example task for the demo: orders: permission checks. Fictional content.",
+   "status": "done",
+   "type": "fix",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": "PRJ-17",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "3687a8cc4",
+     "message": "fix: orders: permission checks",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-20",
+   "projectKey": "PRJ",
+   "title": "Reviews: permission checks",
+   "description": "Example task for the demo: reviews: permission checks. Fictional content.",
+   "status": "done",
+   "type": "refactor",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": "PRJ-7",
+   "deps": [],
+   "planPath": null,
+   "planRef": "Step 4",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-21",
+   "projectKey": "PRJ",
+   "title": "Search: result caching",
+   "description": "",
+   "status": "done",
+   "type": "build",
+   "areas": [
+    "tests"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [
+    {
+     "at": "2026-11-05T12:00:00.000Z",
+     "summary": "Decision 1: the simpler option chosen",
+     "detail": "Fictional reasoning."
+    }
+   ],
+   "commits": [
+    {
+     "sha": "0ea49ac27",
+     "message": "build: search: result caching",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "1111f6026",
+     "message": "build: search: result caching",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "2863e6d19",
+     "message": "build: search: result caching",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "f2c23cbad",
+     "message": "build: search: result caching",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "f3880ceac",
+     "message": "build: search: result caching",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "69da1e22f",
+     "message": "build: search: result caching",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "ab2e56ea6",
+     "message": "build: search: result caching",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "139041aaf",
+     "message": "build: search: result caching",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "cbb55aed7",
+     "message": "build: search: result caching",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-05T13:11:00.000Z",
+   "updatedAt": "2026-11-05T13:11:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-22",
+   "projectKey": "PRJ",
+   "title": "Sales reports: result caching",
+   "description": "Example task for the demo: sales reports: result caching. Fictional content.",
+   "status": "dropped",
+   "type": "build",
+   "areas": [
+    "payments"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "a6e604206",
+     "message": "build: sales reports: result caching",
+     "state": "removed",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-05T12:21:00.000Z",
+   "updatedAt": "2026-11-05T12:21:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-23",
+   "projectKey": "PRJ",
+   "title": "Payments: documentation",
+   "description": "",
+   "status": "todo",
+   "type": "test",
+   "areas": [
+    "api"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": null,
+   "deps": [
+    "PRJ-21"
+   ],
+   "planPath": null,
+   "planRef": "Step 7",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [
+    {
+     "text": "Criterion 1: payments: documentation works and has tests",
+     "done": false
+    },
+    {
+     "text": "Criterion 2: payments: documentation works and has tests",
+     "done": false
+    },
+    {
+     "text": "Criterion 3: payments: documentation works and has tests",
+     "done": false
+    },
+    {
+     "text": "Criterion 4: payments: documentation works and has tests",
+     "done": false
+    },
+    {
+     "text": "Criterion 5: payments: documentation works and has tests",
+     "done": false
+    }
+   ],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-24",
+   "projectKey": "PRJ",
+   "title": "Newsletter: documentation",
+   "description": "Example task for the demo: newsletter: documentation. Fictional content.",
+   "status": "todo",
+   "type": "refactor",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": "PRJ-17",
+   "deps": [],
+   "planPath": null,
+   "planRef": "Step 8",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-05T13:18:00.000Z",
+   "updatedAt": "2026-11-05T13:18:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-25",
+   "projectKey": "PRJ",
+   "title": "Mobile API: documentation",
+   "description": "Example task for the demo: mobile api: documentation. Fictional content.",
+   "status": "todo",
+   "type": "refactor",
+   "areas": [
+    "ci"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": "PRJ-17",
+   "deps": [],
+   "planPath": null,
+   "planRef": "Step 9",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-05T16:02:00.000Z",
+   "updatedAt": "2026-11-05T16:02:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-26",
+   "projectKey": "PRJ",
+   "title": "Shipping: performance fix",
+   "description": "Example task for the demo: shipping: performance fix. Fictional content.",
+   "status": "blocked",
+   "type": null,
+   "areas": [],
+   "owner": "me",
+   "ask": "action",
+   "parentId": "PRJ-17",
+   "fromId": null,
+   "deps": [
+    "PRJ-23",
+    "PRJ-24",
+    "PRJ-25"
+   ],
+   "planPath": null,
+   "planRef": "Step 1",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [
+    {
+     "text": "Criterion 1: shipping: performance fix works and has tests",
+     "done": false
+    },
+    {
+     "text": "Criterion 2: shipping: performance fix works and has tests",
+     "done": false
+    },
+    {
+     "text": "Criterion 3: shipping: performance fix works and has tests",
+     "done": false
+    },
+    {
+     "text": "Criterion 4: shipping: performance fix works and has tests",
+     "done": false
+    }
+   ],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-05T16:19:00.000Z",
+   "updatedAt": "2026-11-05T16:19:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-51",
+   "projectKey": "PRJ",
+   "title": "Orders: event logging",
+   "description": "Example task for the demo: orders: event logging. Fictional content.",
+   "status": "todo",
+   "type": null,
+   "areas": [],
+   "owner": "me",
+   "ask": "action",
+   "parentId": "PRJ-17",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-06T01:46:00.000Z",
+   "updatedAt": "2026-11-06T01:46:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-27",
+   "projectKey": "PRJ",
+   "title": "Returns: performance fix",
+   "description": "",
+   "status": "deferred",
+   "type": null,
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": null,
+   "deps": [
+    "PRJ-26"
+   ],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": {
+    "summary": "Parked for later, outside the current work",
+    "detail": ""
+   },
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-05T11:50:00.000Z",
+   "updatedAt": "2026-11-05T11:50:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-28",
+   "projectKey": "PRJ",
+   "title": "Customer account: new view",
+   "description": "",
+   "status": "deferred",
+   "type": "refactor",
+   "areas": [
+    "security"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": null,
+   "deps": [
+    "PRJ-26"
+   ],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": {
+    "summary": "Parked for later, outside the current work",
+    "detail": ""
+   },
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-29",
+   "projectKey": "PRJ",
+   "title": "Inventory: new view",
+   "description": "Example task for the demo: inventory: new view. Fictional content.",
+   "status": "done",
+   "type": "chore",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": null,
+   "deps": [
+    "PRJ-7"
+   ],
+   "planPath": null,
+   "planRef": null,
+   "branch": "feature/demo-b998",
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "50ba6e4b2",
+     "message": "chore: inventory: new view",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "5e3ede52f",
+     "message": "chore: inventory: new view",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "3e75e76b2",
+     "message": "chore: inventory: new view",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "b6b890783",
+     "message": "chore: inventory: new view",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "c0b8baef9",
+     "message": "chore: inventory: new view",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "aa2606781",
+     "message": "chore: inventory: new view",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "2dfbba54f",
+     "message": "chore: inventory: new view",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "bd8f2da8f",
+     "message": "chore: inventory: new view",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "45a55bfbc",
+     "message": "chore: inventory: new view",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T02:17:00.000Z",
+   "updatedAt": "2026-10-30T02:17:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-30",
+   "projectKey": "PRJ",
+   "title": "Product catalog: code cleanup",
+   "description": "Example task for the demo: product catalog: code cleanup. Fictional content.",
+   "status": "todo",
+   "type": "fix",
+   "areas": [
+    "reports"
+   ],
+   "owner": "me",
+   "ask": "decision",
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-29",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [
+    {
+     "id": "PRJ-30-q1",
+     "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+     "text": "How to handle: product catalog: code cleanup?",
+     "options": [
+      "Option A",
+      "Create a separate task for later",
+      "Option C"
+     ],
+     "multi": false,
+     "askedAt": "2026-10-30T00:44:00.000Z",
+     "answer": null,
+     "dismissed": null
+    }
+   ],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T00:44:00.000Z",
+   "updatedAt": "2026-10-30T00:44:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-31",
+   "projectKey": "PRJ",
+   "title": "Admin panel: code cleanup",
+   "description": "",
+   "status": "done",
+   "type": "fix",
+   "areas": [
+    "cache",
+    "api"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-29",
+   "fromId": "PRJ-29",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "7e400220f",
+     "message": "fix: admin panel: code cleanup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-32",
+   "projectKey": "PRJ",
+   "title": "Cart: environment setup",
+   "description": "Example task for the demo: cart: environment setup. Fictional content.",
+   "status": "done",
+   "type": "security",
+   "areas": [
+    "area-13"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-29",
+   "fromId": "PRJ-33",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "86d8e9e93",
+     "message": "security: cart: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-33",
+   "projectKey": "PRJ",
+   "title": "Discounts: environment setup",
+   "description": "Example task for the demo: discounts: environment setup. Fictional content.",
+   "status": "done",
+   "type": "refactor",
+   "areas": [
+    "security"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-29",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "2e8b71a52",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "549c3b44b",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "b0e54c551",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "a0e2cd68b",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "6f9b4e899",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "0e7ec6bd4",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "25ed53d9b",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "7ed14c597",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "627e154d0",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "ab4cb2b79",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    },
+    {
+     "sha": "9666957cd",
+     "message": "refactor: discounts: environment setup",
+     "state": "squashed",
+     "intoSha": "45a55bfbc",
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-34",
+   "projectKey": "PRJ",
+   "title": "Sign-in: environment setup",
+   "description": "",
+   "status": "deferred",
+   "type": "idea",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-29",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": {
+    "summary": "Parked for later, outside the current work",
+    "detail": ""
+   },
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-35",
+   "projectKey": "PRJ",
+   "title": "Orders: dependency update",
+   "description": "",
+   "status": "done",
+   "type": "refactor",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-34",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "9ed220d1f",
+     "message": "refactor: orders: dependency update",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-36",
+   "projectKey": "PRJ",
+   "title": "Reviews: dependency update",
+   "description": "",
+   "status": "done",
+   "type": "fix",
+   "areas": [
+    "database",
+    "area-14"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-17",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "34eb2a502",
+     "message": "fix: reviews: dependency update",
+     "state": "squashed",
+     "intoSha": "094c24921",
+     "note": null
+    },
+    {
+     "sha": "3d1f7659e",
+     "message": "fix: reviews: dependency update",
+     "state": "squashed",
+     "intoSha": "094c24921",
+     "note": null
+    },
+    {
+     "sha": "094c24921",
+     "message": "fix: reviews: dependency update",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "bcda2deaf",
+     "message": "fix: reviews: dependency update",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-37",
+   "projectKey": "PRJ",
+   "title": "Search: input validation",
+   "description": "Example task for the demo: search: input validation. Fictional content.",
+   "status": "done",
+   "type": "refactor",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-50",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "85c563437",
+     "message": "refactor: search: input validation",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "9de64a725",
+     "message": "refactor: search: input validation",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "5a1b16a1e",
+     "message": "refactor: search: input validation",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "c7f9e32cf",
+     "message": "refactor: search: input validation",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T03:27:00.000Z",
+   "updatedAt": "2026-10-30T03:27:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-38",
+   "projectKey": "PRJ",
+   "title": "Sales reports: input validation",
+   "description": "Example task for the demo: sales reports: input validation. Fictional content.",
+   "status": "todo",
+   "type": "fix",
+   "areas": [],
+   "owner": "me",
+   "ask": "decision",
+   "parentId": "PRJ-37",
+   "fromId": "PRJ-37",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [
+    {
+     "id": "PRJ-38-q1",
+     "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+     "text": "How to handle: sales reports: input validation?",
+     "options": [
+      "Option A",
+      "Option B",
+      "Option C"
+     ],
+     "multi": true,
+     "askedAt": "2026-10-30T03:23:00.000Z",
+     "answer": null,
+     "dismissed": null
+    }
+   ],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T03:23:00.000Z",
+   "updatedAt": "2026-10-30T03:23:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-39",
+   "projectKey": "PRJ",
+   "title": "Payments: unit tests",
+   "description": "Example task for the demo: payments: unit tests. Fictional content.",
+   "status": "in_progress",
+   "type": null,
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-13",
+   "fromId": "PRJ-13",
+   "deps": [
+    "PRJ-13",
+    "PRJ-16"
+   ],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "d4096136c",
+     "message": "chore: payments: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "ec4428feb",
+     "message": "chore: payments: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "2d1768e07",
+     "message": "chore: payments: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "bd55dca1b",
+     "message": "chore: payments: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "a70c252f9",
+     "message": "chore: payments: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "98f7bc503",
+     "message": "chore: payments: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "eb7f23d25",
+     "message": "chore: payments: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "659e0a67a",
+     "message": "chore: payments: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "eb1231da4",
+     "message": "chore: payments: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "4dcd0d784",
+     "message": "chore: payments: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-40",
+   "projectKey": "PRJ",
+   "title": "Newsletter: unit tests",
+   "description": "Example task for the demo: newsletter: unit tests. Fictional content.",
+   "status": "done",
+   "type": "fix",
+   "areas": [
+    "area-15"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-39",
+   "fromId": "PRJ-39",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "d9895c912",
+     "message": "fix: newsletter: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "932ac3d8d",
+     "message": "fix: newsletter: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "7364f0f5b",
+     "message": "fix: newsletter: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "88ea93335",
+     "message": "fix: newsletter: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "f02859c56",
+     "message": "fix: newsletter: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "e934ba2e1",
+     "message": "fix: newsletter: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "b7904379d",
+     "message": "fix: newsletter: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "f95211ec8",
+     "message": "fix: newsletter: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T07:01:00.000Z",
+   "updatedAt": "2026-10-30T07:01:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-41",
+   "projectKey": "PRJ",
+   "title": "Mobile API: unit tests",
+   "description": "Example task for the demo: mobile api: unit tests. Fictional content.",
+   "status": "todo",
+   "type": "idea",
+   "areas": [
+    "area-15"
+   ],
+   "owner": "me",
+   "ask": "decision",
+   "parentId": "PRJ-39",
+   "fromId": "PRJ-39",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [
+    {
+     "id": "PRJ-41-q1",
+     "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+     "text": "How to handle: mobile api: unit tests?",
+     "options": [
+      "Option A",
+      "Option B",
+      "Option C"
+     ],
+     "multi": false,
+     "askedAt": "2026-10-30T03:43:00.000Z",
+     "answer": null,
+     "dismissed": null
+    }
+   ],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-42",
+   "projectKey": "PRJ",
+   "title": "Shipping: error handling",
+   "description": "Example task for the demo: shipping: error handling. Fictional content.",
+   "status": "done",
+   "type": "fix",
+   "areas": [
+    "area-16"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-39",
+   "fromId": "PRJ-39",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "c6bc15023",
+     "message": "fix: shipping: error handling",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-05T11:46:00.000Z",
+   "updatedAt": "2026-11-05T11:46:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-43",
+   "projectKey": "PRJ",
+   "title": "Returns: error handling",
+   "description": "",
+   "status": "deferred",
+   "type": "ci",
+   "areas": [
+    "area-17"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-2",
+   "deps": [],
+   "planPath": null,
+   "planRef": "Step 1",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": {
+    "summary": "Parked for later, outside the current work",
+    "detail": ""
+   },
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-44",
+   "projectKey": "PRJ",
+   "title": "Customer account: refactoring",
+   "description": "Example task for the demo: customer account: refactoring. Fictional content.",
+   "status": "todo",
+   "type": "security",
+   "areas": [
+    "backend",
+    "tests"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-21",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-45",
+   "projectKey": "PRJ",
+   "title": "Inventory: refactoring",
+   "description": "Example task for the demo: inventory: refactoring. Fictional content.",
+   "status": "todo",
+   "type": "chore",
+   "areas": [
+    "payments"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-40",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-52",
+   "projectKey": "PRJ",
+   "title": "Reviews: event logging",
+   "description": "Example task for the demo: reviews: event logging. Fictional content.",
+   "status": "todo",
+   "type": "chore",
+   "areas": [],
+   "owner": "me",
+   "ask": "decision",
+   "parentId": "PRJ-1",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:12:00.000Z",
+   "updatedAt": "2026-10-22T03:12:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-46",
+   "projectKey": "PRJ",
+   "title": "Product catalog: list pagination",
+   "description": "",
+   "status": "done",
+   "type": "chore",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-1",
+   "fromId": "PRJ-7",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-47",
+   "projectKey": "PRJ",
+   "title": "Admin panel: list pagination",
+   "description": "Example task for the demo: admin panel: list pagination. Fictional content.",
+   "status": "dropped",
+   "type": "idea",
+   "areas": [
+    "infrastructure"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": "PRJ-11",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-48",
+   "projectKey": "PRJ",
+   "title": "Cart: CSV export",
+   "description": "Example task for the demo: cart: csv export. Fictional content.",
+   "status": "dropped",
+   "type": "chore",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PRJ-17",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PRJ-49",
+   "projectKey": "PRJ",
+   "title": "Discounts: CSV export",
+   "description": "Example task for the demo: discounts: csv export. Fictional content.",
+   "status": "dropped",
+   "type": "idea",
+   "areas": [],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": "PRJ-39",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "ed08d5d7-18da-4b7e-8239-87b2b703b793"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T03:10:00.000Z",
+   "updatedAt": "2026-10-22T03:10:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-1",
+   "projectKey": "PP",
+   "title": "Notifications: input validation",
+   "description": "Example task for the demo: notifications: input validation. Fictional content.",
+   "status": "done",
+   "type": "perf",
+   "areas": [
+    "invoices"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": "Step 9",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "a94723a4e0",
+     "message": "perf: notifications: input validation",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    },
+    {
+     "sha": "e84043a168",
+     "message": "perf: notifications: input validation",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T00:00:00.000Z",
+   "updatedAt": "2026-10-22T00:00:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-18",
+   "projectKey": "PP",
+   "title": "Documents: documentation",
+   "description": "Example task for the demo: documents: documentation. Fictional content.",
+   "status": "done",
+   "type": "refactor",
+   "areas": [
+    "invoices"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-1",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": "Step 1",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "b65bc66198",
+     "message": "refactor: documents: documentation",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T00:00:00.000Z",
+   "updatedAt": "2026-10-22T00:00:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-40",
+   "projectKey": "PP",
+   "title": "Tax returns: schema migration",
+   "description": "Example task for the demo: tax returns: schema migration. Fictional content.",
+   "status": "todo",
+   "type": "refactor",
+   "areas": [
+    "contractors",
+    "invoices",
+    "accounting"
+   ],
+   "owner": "claude",
+   "ask": "action",
+   "parentId": null,
+   "fromId": null,
+   "deps": [
+    "PP-1"
+   ],
+   "planPath": null,
+   "planRef": "Step 2",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-22T00:00:00.000Z",
+   "updatedAt": "2026-10-22T00:00:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-42",
+   "projectKey": "PP",
+   "title": "#3812: Documents: permission checks",
+   "description": "Example task for the demo: documents: permission checks. Fictional content.",
+   "status": "blocked",
+   "type": "feat",
+   "areas": [
+    "import",
+    "accounting",
+    "export"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": null,
+   "deps": [
+    "PP-43",
+    "PP-44"
+   ],
+   "planPath": "~/.claude/plans/demo-plan-258a.md",
+   "planRef": "Step 3",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "7b4c4db1-5a1a-4426-874b-c2018939e352"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-03T04:05:00.000Z",
+   "updatedAt": "2026-11-03T04:05:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-43",
+   "projectKey": "PP",
+   "title": "Contractors: result caching",
+   "description": "Example task for the demo: contractors: result caching. Fictional content.",
+   "status": "blocked",
+   "type": "chore",
+   "areas": [
+    "import",
+    "export"
+   ],
+   "owner": "me",
+   "ask": "action",
+   "parentId": "PP-42",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "7b4c4db1-5a1a-4426-874b-c2018939e352"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-03T04:29:00.000Z",
+   "updatedAt": "2026-11-03T04:29:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-44",
+   "projectKey": "PP",
+   "title": "Permissions: result caching",
+   "description": "Example task for the demo: permissions: result caching. Fictional content.",
+   "status": "todo",
+   "type": "fix",
+   "areas": [
+    "import",
+    "accounting"
+   ],
+   "owner": "claude",
+   "ask": "decision",
+   "parentId": "PP-42",
+   "fromId": "PP-42",
+   "deps": [],
+   "planPath": null,
+   "planRef": "Step 5",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "7b4c4db1-5a1a-4426-874b-c2018939e352"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-03T05:06:00.000Z",
+   "updatedAt": "2026-11-05T05:43:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-45",
+   "projectKey": "PP",
+   "title": "Statement import: documentation",
+   "description": "Example task for the demo: statement import: documentation. Fictional content.",
+   "status": "todo",
+   "type": "feat",
+   "areas": [
+    "import",
+    "accounting"
+   ],
+   "owner": "claude",
+   "ask": "decision",
+   "parentId": null,
+   "fromId": null,
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-258a.md",
+   "planRef": "Step 6",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "7b4c4db1-5a1a-4426-874b-c2018939e352"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-03T04:05:00.000Z",
+   "updatedAt": "2026-11-03T04:05:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-46",
+   "projectKey": "PP",
+   "title": "Data export: documentation",
+   "description": "Example task for the demo: data export: documentation. Fictional content.",
+   "status": "done",
+   "type": "chore",
+   "areas": [
+    "ui"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": null,
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T13:26:00.000Z",
+   "updatedAt": "2026-10-29T13:26:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-47",
+   "projectKey": "PP",
+   "title": "Deadline calendar: performance fix",
+   "description": "Example task for the demo: deadline calendar: performance fix. Fictional content.",
+   "status": "done",
+   "type": "chore",
+   "areas": [
+    "notifications"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": null,
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T13:33:00.000Z",
+   "updatedAt": "2026-10-29T13:33:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-48",
+   "projectKey": "PP",
+   "title": "Invoices: new view",
+   "description": "Example task for the demo: invoices: new view. Fictional content.",
+   "status": "done",
+   "type": "docs",
+   "areas": [
+    "ui",
+    "integrations"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": null,
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T13:38:00.000Z",
+   "updatedAt": "2026-10-29T13:38:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-49",
+   "projectKey": "PP",
+   "title": "Notifications: new view",
+   "description": "Example task for the demo: notifications: new view. Fictional content.",
+   "status": "in_progress",
+   "type": "chore",
+   "areas": [
+    "ui"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": "PP-48",
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T14:50:00.000Z",
+   "updatedAt": "2026-10-29T14:50:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-50",
+   "projectKey": "PP",
+   "title": "Chart of accounts: code cleanup",
+   "description": "Example task for the demo: chart of accounts: code cleanup. Fictional content.",
+   "status": "todo",
+   "type": "refactor",
+   "areas": [
+    "integrations"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-49",
+   "fromId": "PP-48",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T16:05:00.000Z",
+   "updatedAt": "2026-10-29T16:05:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-51",
+   "projectKey": "PP",
+   "title": "Archive: code cleanup",
+   "description": "Example task for the demo: archive: code cleanup. Fictional content.",
+   "status": "done",
+   "type": "docs",
+   "areas": [
+    "contractors",
+    "invoices",
+    "accounting"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-40",
+   "fromId": "PP-49",
+   "deps": [],
+   "planPath": null,
+   "planRef": "Step 3",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-03T11:39:00.000Z",
+   "updatedAt": "2026-11-03T11:45:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-52",
+   "projectKey": "PP",
+   "title": "Tax returns: environment setup",
+   "description": "Example task for the demo: tax returns: environment setup. Fictional content.",
+   "status": "done",
+   "type": "docs",
+   "areas": [
+    "invoices"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-1",
+   "fromId": "PP-49",
+   "deps": [],
+   "planPath": null,
+   "planRef": "Step 4",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T14:47:00.000Z",
+   "updatedAt": "2026-11-03T11:40:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-53",
+   "projectKey": "PP",
+   "title": "Client dashboard: environment setup",
+   "description": "Example task for the demo: client dashboard: environment setup. Fictional content.",
+   "status": "done",
+   "type": "chore",
+   "areas": [
+    "invoices"
+   ],
+   "owner": "me",
+   "ask": null,
+   "parentId": "PP-1",
+   "fromId": "PP-52",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T14:43:00.000Z",
+   "updatedAt": "2026-10-29T14:43:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-54",
+   "projectKey": "PP",
+   "title": "Documents: dependency update",
+   "description": "Example task for the demo: documents: dependency update. Fictional content.",
+   "status": "done",
+   "type": "docs",
+   "areas": [
+    "invoices"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-55",
+   "fromId": "PP-52",
+   "deps": [],
+   "planPath": null,
+   "planRef": "Step 6",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-03T11:54:00.000Z",
+   "updatedAt": "2026-11-03T11:54:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-55",
+   "projectKey": "PP",
+   "title": "Contractors: input validation",
+   "description": "Example task for the demo: contractors: input validation. Fictional content.",
+   "status": "todo",
+   "type": "feat",
+   "areas": [
+    "invoices"
+   ],
+   "owner": "me",
+   "ask": "decision",
+   "parentId": "PP-1",
+   "fromId": "PP-52",
+   "deps": [
+    "PP-54"
+   ],
+   "planPath": null,
+   "planRef": "Step 7",
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [
+    {
+     "id": "PP-55-q1",
+     "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+     "text": "How to handle: contractors: input validation?",
+     "options": null,
+     "multi": false,
+     "askedAt": "2026-11-05T05:41:00.000Z",
+     "answer": null,
+     "dismissed": null
+    }
+   ],
+   "archivedAt": null,
+   "createdAt": "2026-11-05T05:41:00.000Z",
+   "updatedAt": "2026-11-05T05:41:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-56",
+   "projectKey": "PP",
+   "title": "Permissions: input validation",
+   "description": "Example task for the demo: permissions: input validation. Fictional content.",
+   "status": "done",
+   "type": "docs",
+   "areas": [
+    "tests"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-49",
+   "fromId": "PP-48",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-03T11:40:00.000Z",
+   "updatedAt": "2026-11-03T11:40:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-57",
+   "projectKey": "PP",
+   "title": "Statement import: unit tests",
+   "description": "Example task for the demo: statement import: unit tests. Fictional content.",
+   "status": "todo",
+   "type": "security",
+   "areas": [
+    "ui",
+    "permissions"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-49",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T17:04:00.000Z",
+   "updatedAt": "2026-10-29T17:04:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-58",
+   "projectKey": "PP",
+   "title": "Data export: unit tests",
+   "description": "Example task for the demo: data export: unit tests. Fictional content.",
+   "status": "done",
+   "type": "fix",
+   "areas": [
+    "notifications",
+    "area-11"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-49",
+   "fromId": null,
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "5f963cdb17",
+     "message": "fix: data export: unit tests",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T04:53:00.000Z",
+   "updatedAt": "2026-11-03T11:40:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-59",
+   "projectKey": "PP",
+   "title": "Deadline calendar: error handling",
+   "description": "Example task for the demo: deadline calendar: error handling. Fictional content.",
+   "status": "dropped",
+   "type": "idea",
+   "areas": [
+    "integrations"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-49",
+   "fromId": "PP-48",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T16:05:00.000Z",
+   "updatedAt": "2026-10-29T16:05:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-60",
+   "projectKey": "PP",
+   "title": "Invoices: refactoring",
+   "description": "Example task for the demo: invoices: refactoring. Fictional content.",
+   "status": "dropped",
+   "type": "test",
+   "areas": [
+    "integrations"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-49",
+   "fromId": "PP-59",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T13:25:00.000Z",
+   "updatedAt": "2026-10-29T13:25:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-61",
+   "projectKey": "PP",
+   "title": "Notifications: refactoring",
+   "description": "Example task for the demo: notifications: refactoring. Fictional content.",
+   "status": "dropped",
+   "type": "idea",
+   "areas": [
+    "integrations",
+    "area-12"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": "PP-49",
+   "fromId": "PP-48",
+   "deps": [],
+   "planPath": null,
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T13:25:00.000Z",
+   "updatedAt": "2026-10-29T13:25:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-62",
+   "projectKey": "PP",
+   "title": "Chart of accounts: list pagination",
+   "description": "Example task for the demo: chart of accounts: list pagination. Fictional content.",
+   "status": "dropped",
+   "type": "idea",
+   "areas": [
+    "area-12"
+   ],
+   "owner": "me",
+   "ask": null,
+   "parentId": null,
+   "fromId": "PP-48",
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T13:48:00.000Z",
+   "updatedAt": "2026-10-29T13:48:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-63",
+   "projectKey": "PP",
+   "title": "Archive: list pagination",
+   "description": "Example task for the demo: archive: list pagination. Fictional content.",
+   "status": "dropped",
+   "type": "ci",
+   "areas": [
+    "ui",
+    "tests"
+   ],
+   "owner": "me",
+   "ask": null,
+   "parentId": null,
+   "fromId": "PP-48",
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T13:48:00.000Z",
+   "updatedAt": "2026-10-29T13:48:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-64",
+   "projectKey": "PP",
+   "title": "Tax returns: CSV export",
+   "description": "Example task for the demo: tax returns: csv export. Fictional content.",
+   "status": "deferred",
+   "type": "idea",
+   "areas": [
+    "area-12",
+    "contractors"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": "PP-62",
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-29T16:46:00.000Z",
+   "updatedAt": "2026-10-29T16:46:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-65",
+   "projectKey": "PP",
+   "title": "Client dashboard: CSV export",
+   "description": "Example task for the demo: client dashboard: csv export. Fictional content.",
+   "status": "done",
+   "type": "chore",
+   "areas": [
+    "area-13"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": null,
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T04:38:00.000Z",
+   "updatedAt": "2026-10-30T04:38:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-66",
+   "projectKey": "PP",
+   "title": "Documents: event logging",
+   "description": "Example task for the demo: documents: event logging. Fictional content.",
+   "status": "done",
+   "type": "fix",
+   "areas": [
+    "area-13"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": "PP-65",
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [
+    {
+     "sha": "198c3b2618",
+     "message": "fix: documents: event logging",
+     "state": "live",
+     "intoSha": null,
+     "note": null
+    }
+   ],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T04:42:00.000Z",
+   "updatedAt": "2026-10-30T04:42:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-67",
+   "projectKey": "PP",
+   "title": "Contractors: schema migration",
+   "description": "Example task for the demo: contractors: schema migration. Fictional content.",
+   "status": "deferred",
+   "type": "idea",
+   "areas": [
+    "area-13"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": "PP-65",
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T04:44:00.000Z",
+   "updatedAt": "2026-10-30T04:44:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-68",
+   "projectKey": "PP",
+   "title": "Permissions: schema migration",
+   "description": "Example task for the demo: permissions: schema migration. Fictional content.",
+   "status": "done",
+   "type": "security",
+   "areas": [
+    "permissions"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": "PP-65",
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T04:47:00.000Z",
+   "updatedAt": "2026-10-30T04:47:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-69",
+   "projectKey": "PP",
+   "title": "Statement import: permission checks",
+   "description": "Example task for the demo: statement import: permission checks. Fictional content.",
+   "status": "done",
+   "type": "chore",
+   "areas": [
+    "ui"
+   ],
+   "owner": "me",
+   "ask": null,
+   "parentId": null,
+   "fromId": "PP-65",
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-10-30T04:34:00.000Z",
+   "updatedAt": "2026-10-30T04:34:00.000Z",
+   "version": 1
+  },
+  {
+   "id": "PP-70",
+   "projectKey": "PP",
+   "title": "Data export: permission checks",
+   "description": "Example task for the demo: data export: permission checks. Fictional content.",
+   "status": "todo",
+   "type": "chore",
+   "areas": [
+    "area-14",
+    "invoices"
+   ],
+   "owner": "claude",
+   "ask": null,
+   "parentId": null,
+   "fromId": "PP-18",
+   "deps": [],
+   "planPath": "~/.claude/plans/demo-plan-906d.md",
+   "planRef": null,
+   "branch": null,
+   "issue": null,
+   "pr": null,
+   "deferReason": null,
+   "criteria": [],
+   "decisions": [],
+   "commits": [],
+   "sessionIds": [
+    "b6a48e5f-385f-4b08-8dd6-8857e0f81313"
+   ],
+   "questions": [],
+   "archivedAt": null,
+   "createdAt": "2026-11-05T05:41:00.000Z",
+   "updatedAt": "2026-11-05T05:41:00.000Z",
+   "version": 1
+  }
+ ],
+ "sessions": [
+  {
+   "id": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "projectKey": "PRJ",
+   "title": "Cart and payments rework",
+   "status": "idle",
+   "startedAt": "2026-10-22T03:10:00.000Z",
+   "archivedAt": null,
+   "runningTaskId": null,
+   "waiting": null,
+   "note": null,
+   "compactions": 6
+  },
+  {
+   "id": "7b4c4db1-5a1a-4426-874b-c2018939e352",
+   "projectKey": "PP",
+   "title": "Invoice module cleanup",
+   "status": "waiting",
+   "startedAt": "2026-11-03T04:05:00.000Z",
+   "archivedAt": null,
+   "runningTaskId": null,
+   "waiting": {
+    "kind": "task",
+    "taskId": "PP-44",
+    "since": "2026-11-05T05:46:00.000Z"
+   },
+   "note": null,
+   "compactions": 0
+  },
+  {
+   "id": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "projectKey": "PP",
+   "title": "Backlog review and work plan",
+   "status": "waiting",
+   "startedAt": "2026-10-29T13:25:00.000Z",
+   "archivedAt": null,
+   "runningTaskId": null,
+   "waiting": {
+    "kind": "task",
+    "taskId": "PP-55",
+    "since": "2026-11-05T05:41:00.000Z"
+   },
+   "note": null,
+   "compactions": 0
+  }
+ ],
+ "events": [
+  {
+   "id": 1,
+   "at": "2026-10-22T03:10:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-1",
+   "type": "create",
+   "text": "Example event (create)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 2,
+   "at": "2026-10-22T03:15:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-2",
+   "type": "plan",
+   "text": "Example event (plan)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 3,
+   "at": "2026-10-22T03:39:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-3",
+   "type": "done",
+   "text": "Example event (done)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 4,
+   "at": "2026-10-22T05:49:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-5",
+   "type": "plan",
+   "text": "Example event (plan)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 5,
+   "at": "2026-10-28T03:45:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-6",
+   "type": "create",
+   "text": "Example event (create)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 6,
+   "at": "2026-10-28T03:54:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-7",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 7,
+   "at": "2026-10-28T04:53:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-9",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 8,
+   "at": "2026-10-28T05:12:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-8",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 9,
+   "at": "2026-10-28T06:18:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-13",
+   "type": "defer",
+   "text": "Example event (defer)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 10,
+   "at": "2026-10-28T13:25:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-7",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 11,
+   "at": "2026-10-28T13:50:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-13",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 12,
+   "at": "2026-10-28T14:18:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-17",
+   "type": "focus",
+   "text": "Example event (focus)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 13,
+   "at": "2026-10-28T14:53:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-18",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 14,
+   "at": "2026-10-30T00:44:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-30",
+   "type": "wait",
+   "text": "Example event (wait)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 15,
+   "at": "2026-10-30T00:58:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-16",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 16,
+   "at": "2026-10-30T02:17:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-29",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 17,
+   "at": "2026-10-30T03:23:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-38",
+   "type": "wait",
+   "text": "Example event (wait)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 18,
+   "at": "2026-10-30T03:27:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-37",
+   "type": "done",
+   "text": "Example event (done)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 19,
+   "at": "2026-10-30T07:01:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-40",
+   "type": "done",
+   "text": "Example event (done)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 20,
+   "at": "2026-11-05T11:46:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-42",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 21,
+   "at": "2026-11-05T11:50:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-27",
+   "type": "defer",
+   "text": "Example event (defer)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 22,
+   "at": "2026-11-05T12:21:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-22",
+   "type": "drop",
+   "text": "Example event (drop)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 23,
+   "at": "2026-11-05T13:11:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-21",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 24,
+   "at": "2026-11-05T13:18:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-24",
+   "type": "plan",
+   "text": "Example event (plan)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 25,
+   "at": "2026-11-05T16:02:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-25",
+   "type": "plan",
+   "text": "Example event (plan)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 26,
+   "at": "2026-11-05T16:19:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-26",
+   "type": "block",
+   "text": "Example event (block)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 27,
+   "at": "2026-11-06T01:46:00.000Z",
+   "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
+   "taskId": "PRJ-51",
+   "type": "wait",
+   "text": "Example event (wait)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 28,
+   "at": "2026-11-03T04:29:00.000Z",
+   "sessionId": "7b4c4db1-5a1a-4426-874b-c2018939e352",
+   "taskId": "PP-43",
+   "type": "create",
+   "text": "Example event (create)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 29,
+   "at": "2026-11-03T05:06:00.000Z",
+   "sessionId": "7b4c4db1-5a1a-4426-874b-c2018939e352",
+   "taskId": "PP-44",
+   "type": "create",
+   "text": "Example event (create)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 30,
+   "at": "2026-11-05T05:43:00.000Z",
+   "sessionId": "7b4c4db1-5a1a-4426-874b-c2018939e352",
+   "taskId": "PP-44",
+   "type": "wait",
+   "text": "Example event (wait)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 31,
+   "at": "2026-10-29T13:26:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-46",
+   "type": "done",
+   "text": "Example event (done)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 32,
+   "at": "2026-10-29T13:33:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-47",
+   "type": "done",
+   "text": "Example event (done)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 33,
+   "at": "2026-10-29T13:38:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-48",
+   "type": "create",
+   "text": "Example event (create)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 34,
+   "at": "2026-10-29T13:48:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-62",
+   "type": "drop",
+   "text": "Example event (drop)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 35,
+   "at": "2026-10-29T13:48:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-63",
+   "type": "drop",
+   "text": "Example event (drop)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 36,
+   "at": "2026-10-29T14:43:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-53",
+   "type": "done",
+   "text": "Example event (done)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 37,
+   "at": "2026-10-29T14:47:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-52",
+   "type": "create",
+   "text": "Example event (create)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 38,
+   "at": "2026-10-29T14:50:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-49",
+   "type": "create",
+   "text": "Example event (create)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 39,
+   "at": "2026-10-29T16:05:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-59",
+   "type": "drop",
+   "text": "Example event (drop)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 40,
+   "at": "2026-10-29T16:05:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-50",
+   "type": "focus",
+   "text": "Example event (focus)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 41,
+   "at": "2026-10-29T16:46:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-64",
+   "type": "defer",
+   "text": "Example event (defer)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 42,
+   "at": "2026-10-29T17:04:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-57",
+   "type": "create",
+   "text": "Example event (create)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 43,
+   "at": "2026-10-30T04:34:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-69",
+   "type": "done",
+   "text": "Example event (done)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 44,
+   "at": "2026-10-30T04:38:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-65",
+   "type": "focus",
+   "text": "Example event (focus)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 45,
+   "at": "2026-10-30T04:42:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-66",
+   "type": "commit",
+   "text": "Example event (commit)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 46,
+   "at": "2026-10-30T04:44:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-67",
+   "type": "defer",
+   "text": "Example event (defer)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 47,
+   "at": "2026-10-30T04:47:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-68",
+   "type": "done",
+   "text": "Example event (done)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 48,
+   "at": "2026-10-30T04:53:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-58",
+   "type": "create",
+   "text": "Example event (create)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 49,
+   "at": "2026-11-03T11:39:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-51",
+   "type": "plan",
+   "text": "Example event (plan)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 50,
+   "at": "2026-11-03T11:40:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-52",
+   "type": "plan",
+   "text": "Example event (plan)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 51,
+   "at": "2026-11-03T11:40:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-58",
+   "type": "done",
+   "text": "Example event (done)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 52,
+   "at": "2026-11-03T11:40:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-56",
+   "type": "done",
+   "text": "Example event (done)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 53,
+   "at": "2026-11-03T11:45:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-51",
+   "type": "focus",
+   "text": "Example event (focus)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 54,
+   "at": "2026-11-03T11:54:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-54",
+   "type": "plan",
+   "text": "Example event (plan)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 55,
+   "at": "2026-11-05T05:41:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-70",
+   "type": "create",
+   "text": "Example event (create)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  },
+  {
+   "id": 56,
+   "at": "2026-11-05T05:41:00.000Z",
+   "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
+   "taskId": "PP-55",
+   "type": "wait",
+   "text": "Example event (wait)",
+   "actor": "claude",
+   "changeId": null,
+   "delivery": null
+  }
+ ]
+}

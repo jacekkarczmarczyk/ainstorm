@@ -1,0 +1,16 @@
+{
+  "name": "@ainstorm/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Domain logic shared by the ainstorm daemon and web UI: no I/O.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

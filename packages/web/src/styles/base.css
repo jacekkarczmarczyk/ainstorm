@@ -1,0 +1,42 @@
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #app { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: var(--fs-base)/1.5 var(--f-ui); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Text fields show focus by their border, without the offset ring buttons get */
+input:not([type="checkbox"], [type="radio"]):focus-visible, textarea:focus-visible { outline: none; border-color: var(--accent); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Shared building blocks used across components */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-m); padding: 5px 11px; border-radius: 5px;
+  border: 1px solid var(--line-strong); background: var(--panel); cursor: pointer; white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-strong); font-weight: 500; }
+.btn.danger { background: var(--s-blocked); border-color: var(--s-blocked); color: var(--on-strong); font-weight: 500; }
+.btn.claude { background: var(--claude); border-color: var(--claude); color: var(--on-strong); font-weight: 500; }
+.btn.ghost { border-color: transparent; background: none; color: var(--muted); }
+.btn.ghost:hover { color: var(--ink); border-color: var(--line); }
+.btn.sm { font-size: var(--fs-s); padding: 2px 8px; }
+.link { border: 0; background: none; padding: 0; cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 2px; }
+.link:hover { text-decoration-color: var(--accent); }
+.link.accent { color: var(--accent); font-size: var(--fs-s); }
+.tid { font-family: var(--f-mono); font-size: var(--fs-s); color: var(--muted); font-weight: 500; white-space: nowrap; }
+.muted { color: var(--muted); }
+.frac { font-family: var(--f-mono); font-size: var(--fs-xs); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.label { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; }
+.empty { color: var(--muted); font-size: var(--fs-m); margin: 0; }
+.t-done { color: var(--muted); }
+.t-dropped { color: var(--muted); text-decoration: line-through; }
+.you {
+  font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 1px 7px;
+  border-radius: 4px; background: var(--you); color: var(--on-strong); white-space: nowrap;
+}
+.flash { animation: flash 1.8s ease-out; }
+@keyframes flash { from { background-color: color-mix(in srgb, var(--s-deferred) 28%, var(--panel)); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

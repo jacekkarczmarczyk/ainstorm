@@ -1,0 +1,35 @@
+/* Colour and type tokens. Light values on :root; dark values for "auto" (system) and for the explicit dark theme. */
+:root {
+  --bg: #f2f4f8; --panel: #ffffff; --sunk: #e8ecf2; --ink: #141a24; --muted: #5a6577;
+  --line: #dbe1ea; --line-strong: #b5bfcd; --accent: #2c56c9; --accent-soft: #e2e9fb;
+  --s-todo: #6f7a8c; --s-in_progress: #2c6fe0; --s-blocked: #c4372b; --s-deferred: #a7680f; --s-done: #237d4c; --s-dropped: #98a1ae;
+  --you: #b02a68; --you-soft: #fbe8f0; --on-strong: #ffffff;
+  /* Things sent to a Claude session (confirmation dialogs) */
+  --claude: #6a46d4; --claude-soft: #eee8fd;
+  --chip-s: 55%; --chip-l: 36%;
+  --f-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --r: 6px;
+  --fs-xs: 12px; --fs-s: 13px; --fs-m: 14px; --fs-base: 15px; --fs-l: 17px; --fs-xl: 19px; --fs-xxl: 24px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f131a; --panel: #161b24; --sunk: #1d2330; --ink: #e4e9f1; --muted: #96a1b3;
+    --line: #283041; --line-strong: #3d485c; --accent: #7f9cff; --accent-soft: #1d2741;
+    --s-todo: #8e99ab; --s-in_progress: #6c9cff; --s-blocked: #f07468; --s-deferred: #e2a64a; --s-done: #5bc489; --s-dropped: #687284;
+    --you: #f27bb0; --you-soft: #3a1c2b; --on-strong: #10131a;
+    --claude: #a990ff; --claude-soft: #251d3f;
+    --chip-s: 60%; --chip-l: 72%;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f131a; --panel: #161b24; --sunk: #1d2330; --ink: #e4e9f1; --muted: #96a1b3;
+  --line: #283041; --line-strong: #3d485c; --accent: #7f9cff; --accent-soft: #1d2741;
+  --s-todo: #8e99ab; --s-in_progress: #6c9cff; --s-blocked: #f07468; --s-deferred: #e2a64a; --s-done: #5bc489; --s-dropped: #687284;
+  --you: #f27bb0; --you-soft: #3a1c2b; --on-strong: #10131a;
+  --claude: #a990ff; --claude-soft: #251d3f;
+  --chip-s: 60%; --chip-l: 72%;
+  color-scheme: dark;
+}
