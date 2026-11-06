@@ -11,6 +11,7 @@ import { useSelection } from '../composables/useSelection.ts';
 import { useTaskActions } from '../composables/useTaskActions.ts';
 import { useMapStore } from '../stores/map.ts';
 import { useUiStore } from '../stores/ui.ts';
+import ActionBox from './ActionBox.vue';
 import AppModal from './AppModal.vue';
 import AreaTag from './AreaTag.vue';
 import CommitMessageField from './CommitMessageField.vue';
@@ -116,6 +117,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
     <p v-if="map.queued.get(t.id)" class="run-line"><QueuedTag :task-id="t.id" /> <span class="muted">{{ $t('queue.queuedHelp') }}</span></p>
     <!-- A decision of yours without a question from Claude: decide it here (with questions, answering them decides) -->
     <DecisionBox v-if="t.owner === 'me' && t.ask === 'decision' && !isClosed(t.status) && openQuestions(t).length === 0" :key="t.id" :task="t" />
+    <ActionBox v-else-if="t.owner === 'me' && t.ask === 'action' && !isClosed(t.status)" :task="t" />
 
     <section v-if="t.questions.length" class="block">
       <h3 class="label">{{ $t('detail.questions') }} <span v-if="openQuestions(t).length" class="open">{{ $t('detail.open', { n: openQuestions(t).length }) }}</span></h3>

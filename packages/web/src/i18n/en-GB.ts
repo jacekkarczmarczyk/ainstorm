@@ -109,6 +109,9 @@ export const enGB = {
     hintSingle: 'Enter saves, Esc cancels', hintMulti: 'Ctrl+Enter saves, Esc cancels',
     dialogTitle: 'Change the commit message of {id}', saved: 'Commit message of {id} saved',
   },
+  action: {
+    title: 'Your action', help: 'Done it? Confirm it here; the change goes to Claude like any status change.', done: 'Mark as done',
+  },
   decide: {
     title: 'Your decision', note: 'Note for Claude (optional)…', yes: 'Yes, hand to Claude', no: 'No, drop it',
     yesTitle: 'Hand {id} to Claude?',

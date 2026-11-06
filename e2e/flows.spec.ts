@@ -276,6 +276,20 @@ test('a decision of the user\'s hands the task to Claude, who can then run it', 
   await expect(taskPanel(page).getByRole('button', { name: 'Run', exact: true })).toBeVisible();
 });
 
+test('an action of the user\'s is marked done from the panel, and can be undone', async ({ page }) => {
+  await page.goto(`${SHOP}/tree/PRJ-51`);
+  const panel = taskPanel(page);
+  await panel.getByRole('button', { name: 'Mark as done' }).click();
+  await dialog(page).getByRole('button', { name: /Mark as Done/ }).click();
+  await expect(rowTitle(page, 'PRJ-51')).toHaveClass(/t-done/);
+  await expect(panel.getByRole('button', { name: 'Mark as done' })).toHaveCount(0);
+  await toast(page).getByRole('button', { name: 'Undo' }).click();
+  await expect(panel.getByRole('button', { name: 'Mark as done' })).toBeVisible();
+  // Not on Claude's tasks
+  await page.goto(`${SHOP}/tree/PRJ-45`);
+  await expect(taskPanel(page).getByRole('button', { name: 'Mark as done' })).toHaveCount(0);
+});
+
 test('a decision of no drops the task', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-52`);
   await page.getByRole('button', { name: 'No, drop it' }).click();
