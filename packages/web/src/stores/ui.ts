@@ -33,6 +33,8 @@ export const useUiStore = defineStore('ui', () => {
   const showOutline = useStoredRef('showOutline', false);
   /** Plugin folder for `claude --plugin-dir` in copied resume commands, until the plugin is installed */
   const pluginDir = useStoredRef('pluginDir', '');
+  /** Browser (on Windows: native) notifications when a session starts waiting on the user */
+  const notifyWaiting = useStoredRef('notifyWaiting', false);
   /** Language of the prompts copied into sessions */
   const promptLanguage = useStoredRef<PromptLanguage>('promptLanguage', 'en', isPromptLanguage);
   /** Per action: confirm in a dialog (true) or apply straight away (false) */
@@ -72,7 +74,7 @@ export const useUiStore = defineStore('ui', () => {
   }
 
   return {
-    projectKey, theme, detailWidth, notifyAuto, showOutline, pluginDir, promptLanguage, confirm, filter, collapsed, hideClosedBranches, panelHidden, sheetOpen,
+    projectKey, theme, detailWidth, notifyAuto, notifyWaiting, showOutline, pluginDir, promptLanguage, confirm, filter, collapsed, hideClosedBranches, panelHidden, sheetOpen,
     toggleCollapsed, expand, patchFilter, setConfirm, cycleTheme,
     resetFilter: () => setFilter(EMPTY_FILTER),
   };

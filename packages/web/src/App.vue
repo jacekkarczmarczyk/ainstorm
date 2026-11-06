@@ -10,6 +10,7 @@ import DetailPanel from './components/DetailPanel.vue';
 import ToastHost from './components/ToastHost.vue';
 import { useIsMobile } from './composables/useMediaQuery.ts';
 import { useResizable } from './composables/useResizable.ts';
+import { useWaitNotifications } from './composables/useWaitNotifications.ts';
 import { useDialogStore } from './stores/dialog.ts';
 import { useMapStore } from './stores/map.ts';
 import { useUiStore } from './stores/ui.ts';
@@ -34,6 +35,7 @@ watchEffect(() => {
   if (ui.theme === 'auto') root.removeAttribute('data-theme');
   else root.setAttribute('data-theme', ui.theme);
 });
+useWaitNotifications();
 watchEffect(() => {
   const n = map.waitingSessions.length;
   document.title = n ? `(${n}) ${t('app.name')}` : t('app.name');

@@ -86,6 +86,13 @@ export const enGB = {
     queuedNext: 'Queued in session · next', queuedAhead: 'Queued in session · {n} ahead | Queued in session · {n} ahead',
     queuedHelp: 'Sent to a session together with other tasks; it starts when the open tasks before it are finished.',
   },
+  notify: {
+    title: '„{session}” waits on you',
+    permission: 'Answer the permission prompt in the terminal ({tool}).',
+    decision: 'Your decision: {id} {title}',
+    action: 'Your action: {id} {title}',
+    start: 'Approve and start: {id} {title}',
+  },
   issue: {
     create: 'Create issue', close: 'Close issue', sent: 'Sent to Claude: issue of {id}',
     createTitle: 'Ask Claude to create a GitHub issue for {id}?', closeTitle: 'Ask Claude to close the GitHub issue of {id}?',
@@ -176,6 +183,9 @@ export const enGB = {
     showOutline: 'Show outline position next to ids', showOutlineHelp: 'For orientation only, e.g. PRJ-49(1/3/2). Claude and links use the id alone.',
     pluginDir: 'Plugin folder (until the plugin is installed)',
     pluginDirHelp: 'Added as --plugin-dir to copied resume commands. Leave empty once the plugin is installed.',
+    notifications: 'Notifications', notifyWaiting: 'Notify me when a session waits on me',
+    notifyWaitingHelp: 'A system notification (on Windows: native) while this map is open, also in a background tab. Your browser asks for permission once.',
+    notifyDenied: 'Notifications are blocked for this page. Allow them in the browser’s site settings, then tick again.',
     promptLanguage: 'Prompt language',
     promptLanguageHelp: 'Language of the prompts copied into Claude sessions. Claude answers in the language of your conversation anyway.',
     confirmHelp: 'Changes sent to Claude. Unticked actions are applied straight away, with Undo in the toast.',

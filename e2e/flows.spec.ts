@@ -118,6 +118,40 @@ test('"Still relevant?" sends a recheck prompt and leaves the question open', as
   await expect(page.getByRole('button', { name: 'Send answer' })).toBeVisible();
 });
 
+// Headless Chromium reports notifications as blocked, so the browser's answer is stubbed
+const stubNotifications = (page: Page, answer: 'granted' | 'denied') => page.addInitScript(a => {
+  let permission = 'default';
+  Object.defineProperty(window, 'Notification', {
+    configurable: true,
+    value: Object.assign(function Notification() {}, {
+      get permission() { return permission; },
+      requestPermission: async () => { permission = a; return a; },
+    }),
+  });
+}, answer);
+
+test('notifications are an option in the settings, off until turned on', async ({ page }) => {
+  await stubNotifications(page, 'granted');
+  await page.goto(`${SHOP}/tree`);
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  const box = page.getByRole('dialog', { name: 'Settings' }).getByLabel('Notify me when a session waits on me');
+  await expect(box).not.toBeChecked();
+  await box.click();
+  await expect(box).toBeChecked();
+  await box.click();
+  await expect(box).not.toBeChecked();
+});
+
+test('notifications stay off when the browser blocks them, and say why', async ({ page }) => {
+  await stubNotifications(page, 'denied');
+  await page.goto(`${SHOP}/tree`);
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  const settings = page.getByRole('dialog', { name: 'Settings' });
+  await settings.getByLabel('Notify me when a session waits on me').click();
+  await expect(settings.getByLabel('Notify me when a session waits on me')).not.toBeChecked();
+  await expect(settings.getByText(/Notifications are blocked for this page/)).toBeVisible();
+});
+
 test('prompts follow the prompt language from the settings', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await page.getByRole('button', { name: 'Open settings' }).click();
