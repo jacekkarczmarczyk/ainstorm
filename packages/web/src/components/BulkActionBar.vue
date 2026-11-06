@@ -44,7 +44,7 @@ async function setStatus(e: Event) {
       </select>
       <button type="button" class="btn sm" @click="moving = true"><CornerDownRight :size="13" aria-hidden="true" /> {{ $t('bulk.move') }}</button>
       <button type="button" class="btn sm drop" @click="actions.setStatusMany(tasks, 'dropped')"><Ban :size="13" aria-hidden="true" /> {{ $t('bulk.drop') }}</button>
-      <button type="button" class="btn sm ghost" @click="picked.clear()"><X :size="13" aria-hidden="true" /> {{ $t('bulk.clear') }}</button>
+      <button type="button" class="btn sm" @click="picked.clear()"><X :size="13" aria-hidden="true" /> {{ $t('bulk.clear') }}</button>
     </div>
     <MoveTaskDialog v-if="moving" :tasks="tasks" @close="moving = false" />
   </section>
@@ -58,7 +58,8 @@ async function setStatus(e: Event) {
 .count { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; color: var(--accent); }
 .buttons { display: flex; flex-wrap: wrap; gap: 6px; }
 .drop { color: var(--s-blocked); }
-select.btn { padding-right: 4px; }
+/* A list, not a button: the native options take their colours from it, so it keeps the panel background */
+select.btn { padding-right: 4px; background: var(--panel); }
 @media (max-width: 760px) {
   .bulk { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 }

@@ -42,7 +42,7 @@ const open = ref(false);
       </label>
     </section>
     <template #footer>
-      <div class="actions"><button type="button" class="btn primary-action primary" @click="open = false">{{ $t('settings.close') }}</button></div>
+      <div class="actions"><button type="button" class="btn primary-action" @click="open = false">{{ $t('settings.close') }}</button></div>
     </template>
   </AppModal>
 </template>

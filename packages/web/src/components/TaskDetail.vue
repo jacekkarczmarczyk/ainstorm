@@ -96,7 +96,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
         <button type="button" class="unfocus" :title="$t('detail.clearFocus')" :aria-label="$t('detail.clearFocus')" @click="clearingFocus = true"><X :size="12" aria-hidden="true" /></button>
       </span>
       <span class="spacer"></span>
-      <button v-if="mobile" type="button" class="btn ghost sm" @click="ui.sheetOpen = false">{{ $t('detail.close') }}</button>
+      <button v-if="mobile" type="button" class="btn sm" @click="ui.sheetOpen = false">{{ $t('detail.close') }}</button>
       <button v-else type="button" class="btn ghost sm" :aria-label="$t('detail.hide')" :title="$t('detail.hide')" @click="ui.panelHidden = true"><X :size="16" /></button>
     </div>
     <h2 :class="`t-${t.status}`"><IssueText :text="t.title" :repo-url="repoUrl" /></h2>
