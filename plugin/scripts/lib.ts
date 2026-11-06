@@ -14,7 +14,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 
 export type Api = <T>(method: 'GET' | 'POST', path: string, body?: unknown) => Promise<T>;
 
-function readJsonFile<T>(path: string): T | null {
+export function readJsonFile<T>(path: string): T | null {
   try {
     return JSON.parse(readFileSync(path, 'utf8')) as T;
   } catch {
@@ -40,7 +40,7 @@ export function createApi(token?: string, port = PORT, timeoutMs = 3000): Api {
   };
 }
 
-async function healthy(): Promise<boolean> {
+export async function healthy(): Promise<boolean> {
   try {
     const response = await fetch(`${BASE}/health`, { signal: AbortSignal.timeout(800) });
     return response.ok;

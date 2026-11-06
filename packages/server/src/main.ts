@@ -39,8 +39,8 @@ if (values.import) {
   if (values['import-only']) process.exit(0);
 }
 
-// Recorded for the plugin's SessionStart hook, which starts the daemon when it is not running
-writeFileSync(paths.daemon, `${JSON.stringify({ entry: fileURLToPath(import.meta.url) }, null, 2)}\n`, { mode: 0o600 });
+// Recorded for the plugin's hooks, which start the daemon when it is not running, and for `pnpm daemon:restart`
+writeFileSync(paths.daemon, `${JSON.stringify({ entry: fileURLToPath(import.meta.url), pid: process.pid }, null, 2)}\n`, { mode: 0o600 });
 
 const staticDir = join(import.meta.dirname, '..', '..', 'web', 'dist');
 // Signed-in browsers stay signed in across restarts

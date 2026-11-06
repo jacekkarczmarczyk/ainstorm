@@ -101,6 +101,7 @@ pnpm typecheck
 pnpm test           # unit and integration tests
 pnpm e2e            # Playwright, against the dev server
 pnpm e2e:daemon     # Playwright, against a real daemon serving the built UI (pnpm build first)
+pnpm daemon:restart # restart your daemon with the current code; says when sessions need /reload-plugins
 ```
 
 Packages: `packages/core` (domain rules, no I/O), `packages/server` (daemon), `packages/web` (Vue 3 UI),

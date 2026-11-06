@@ -15,6 +15,7 @@
     "e2e": "playwright test",
     "e2e:daemon": "playwright test -c playwright.daemon.config.ts",
     "daemon": "node packages/server/src/main.ts",
+    "daemon:restart": "node scripts/restart-daemon.ts",
     "build": "pnpm -r run build",
     "dev": "pnpm --filter @ainstorm/web run dev"
   },
