@@ -54,7 +54,9 @@ test('a link asked for by a session opens that session', async ({ page, request 
   });
   await page.goto(((await reply.json()) as { url: string }).url);
   await page.getByRole('button', { name: 'Open the map' }).click();
-  await expect(page).toHaveURL(`http://127.0.0.1:${DAEMON_PORT}/s/ed08d5d7/tree`);
+  // Only open tasks: the "Open" quick filter is on
+  await expect(page).toHaveURL(`http://127.0.0.1:${DAEMON_PORT}/s/ed08d5d7/tree?status=todo&status=in_progress&status=blocked&status=deferred`);
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#row-PRJ-1')).toBeVisible();
 });
 

@@ -135,7 +135,8 @@ describe('daemon over HTTP', () => {
   it('a link asked for by a session opens that session; the target cannot be chosen from outside', async () => {
     const session = fixture().sessions[0]!;
     const link = async (body: unknown) => new URL((JSON.parse((await call('/api/open-link', { method: 'POST', headers: auth, body })).body) as { url: string }).url).searchParams.get('code')!;
-    expect((await redeem(await link({ sessionId: session.id }))).headers.location).toBe(`/s/${session.id.slice(0, 8)}/tree`);
+    expect((await redeem(await link({ sessionId: session.id }))).headers.location)
+      .toBe(`/s/${session.id.slice(0, 8)}/tree?status=todo&status=in_progress&status=blocked&status=deferred`);
     // An unknown session, or no session, lands on the start page
     expect((await redeem(await link({ sessionId: '00000000-0000-4000-8000-000000000000' }))).headers.location).toBe('/');
     expect((await redeem(await newCode())).headers.location).toBe('/');

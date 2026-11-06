@@ -1,6 +1,7 @@
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { extname, join, normalize, sep } from 'node:path';
+import { EMPTY_FILTER, filterToQuery, toggleQuickFilter } from '@ainstorm/core';
 import { z, ZodError } from 'zod';
 import { EngineError, type Daemon } from './daemon.ts';
 import { callTool, toolDefinitions } from './mcpTools.ts';
@@ -45,7 +46,11 @@ function sendHtml(res: ServerResponse, status: number, html: string) {
 
 const ChangeBody = z.object({ command: z.unknown(), changeId: z.number().int().positive().optional() });
 const PromptBody = z.object({ prompt: z.string().max(200_000) });
-const OpenLinkBody = z.object({ sessionId: z.uuid().optional() }).nullable().transform(body => body ?? {});
+// The tree of the session opens with the "Open" quick filter on: only tasks still to be done
+const OPEN_TASKS = new URLSearchParams(
+  Object.entries(filterToQuery(toggleQuickFilter(EMPTY_FILTER, 'open'))).flatMap(([key, v]) => (Array.isArray(v) ? v : [v]).map(x => [key, x])),
+).toString();
+const OpenLinkBody =z.object({ sessionId: z.uuid().optional() }).nullable().transform(body => body ?? {});
 
 /**
  * HTTP API, SSE and the static UI. Every request passes the Host check; API calls need either the bearer
@@ -198,7 +203,7 @@ export function createHttpServer(options: HttpOptions): Server {
         const hasBody = (req.headers['content-type'] ?? '').startsWith('application/json');
         const { sessionId } = OpenLinkBody.parse(hasBody ? await readJson(req) : null);
         const known = options.daemon.snapshot().sessions.find(s => s.id === sessionId);
-        const target = known ? `/s/${known.id.slice(0, 8)}/tree` : '/';
+        const target = known ? `/s/${known.id.slice(0, 8)}/tree?${OPEN_TASKS}` : '/';
         return send(res, 200, { url: `http://127.0.0.1:${port}/open?code=${sessions.issueCode(target)}` });
       }
       if (pathname === '/api/reserve') return send(res, 200, { changeId: options.daemon.reserveChangeId() });
