@@ -14,6 +14,13 @@ test('start page shows all projects and what waits on the user anywhere', async 
   await expect(page.locator('article.project')).toHaveCount(2);
   // Both bookkeeping sessions wait on the user
   await expect(page.locator('article.session')).toHaveCount(2);
+  // Tasks for you are counted per project card, not in the header (one click could not show them all)
+  const header = page.getByRole('banner');
+  await expect(header.getByRole('button', { name: /tasks? for you/ })).toHaveCount(0);
+  await expect(page.locator('article.project', { hasText: 'shop' }).getByText('6 tasks for you')).toBeVisible();
+  await page.goto('/p/PRJ');
+  await expect(header.getByRole('button', { name: '6 tasks for you' })).toBeVisible();
+  await page.goto('/');
   await page.locator('article.project', { hasText: 'shop' }).locator('h3').click();
   await expect(page).toHaveURL(/\/p\/PRJ$/);
 });

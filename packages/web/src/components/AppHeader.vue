@@ -58,9 +58,10 @@ const sessionItems = computed<PickerItem[]>(() => [
   })),
 ]);
 
-// Badges count the current project, or all projects on the start page
+// Badges count the current project; waiting sessions count all projects on the start page. Tasks for you are not
+// counted there: the project cards show them, since one click could not lead to tasks spread over several projects
 const waiting = computed(() => map.waitingSessions.filter(s => !projectKey.value || s.projectKey === projectKey.value));
-const forYou = computed(() => map.forUser.filter(t => !projectKey.value || t.projectKey === projectKey.value));
+const forYou = computed(() => (projectKey.value ? map.forUser.filter(t => t.projectKey === projectKey.value) : []));
 
 function openWaiting() {
   const only = waiting.value.length === 1 ? waiting.value[0]! : null;
