@@ -58,7 +58,9 @@ export type PromptKind =
   | { kind: 'commitMessage'; task: Task; message: string }
   | { kind: 'issue'; task: Task; request: 'create' | 'close'; repoUrl: string; number: number | null }
   | { kind: 'statusMany'; tasks: readonly Task[]; to: TaskStatus }
-  | { kind: 'moveMany'; tasks: readonly Task[]; to: Task | null };
+  | { kind: 'moveMany'; tasks: readonly Task[]; to: Task | null }
+  | { kind: 'typeMany'; tasks: readonly Task[]; type: string | null }
+  | { kind: 'areaMany'; tasks: readonly Task[]; area: string; on: boolean };
 
 export { PROMPT_LANGUAGES, PROMPT_PHRASES, isPromptLanguage, type PromptLanguage } from './promptLanguages.ts';
 
@@ -103,6 +105,16 @@ function render(p: PromptKind, l: PromptPhrases, ref: (t: Task) => string, q: (s
       fill(l.moveMany, { where: p.to ? fill(l.under, { task: ref(p.to) }) : l.topLevel }),
       ...p.tasks.map(t => `- ${ref(t)}`),
       l.moveManyOutro,
+    ].join('\n');
+    case 'typeMany': return [
+      fill(l.typeMany, { type: p.type ?? '—' }),
+      ...p.tasks.map(t => `- ${ref(t)}`),
+      l.statusManyOther,
+    ].join('\n');
+    case 'areaMany': return [
+      fill(p.on ? l.areaAdded : l.areaRemoved, { area: q(p.area) }),
+      ...p.tasks.map(t => `- ${ref(t)}`),
+      l.statusManyOther,
     ].join('\n');
     case 'decide': {
       const text = fill(p.approve ? l.decideYes : l.decideNo, { task: ref(p.task) });

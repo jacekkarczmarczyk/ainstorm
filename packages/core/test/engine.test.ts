@@ -156,6 +156,21 @@ describe('MapEngine', () => {
     expect(() => engine.execute({ type: 'setStatusMany', taskIds: ['PRJ-1'], to: engine.task('PRJ-1').status, notify: true })).toThrow(/already/);
   });
 
+  it('sets the type and adds or removes a known area of many tasks, each in one change', () => {
+    const { engine } = setup();
+    const typed = engine.execute({ type: 'setTypeMany', taskIds: ['PRJ-1', 'PRJ-2'], taskType: 'fix', notify: false });
+    expect(['PRJ-1', 'PRJ-2'].map(id => engine.task(id).type)).toEqual(['fix', 'fix']);
+    engine.revert(typed.changeId);
+    expect(engine.task('PRJ-1').type).toBeNull();
+
+    expect(() => engine.execute({ type: 'setAreaMany', taskIds: ['PRJ-1'], area: 'nowhere', on: true, notify: false })).toThrow(/Unknown area/);
+    engine.state.projects[0]!.areas = ['web'];
+    engine.execute({ type: 'setAreaMany', taskIds: ['PRJ-1', 'PRJ-2'], area: 'web', on: true, notify: false });
+    expect(engine.task('PRJ-2').areas).toEqual(['web']);
+    engine.execute({ type: 'setAreaMany', taskIds: ['PRJ-1', 'PRJ-2'], area: 'web', on: false, notify: false });
+    expect(engine.task('PRJ-1').areas).toEqual([]);
+  });
+
   it('moves many tasks in one change and rejects a move under a subtask', () => {
     const { engine } = setup();
     const { changeId } = engine.execute({ type: 'moveMany', taskIds: ['PRJ-2', 'PRJ-3'], parentId: null, notify: false });

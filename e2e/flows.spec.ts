@@ -70,6 +70,12 @@ test('ticked tasks get bulk actions: one dialog and one Undo for all, Run in the
   await expect(row(page, 'PRJ-44').locator('.title')).not.toHaveClass(/t-dropped/);
   await expect(row(page, 'PRJ-45').locator('.title')).not.toHaveClass(/t-dropped/);
 
+  // Type for all ticked tasks: one dialog, one change
+  await bar.getByLabel('Type…').selectOption('docs');
+  await dialog(page).getByRole('button', { name: 'Set type' }).click();
+  await expect(row(page, 'PRJ-44').locator('.lead')).toContainText('docs');
+  await expect(row(page, 'PRJ-45').locator('.lead')).toContainText('docs');
+
   // Run: one prompt for the ticked tasks in the order they were ticked; unticking takes a task out
   await row(page, 'PRJ-23').getByRole('checkbox', { name: 'Select PRJ-23' }).check();
   await row(page, 'PRJ-44').getByRole('checkbox', { name: 'Select PRJ-44' }).uncheck();

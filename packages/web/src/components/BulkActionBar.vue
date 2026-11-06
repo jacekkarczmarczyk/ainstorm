@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { isClosed, TASK_STATUSES, type Session, type Task, type TaskStatus } from '@ainstorm/core';
+import { isClosed, projectAreas, TASK_STATUSES, TASK_TYPES, type Session, type Task, type TaskStatus, type TaskType } from '@ainstorm/core';
 import { Ban, CornerDownRight, Play, SquareCheck, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useTaskActions } from '../composables/useTaskActions.ts';
@@ -22,6 +22,24 @@ watch(() => props.session.id, () => picked.clear());
 
 const run = () => actions.runMany(tasks.value, props.session, () => picked.clear());
 
+// Areas can only be ones the project knows; removing offers those the ticked tasks have
+const knownAreas = computed(() => projectAreas(map.snapshot, props.session.projectKey));
+const usedAreas = computed(() => [...new Set(tasks.value.flatMap(t => t.areas))].sort((a, b) => a.localeCompare(b)));
+
+async function setType(e: Event) {
+  const select = e.target as HTMLSelectElement;
+  const value = select.value;
+  select.value = '';
+  await actions.setTypeMany(tasks.value, value === '-' ? null : value as TaskType);
+}
+
+async function setArea(e: Event) {
+  const select = e.target as HTMLSelectElement;
+  const value = select.value;
+  select.value = '';
+  await actions.setAreaMany(tasks.value, value.slice(1), value.startsWith('+'));
+}
+
 async function setStatus(e: Event) {
   const select = e.target as HTMLSelectElement;
   const to = select.value as TaskStatus;
@@ -41,6 +59,22 @@ async function setStatus(e: Event) {
       <select id="bulk-status" class="btn sm" value="" @change="setStatus">
         <option value="" disabled>{{ $t('bulk.status') }}</option>
         <option v-for="s in TASK_STATUSES" :key="s" :value="s">{{ $t(`status.${s}`) }}</option>
+      </select>
+      <label class="sr-only" for="bulk-type">{{ $t('bulk.type') }}</label>
+      <select id="bulk-type" class="btn sm" value="" @change="setType">
+        <option value="" disabled>{{ $t('bulk.type') }}</option>
+        <option v-for="ty in TASK_TYPES" :key="ty" :value="ty">{{ ty }}</option>
+        <option value="-">{{ $t('bulk.noType') }}</option>
+      </select>
+      <label class="sr-only" for="bulk-area">{{ $t('bulk.area') }}</label>
+      <select id="bulk-area" class="btn sm" value="" @change="setArea">
+        <option value="" disabled>{{ $t('bulk.area') }}</option>
+        <optgroup v-if="knownAreas.length" :label="$t('bulk.areaAdd')">
+          <option v-for="a in knownAreas" :key="`+${a}`" :value="`+${a}`">+ {{ a }}</option>
+        </optgroup>
+        <optgroup v-if="usedAreas.length" :label="$t('bulk.areaRemove')">
+          <option v-for="a in usedAreas" :key="`-${a}`" :value="`-${a}`">− {{ a }}</option>
+        </optgroup>
       </select>
       <button type="button" class="btn sm" @click="moving = true"><CornerDownRight :size="13" aria-hidden="true" /> {{ $t('bulk.move') }}</button>
       <button type="button" class="btn sm drop" @click="actions.setStatusMany(tasks, 'dropped')"><Ban :size="13" aria-hidden="true" /> {{ $t('bulk.drop') }}</button>

@@ -1,10 +1,11 @@
 import { z } from 'zod';
 import {
-  Delivery, isClosed, MapSnapshot, ProjectKey, Session, SessionId, Task, TaskId, TaskStatus,
+  Delivery, isClosed, MapSnapshot, ProjectKey, Session, SessionId, Task, TaskId, TaskStatus, TaskType,
   type Actor, type EventType, type MapEvent, type Project,
 } from './model.ts';
 import { withCommit } from './commitMessage.ts';
 import { issueNumber } from './github.ts';
+import { projectAreas } from './sessionOps.ts';
 import { isSessionOpen, targetSessions } from './sessions.ts';
 import { openQuestions } from './status.ts';
 import { buildTaskIndex, descendants, wouldCreateParentCycle } from './tree.ts';
@@ -35,6 +36,9 @@ export const UserCommand = z.discriminatedUnion('type', [
   z.object({ type: z.literal('requestIssue'), taskId: TaskId, request: z.enum(['create', 'close']), notify: z.boolean() }),
   /** Bulk actions on tasks selected in the tree: one change, undone as a whole */
   z.object({ type: z.literal('setStatusMany'), taskIds: z.array(TaskId).min(1).max(100), to: TaskStatus, notify: z.boolean() }),
+  z.object({ type: z.literal('setTypeMany'), taskIds: z.array(TaskId).min(1).max(100), taskType: TaskType.nullable(), notify: z.boolean() }),
+  /** Add (on) or remove an area; only areas known to the project can be added */
+  z.object({ type: z.literal('setAreaMany'), taskIds: z.array(TaskId).min(1).max(100), area: z.string().min(1).max(60), on: z.boolean(), notify: z.boolean() }),
   z.object({ type: z.literal('moveMany'), taskIds: z.array(TaskId).min(1).max(100), parentId: TaskId.nullable(), notify: z.boolean() }),
   /** Run several tasks in order with one pasted prompt (ticked in the tree); only recorded, one change for all */
   z.object({ type: z.literal('requestRunMany'), taskIds: z.array(TaskId).min(1).max(20), sessionId: SessionId.nullable() }),
@@ -255,6 +259,33 @@ export class MapEngine {
             this.touch(t);
             if (isClosed(command.to)) this.resolveWaiting(t);
             log({ taskId: t.id, type: statusEvent(command.to), text: `${from} → ${command.to}`, delivery: this.delivery(t, command.notify) });
+          }
+        });
+      }
+      case 'setTypeMany': {
+        const tasks = [...new Set(command.taskIds)].map(taskId => this.task(taskId)).filter(t => t.type !== command.taskType);
+        if (tasks.length === 0) throw new EngineError('All tasks already have this type', 'invalid');
+        return this.change(id, actor, tasks.map(t => t.id), [], null, log => {
+          for (const t of tasks) {
+            const from = t.type;
+            t.type = command.taskType;
+            this.touch(t);
+            log({ taskId: t.id, type: 'edit', text: `type: ${from ?? 'none'} → ${command.taskType ?? 'none'}`, delivery: this.delivery(t, command.notify) });
+          }
+        });
+      }
+      case 'setAreaMany': {
+        const tasks = [...new Set(command.taskIds)].map(taskId => this.task(taskId)).filter(t => t.areas.includes(command.area) !== command.on);
+        if (tasks.length === 0) throw new EngineError(command.on ? `All tasks already have the area ${command.area}` : `No task has the area ${command.area}`, 'invalid');
+        if (command.on) {
+          const unknown = tasks.find(t => !projectAreas(this.state, t.projectKey).includes(command.area));
+          if (unknown) throw new EngineError(`Unknown area ${command.area} in project ${unknown.projectKey}`, 'invalid');
+        }
+        return this.change(id, actor, tasks.map(t => t.id), [], null, log => {
+          for (const t of tasks) {
+            t.areas = command.on ? [...t.areas, command.area] : t.areas.filter(a => a !== command.area);
+            this.touch(t);
+            log({ taskId: t.id, type: 'edit', text: `area ${command.on ? 'added' : 'removed'}: ${command.area}`, delivery: this.delivery(t, command.notify) });
           }
         });
       }

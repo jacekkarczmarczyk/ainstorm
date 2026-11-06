@@ -82,6 +82,10 @@ export const enGB = {
     moveDialogTitle: 'Move {n} tasks under…',
     statusTitle: 'Set {n} task(s) to {status}?', statusDone: '{n} task(s) set to {status}',
     moveTitle: 'Move {n} task(s) under {to}?', moveDone: '{n} task(s) moved under {to}',
+    type: 'Type…', noType: 'No type', setType: 'Set type', typeTitle: 'Set the type of {n} task(s) to {type}?', typeDone: 'Type of {n} task(s) set to {type}',
+    area: 'Area…', areaAdd: 'Add area', areaRemove: 'Remove area',
+    areaAddTitle: 'Add the area {area} to {n} task(s)?', areaRemoveTitle: 'Remove the area {area} from {n} task(s)?',
+    areaAdded: 'Area {area} added to {n} task(s)', areaRemoved: 'Area {area} removed from {n} task(s)',
   },
   queue: {
     queuedNext: 'Queued in session · next', queuedAhead: 'Queued in session · {n} ahead | Queued in session · {n} ahead',

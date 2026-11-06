@@ -1,6 +1,6 @@
 import {
   buildPrompt, descendants, inherited, isClosed, issueNumber, newSessionCommand, splitCommit, targetSessions, unusualTransition,
-  type Blocker, type PromptKind, type Question, type Session, type Task, type TaskStatus,
+  type Blocker, type PromptKind, type Question, type Session, type Task, type TaskStatus, type TaskType,
 } from '@ainstorm/core';
 import { useI18n } from 'vue-i18n';
 import type { Command } from '../api/types.ts';
@@ -256,6 +256,31 @@ export function useTaskActions() {
     });
   }
 
+  function setTypeMany(all: Task[], type: TaskType | null) {
+    const tasks = all.filter(x => x.type !== type);
+    if (tasks.length === 0) return Promise.resolve();
+    const label = type ?? t('bulk.noType');
+    return perform({
+      action: 'status', task: tasks[0]!, tasks, prompt: { kind: 'typeMany', tasks, type },
+      command: notify => ({ type: 'setTypeMany', taskIds: tasks.map(x => x.id), taskType: type, notify }),
+      title: t('bulk.typeTitle', { n: tasks.length, type: label }), confirmLabel: t('bulk.setType'),
+      doneText: t('bulk.typeDone', { n: tasks.length, type: label }),
+    });
+  }
+
+  /** Add an area (one the project knows) to the ticked tasks, or remove it from them. */
+  function setAreaMany(all: Task[], area: string, on: boolean) {
+    const tasks = all.filter(x => x.areas.includes(area) !== on);
+    if (tasks.length === 0) return Promise.resolve();
+    return perform({
+      action: 'status', task: tasks[0]!, tasks, prompt: { kind: 'areaMany', tasks, area, on },
+      command: notify => ({ type: 'setAreaMany', taskIds: tasks.map(x => x.id), area, on, notify }),
+      title: t(on ? 'bulk.areaAddTitle' : 'bulk.areaRemoveTitle', { n: tasks.length, area }),
+      confirmLabel: t(on ? 'bulk.areaAdd' : 'bulk.areaRemove'),
+      doneText: t(on ? 'bulk.areaAdded' : 'bulk.areaRemoved', { n: tasks.length, area }),
+    });
+  }
+
   function moveMany(all: Task[], parent: Task | null) {
     const tasks = all.filter(x => x.parentId !== (parent?.id ?? null));
     if (tasks.length === 0) return Promise.resolve();
@@ -305,5 +330,5 @@ export function useTaskActions() {
     toasts.show(t(archived ? 'toast.archived' : 'toast.restored', { session: session.title }), undoAction(changeId));
   }
 
-  return { targetsFor, setStatus, toggleDone, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, moveMany, runMany, requestIssue, requestSession, setFocus, clearFocus, setSessionArchived };
+  return { targetsFor, setStatus, toggleDone, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, runMany, requestIssue, requestSession, setFocus, clearFocus, setSessionArchived };
 }
