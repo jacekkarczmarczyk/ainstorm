@@ -20,6 +20,8 @@ export interface McpOptions {
   api: Api;
   sessionId: string;
   instructions: string;
+  /** Starts the daemon when it does not answer; true once it runs */
+  ensureDaemon(): Promise<boolean>;
 }
 
 export class RpcError extends Error {
@@ -31,6 +33,18 @@ export class RpcError extends Error {
 }
 
 const UNAVAILABLE = 'The ainstorm map service is not available right now. Continue the work without the map.';
+// What fetch throws when nothing listens on the port (a timeout is another error: a hung daemon is not restarted)
+const REFUSED = 'fetch failed';
+
+/** A call that finds the daemon down (gone or restarted during the session) starts it and tries once more. */
+async function call<T>(options: McpOptions, send: () => Promise<T>): Promise<T> {
+  try {
+    return await send();
+  } catch (error) {
+    if (!(error instanceof Error && error.message === REFUSED) || !await options.ensureDaemon()) throw error;
+    return send();
+  }
+}
 
 export async function handle(options: McpOptions, request: Request): Promise<unknown> {
   switch (request.method) {
@@ -47,7 +61,7 @@ export async function handle(options: McpOptions, request: Request): Promise<unk
       return {};
     case 'tools/list':
       try {
-        return await options.api('GET', '/api/mcp/tools');
+        return await call(options, () => options.api('GET', '/api/mcp/tools'));
       } catch {
         return { tools: [] };
       }
@@ -55,10 +69,10 @@ export async function handle(options: McpOptions, request: Request): Promise<unk
       const name = String(request.params?.name ?? '');
       if (!/^[a-z_]{1,40}$/.test(name)) throw new RpcError(-32602, `Unknown tool ${name}`);
       try {
-        const result = await options.api<{ text: string; isError: boolean }>('POST', `/api/sessions/${options.sessionId}/tools/${name}`, request.params?.arguments ?? {});
+        const result = await call(options, () => options.api<{ text: string; isError: boolean }>('POST', `/api/sessions/${options.sessionId}/tools/${name}`, request.params?.arguments ?? {}));
         return { content: [{ type: 'text', text: result.text }], isError: result.isError };
       } catch (error) {
-        return { content: [{ type: 'text', text: error instanceof Error && error.message !== 'fetch failed' ? error.message : UNAVAILABLE }], isError: true };
+        return { content: [{ type: 'text', text: error instanceof Error && error.message !== REFUSED ? error.message : UNAVAILABLE }], isError: true };
       }
     }
     default:

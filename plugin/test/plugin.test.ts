@@ -23,7 +23,7 @@ beforeEach(async () => {
   const port = await listenLoopback(server, 0);
   const api = createApi(TOKEN, port);
   deps = { api, ensureDaemon: async () => true };
-  mcp = { api, sessionId: SESSION, instructions: 'i' };
+  mcp = { api, sessionId: SESSION, instructions: 'i', ensureDaemon: async () => true };
 });
 afterEach(() => new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); }));
 
@@ -85,6 +85,18 @@ describe('hooks', () => {
     expect(daemon.snapshot().sessions[0]!.status).toBe('ended');
   });
 
+  it('every hook first makes sure the daemon runs, and does nothing when it cannot start', async () => {
+    await start();
+    let checks = 0;
+    await runHook({ hook_event_name: 'Stop', session_id: SESSION }, { ...deps, ensureDaemon: async () => { checks++; return true; } });
+    expect(checks).toBe(1);
+    expect(daemon.snapshot().sessions[0]!.status).toBe('idle');
+    let calls = 0;
+    const counting: HookDeps = { api: async () => { calls++; return {} as never; }, ensureDaemon: async () => false };
+    expect(await runHook({ hook_event_name: 'UserPromptSubmit', session_id: SESSION, prompt: 'x' }, counting)).toBeNull();
+    expect(calls).toBe(0);
+  });
+
   it('parses git commit output and describes permission prompts briefly', () => {
     expect(parseCommit('[main (root-commit) abc1234] init')).toEqual({ sha: 'abc1234', message: 'init' });
     expect(parseCommit('nothing to commit')).toBeNull();
@@ -108,6 +120,28 @@ describe('MCP proxy', () => {
     expect(bad.isError).toBe(true);
     expect(bad.content[0]!.text).toMatch(/^Invalid input: title/);
     expect((await tool('no_such_tool', {})).isError).toBe(true);
+  });
+
+  it('a call that finds the daemon down starts it and tries once more', async () => {
+    await start();
+    let down = true;
+    let starts = 0;
+    const api: McpOptions['api'] = async (method, path, body) => {
+      if (down) throw new TypeError('fetch failed');
+      return mcp.api(method, path, body);
+    };
+    const restarting: McpOptions = { ...mcp, api, ensureDaemon: async () => { starts++; down = false; return true; } };
+    const call = (options: McpOptions) => handle(options, { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'task_create', arguments: { title: 'Po restarcie' } } });
+    expect(await call(restarting)).toMatchObject({ isError: false });
+    expect(starts).toBe(1);
+    // Cannot be started: the tool says the map is unavailable
+    down = true;
+    expect(await call({ ...restarting, ensureDaemon: async () => false })).toMatchObject({ isError: true, content: [{ text: expect.stringMatching(/not available/) }] });
+    // A hung daemon (timeout) is not started again
+    const timeout: McpOptions = { ...restarting, api: async () => { throw new DOMException('The operation was aborted due to timeout', 'TimeoutError'); } };
+    starts = 0;
+    expect(await call(timeout)).toMatchObject({ isError: true });
+    expect(starts).toBe(0);
   });
 
   it('answers over stdio, ignoring notifications', async () => {

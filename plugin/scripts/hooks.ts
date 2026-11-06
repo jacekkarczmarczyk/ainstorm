@@ -63,15 +63,20 @@ export async function runHook(input: HookInput, deps: HookDeps): Promise<HookOut
   const op = (body: Record<string, unknown>) => api<Record<string, unknown>>('POST', `${session}/ops`, body);
   const deliveries = async () => (await api<{ context: string | null }>('POST', `${session}/deliveries`, {})).context;
   const event = input.hook_event_name;
+  // A daemon that went down or was restarted during the session is started again by the next hook (one /health
+  // call while it runs); when it cannot be started, the hook does nothing
+  const up = await deps.ensureDaemon();
+
+  if (event === 'SessionStart') {
+    if (!up) return { systemMessage: 'ainstorm: the map service is not running; working without the task map.' };
+    const started = await op({ op: 'start', cwd: input.cwd ?? '', source: input.source ?? 'startup' });
+    if (started.project === null) return context(event, NOT_REGISTERED);
+    const [map, pending] = [(await api<{ context: string | null }>('GET', `${session}/context`)).context, await deliveries()];
+    return context(event, [map, pending].filter(Boolean).join('\n\n'));
+  }
+  if (!up) return null;
 
   switch (event) {
-    case 'SessionStart': {
-      if (!await deps.ensureDaemon()) return { systemMessage: 'ainstorm: the map service is not running; working without the task map.' };
-      const started = await op({ op: 'start', cwd: input.cwd ?? '', source: input.source ?? 'startup' });
-      if (started.project === null) return context(event, NOT_REGISTERED);
-      const [map, pending] = [(await api<{ context: string | null }>('GET', `${session}/context`)).context, await deliveries()];
-      return context(event, [map, pending].filter(Boolean).join('\n\n'));
-    }
     case 'UserPromptSubmit': {
       const { block } = await api<{ block: string | null }>('POST', `${session}/prompt`, { prompt: input.prompt ?? '' });
       if (block) return { decision: 'block', reason: block };
