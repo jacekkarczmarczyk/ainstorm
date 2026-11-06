@@ -55,7 +55,8 @@ const hashOf = (session: string) => createHash('sha256').update(session).digest(
  * valid for a short time, usable once. A UI session lasts UI_SESSION_TTL_MS; with a store it survives a restart.
  */
 export class UiSessions {
-  private readonly codes = new Map<string, number>();
+  /** One-time code → when it expires and the local path the browser lands on */
+  private readonly codes = new Map<string, { expires: number; target: string }>();
   /** Hash of the cookie value → when it expires */
   private readonly sessions = new Map<string, number>();
   private readonly ttlMs: number;
@@ -74,23 +75,29 @@ export class UiSessions {
     }
   }
 
-  issueCode(): string {
+  /** `target` is a path the daemon chose itself (never taken from a request), where the browser lands after signing in. */
+  issueCode(target = '/'): string {
     const code = newSecret();
-    this.codes.set(code, this.now() + this.ttlMs);
+    this.codes.set(code, { expires: this.now() + this.ttlMs, target });
     return code;
   }
 
   /** Whether a code can still be redeemed, without using it (the GET of a link must not use it: browsers prefetch links). */
   usable(code: string): boolean {
-    const expires = this.codes.get(code);
-    return expires !== undefined && expires >= this.now();
+    const entry = this.codes.get(code);
+    return entry !== undefined && entry.expires >= this.now();
+  }
+
+  /** Where the browser goes after redeeming the code; read before redeem(), which forgets the code. */
+  targetOf(code: string): string {
+    return this.codes.get(code)?.target ?? '/';
   }
 
   /** Exchange a code for a session value; null when it is unknown, used or expired. */
   redeem(code: string): string | null {
-    const expires = this.codes.get(code);
+    const expires = this.codes.get(code)?.expires;
     this.codes.delete(code);
-    for (const [c, at] of this.codes) if (at < this.now()) this.codes.delete(c);
+    for (const [c, entry] of this.codes) if (entry.expires < this.now()) this.codes.delete(c);
     if (expires === undefined || expires < this.now()) return null;
     const session = newSecret();
     const hash = hashOf(session);

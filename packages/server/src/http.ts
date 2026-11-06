@@ -45,6 +45,7 @@ function sendHtml(res: ServerResponse, status: number, html: string) {
 
 const ChangeBody = z.object({ command: z.unknown(), changeId: z.number().int().positive().optional() });
 const PromptBody = z.object({ prompt: z.string().max(200_000) });
+const OpenLinkBody = z.object({ sessionId: z.uuid().optional() }).nullable().transform(body => body ?? {});
 
 /**
  * HTTP API, SSE and the static UI. Every request passes the Host check; API calls need either the bearer
@@ -147,10 +148,12 @@ export function createHttpServer(options: HttpOptions): Server {
     }
     if (pathname === '/open' && method === 'POST') {
       if (!allowedOrigin(req.headers.origin, port)) throw new HttpError(403, 'Foreign origin');
-      const session = sessions.redeem(await readCode(req));
+      const code = await readCode(req);
+      const target = sessions.targetOf(code);
+      const session = sessions.redeem(code);
       if (session === null) return sendHtml(res, 403, EXPIRED_PAGE);
       res.writeHead(303, {
-        ...SECURITY_HEADERS, Location: '/', 'Cache-Control': 'no-store',
+        ...SECURITY_HEADERS, Location: target, 'Cache-Control': 'no-store',
         // Kept by the browser as long as the daemon keeps the session
         'Set-Cookie': `${COOKIE}=${session}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${Math.floor(sessions.sessionTtlMs / 1000)}`,
       });
@@ -191,7 +194,12 @@ export function createHttpServer(options: HttpOptions): Server {
       if (method !== 'POST') throw new HttpError(405, 'Method not allowed');
       if (pathname === '/api/open-link') {
         if (caller !== 'token') throw new HttpError(403, 'Only the plugin can issue links');
-        return send(res, 200, { url: `http://127.0.0.1:${port}/open?code=${sessions.issueCode()}` });
+        // The link opens the view of the session that asked for it; the path is built here, never taken from the request
+        const hasBody = (req.headers['content-type'] ?? '').startsWith('application/json');
+        const { sessionId } = OpenLinkBody.parse(hasBody ? await readJson(req) : null);
+        const known = options.daemon.snapshot().sessions.find(s => s.id === sessionId);
+        const target = known ? `/s/${known.id.slice(0, 8)}/tree` : '/';
+        return send(res, 200, { url: `http://127.0.0.1:${port}/open?code=${sessions.issueCode(target)}` });
       }
       if (pathname === '/api/reserve') return send(res, 200, { changeId: options.daemon.reserveChangeId() });
       if (pathname === '/api/commands') {

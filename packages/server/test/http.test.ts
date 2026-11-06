@@ -132,6 +132,19 @@ describe('daemon over HTTP', () => {
     expect((await call('/api/sessions/not-a-uuid/ops', { method: 'POST', headers: auth, body: { op: 'end' } })).status).toBe(404);
   });
 
+  it('a link asked for by a session opens that session; the target cannot be chosen from outside', async () => {
+    const session = fixture().sessions[0]!;
+    const link = async (body: unknown) => new URL((JSON.parse((await call('/api/open-link', { method: 'POST', headers: auth, body })).body) as { url: string }).url).searchParams.get('code')!;
+    expect((await redeem(await link({ sessionId: session.id }))).headers.location).toBe(`/s/${session.id.slice(0, 8)}/tree`);
+    // An unknown session, or no session, lands on the start page
+    expect((await redeem(await link({ sessionId: '00000000-0000-4000-8000-000000000000' }))).headers.location).toBe('/');
+    expect((await redeem(await newCode())).headers.location).toBe('/');
+    // Only a session id is accepted; anything that could name another place is refused
+    expect((await call('/api/open-link', { method: 'POST', headers: auth, body: { sessionId: 'https://evil.example' } })).status).toBe(400);
+    const code = await newCode();
+    expect((await call('/open', { method: 'POST', form: `code=${code}&target=https://evil.example`, headers: { Origin: `http://127.0.0.1:${port}` } })).headers.location).toBe('/');
+  });
+
   it('does not let the UI issue links', async () => {
     const cookie = await uiCookie();
     expect((await call('/api/open-link', { method: 'POST', headers: { Cookie: cookie, Origin: `http://127.0.0.1:${port}` } })).status).toBe(403);

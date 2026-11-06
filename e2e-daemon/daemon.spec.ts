@@ -48,6 +48,16 @@ test('a one-time link logs the browser in once; changes go through the daemon', 
   expect(external).toEqual([]);
 });
 
+test('a link asked for by a session opens that session', async ({ page, request }) => {
+  const reply = await request.post('/api/open-link', {
+    headers: { Authorization: `Bearer ${token()}` }, data: { sessionId: 'ed08d5d7-18da-4b7e-8239-87b2b703b793' },
+  });
+  await page.goto(((await reply.json()) as { url: string }).url);
+  await page.getByRole('button', { name: 'Open the map' }).click();
+  await expect(page).toHaveURL(`http://127.0.0.1:${DAEMON_PORT}/s/ed08d5d7/tree`);
+  await expect(page.locator('#row-PRJ-1')).toBeVisible();
+});
+
 test('a browser that loses its sign-in sees the sign-in screen instead of a stale map', async ({ page, request, context }) => {
   await page.goto(await openLink(request));
   await page.getByRole('button', { name: 'Open the map' }).click();
