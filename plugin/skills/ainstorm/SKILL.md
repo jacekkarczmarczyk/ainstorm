@@ -57,6 +57,8 @@ what was parked on the way, and what waits for them. Keep it true as you work. T
 - Work you finished that only the user can verify (an install, a manual test in their own session): hand the task over
   with `owner: "me"`, `ask: "action"`, status `todo` and the steps to check in the description. Do not keep it as
   your own task in progress.
+- A choice the user should make only after your opinion (e.g. "which variant?"): keep the task yours with
+  `ask: "proposal"`. Present the opinion and options, then ask with `question_ask`; that makes it the user's decision.
 
 ## Changes from the web UI
 

@@ -8,7 +8,7 @@ export const enGB = {
   },
   status: { todo: 'To do', in_progress: 'In progress', blocked: 'Blocked', deferred: 'Deferred', done: 'Done', dropped: 'Dropped' },
   sessionStatus: { waiting: 'Waiting on you', active: 'Working', paused: 'Paused', idle: 'Idle', ended: 'Ended', archived: 'Archived' },
-  ask: { action: 'action', decision: 'decision' },
+  ask: { action: 'action', decision: 'decision', proposal: 'proposal' },
   owner: { me: 'You', claude: 'Claude' },
   facet: { type: 'Type', status: 'Status', area: 'Area' },
   commitState: { squashed: 'squashed into', amended: 'amended as', rebased: 'rebased as', removed: 'removed from history' },
@@ -39,6 +39,7 @@ export const enGB = {
   tree: { hideClosed: 'Hide closed branches', empty: 'Nothing matches these filters.', expand: 'Expand {id}', collapse: 'Collapse {id}' },
   task: {
     markDone: 'Mark {id} as done', select: 'Select {id}', changeStatus: 'Status of {id}', you: 'You · {ask}', from: 'from {id}', waitsFor: 'waits for {ids}', waitsForLabel: 'waits for', focus: 'focus',
+    proposal: 'Claude · proposal', proposalHelp: 'Claude presents an opinion and options first; then it becomes your decision.',
     run: 'Run {id} in a Claude session', pause: 'Pause the session', question: 'Claude has a question for you',
   },
   run: {
@@ -50,7 +51,7 @@ export const enGB = {
     label: 'Task details', pick: 'Pick a task to see its details.', hide: 'Hide', close: 'Close', status: 'Status', run: 'Run', pause: 'Pause', resume: 'Resume',
     setFocus: 'Set as project focus', isFocus: 'Project focus', clearFocus: 'Clear project focus',
     clearFocusTitle: 'Clear the project focus?', clearFocusText: '{id} stops being the focus of {project}. The project will have no focus until you set one.', showMore: 'Show full description', showLess: 'Show less',
-    owner: 'Owner', ownerMe: 'You ({ask})', ownerClaude: 'Claude', project: 'Project', areas: 'Areas', branch: 'Branch', plan: 'Plan',
+    owner: 'Owner', ownerMe: 'You ({ask})', ownerClaude: 'Claude', ownerClaudeProposal: 'Claude, proposal first (then your decision)', project: 'Project', areas: 'Areas', branch: 'Branch', plan: 'Plan',
     planMarker: 'marked [{id}] in the plan', copyPath: 'Copy path', issue: 'Issue', pr: 'PR', from: 'from',
     whyDeferred: 'Why deferred', doneWhen: 'Done when', allMet: 'All met', next: 'Next: {text}', decisions: 'Decisions', latest: 'Latest: {text}',
     subtasks: 'Subtasks', dependencies: 'Dependencies', waitsFor: 'Waits for', waitedFor: 'Waited for (done)', blocks: 'Blocks', origin: 'Origin', foundDuring: 'From',

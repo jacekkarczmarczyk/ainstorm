@@ -3,6 +3,7 @@ import { EngineError, MapEngine } from '../src/engine.ts';
 import type { MapSnapshot } from '../src/model.ts';
 import { buildPrompt } from '../src/prompts.ts';
 import { applySessionOp, checkPrompt, nextTaskId, projectAreas, takeDeliveries } from '../src/sessionOps.ts';
+import { needsUser } from '../src/status.ts';
 import { makeProject, makeTask } from './factory.ts';
 
 const NOW = '2026-11-06T12:00:00.000Z';
@@ -128,6 +129,16 @@ describe('session operations', () => {
     expect(value.warning).toMatch(/not ticked: lint\./);
     op(S1, { op: 'setCriterion', taskId: 'PRJ-1', index: 1, done: true });
     expect(op(S1, { op: 'updateTask', taskId: 'PRJ-1', status: 'done', title: 'x' }).value.warning).toBeUndefined();
+  });
+
+  it('a proposal of Claude becomes the user\'s decision once its question is asked', () => {
+    const { engine, op } = setup();
+    const { taskId } = op(S1, { op: 'createTask', title: 'Which variant?', ask: 'proposal' }).value as { taskId: string };
+    expect(engine.task(taskId)).toMatchObject({ owner: 'claude', ask: 'proposal' });
+    expect(needsUser(engine.task(taskId))).toBe(false);
+    op(S1, { op: 'askQuestion', taskId, text: 'A or B?', options: ['A', 'B'] });
+    expect(engine.task(taskId)).toMatchObject({ owner: 'me', ask: 'decision' });
+    expect(needsUser(engine.task(taskId))).toBe(true);
   });
 
   it('records decisions and criteria', () => {

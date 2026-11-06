@@ -286,6 +286,11 @@ export function applySessionOp(engine: MapEngine, sessionId: string, input: unkn
       return run('claude', ctx => {
         const id = `q${t.questions.length + 1}`;
         t.questions.push({ id, sessionId, text: op.text, options: op.options, multi: op.multi, askedAt: ctx.now, answer: null, dismissed: null });
+        // The proposal is on the table: from now on the task waits for the user's decision
+        if (t.owner === 'claude' && t.ask === 'proposal') {
+          t.owner = 'me';
+          t.ask = 'decision';
+        }
         join(ctx, t);
         ctx.log({ taskId: t.id, type: 'wait', text: op.text, delivery: null });
         return { questionId: id };

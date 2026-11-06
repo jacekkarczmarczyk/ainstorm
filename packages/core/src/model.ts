@@ -15,7 +15,11 @@ export type TaskType = z.infer<typeof TaskType>;
 export const Owner = z.enum(['claude', 'me']);
 export type Owner = z.infer<typeof Owner>;
 
-export const Ask = z.enum(['action', 'decision']);
+/**
+ * What the owner of a task is asked for. A user's task: an action or a decision. A Claude task with "proposal":
+ * Claude first presents an opinion and options; asking that question makes it the user's decision.
+ */
+export const Ask = z.enum(['action', 'decision', 'proposal']);
 export type Ask = z.infer<typeof Ask>;
 
 export const COMMIT_STATES = ['live', 'squashed', 'amended', 'rebased', 'removed'] as const;

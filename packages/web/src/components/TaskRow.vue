@@ -69,6 +69,7 @@ const { session } = useSelection();
     <span class="meta">
       <AreaTag v-for="area in task.areas" :key="area" :name="area" />
       <span v-if="task.owner === 'me'" class="you">{{ $t('task.you', { ask: task.ask ? $t(`ask.${task.ask}`) : '' }) }}</span>
+      <span v-else-if="task.ask === 'proposal'" class="proposal" :title="$t('task.proposalHelp')">{{ $t('task.proposal') }}</span>
       <span v-if="questions" class="question" :title="$t('task.question')">? {{ questions }}</span>
       <span v-if="ui.projectKey !== null && map.project(task.projectKey)?.focusTaskId === task.id" class="focus">{{ $t('task.focus') }}</span>
       <span v-if="task.fromId && task.fromId !== task.parentId" class="tag from"><GitBranch :size="12" aria-hidden="true" /> {{ $t('detail.from') }} <TaskLink :id="task.fromId" /></span>
@@ -116,6 +117,7 @@ const { session } = useSelection();
 .tag.from { color: var(--s-deferred); }
 .tag.dep { color: var(--s-blocked); }
 .tag.sha { font-family: var(--f-mono); color: var(--s-done); }
+.proposal { font-size: var(--fs-xs); font-weight: 600; padding: 1px 7px; border-radius: 4px; color: var(--claude); background: var(--claude-soft); white-space: nowrap; }
 .focus { font-size: var(--fs-xs); padding: 1px 6px; border-radius: 4px; background: var(--accent); color: var(--on-strong); font-weight: 600; }
 .question { font-size: var(--fs-xs); font-weight: 700; padding: 1px 7px; border-radius: 10px; border: 1.5px solid var(--you); color: var(--you); background: var(--you-soft); }
 .run-slot { width: 26px; display: grid; place-items: center; }
