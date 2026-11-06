@@ -24,7 +24,7 @@ Access must therefore stay local to this user. This document is the threat model
 | A copied prompt pasted into the wrong session | Act on another session's change | Fixed header `[ainstorm #change · session id8 · project]`; the UserPromptSubmit hook blocks wrong session, wrong project, undone or repeated changes | `core/src/sessionOps.ts` (`checkPrompt`) | `core/test/sessionOps.test.ts`, `plugin/test/plugin.test.ts` |
 | A session (model) | Write as another session | The session id comes from Claude Code (`CLAUDE_CODE_SESSION_ID`, hook input), never from tool arguments | `plugin/scripts/mcp.ts`, `plugin/scripts/hook.ts` | `plugin/test/plugin.test.ts` |
 | Malformed input | Injection, crashes | zod schemas on every input; SQL only with parameters (table names are constants); 1 MB body limit; internal errors are not described to clients | `core/src/engine.ts`, `core/src/sessionOps.ts`, `server/src/store.ts`, `server/src/http.ts` | `store.test.ts`, `http.test.ts` |
-| Static file requests | Path traversal | Paths resolved inside the static root only, otherwise the SPA entry | `server/src/http.ts` (`serveStatic`) | to add |
+| Static file requests | Path traversal | Paths resolved inside the static root only, otherwise the SPA entry | `server/src/http.ts` (`serveStatic`) | `server/test/static.test.ts` |
 | Dependencies | Vulnerable or malicious packages | Few runtime dependencies (zod; the daemon, MCP server and hooks use Node built-ins); pinned versions and lockfile; `pnpm audit` | `package.json` files | `pnpm audit` |
 | Data leaving the machine | Telemetry, CDN fonts | No outbound requests: fonts bundled, CSP `default-src 'self'`, no analytics | `server/src/security.ts` (`SECURITY_HEADERS`) | e2e fixtures fail on external requests; `e2e-daemon` |
 
