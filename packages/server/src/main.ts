@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { Daemon, defaultPaths, DEFAULT_PORT, createHttpServer, listenLoopback, loadConfig, loadSnapshot, openDatabase, saveSnapshot } from './index.ts';
 import { planProjectImport } from './merge.ts';
-import { clearProject } from './store.ts';
+import { UiSessions } from './security.ts';
+import { clearProject, uiSessionStore } from './store.ts';
 
 // Entry point: node packages/server/src/main.ts [--port 4477] [--home dir]
 //   [--import snapshot.json [--project KEY ...] [--import-only]]
@@ -42,6 +43,8 @@ if (values.import) {
 writeFileSync(paths.daemon, `${JSON.stringify({ entry: fileURLToPath(import.meta.url) }, null, 2)}\n`, { mode: 0o600 });
 
 const staticDir = join(import.meta.dirname, '..', '..', 'web', 'dist');
-const server = createHttpServer({ daemon: new Daemon(db), token: config.token, staticDir: existsSync(staticDir) ? staticDir : null });
+// Signed-in browsers stay signed in across restarts
+const sessions = new UiSessions(undefined, undefined, uiSessionStore(db));
+const server = createHttpServer({ daemon: new Daemon(db), token: config.token, staticDir: existsSync(staticDir) ? staticDir : null, sessions });
 const port = await listenLoopback(server, Number(values.port));
 console.log(`ainstorm listening on http://127.0.0.1:${port}`);

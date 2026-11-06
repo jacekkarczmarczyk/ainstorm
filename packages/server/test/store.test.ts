@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { Daemon } from '../src/daemon.ts';
 import { openDatabase } from '../src/db.ts';
-import { loadSnapshot, saveSnapshot } from '../src/store.ts';
+import { UiSessions } from '../src/security.ts';
+import { loadSnapshot, saveSnapshot, uiSessionStore } from '../src/store.ts';
 import { fixture } from './helpers.ts';
 
 describe('store', () => {
   it('migrates an empty database', () => {
     const db = openDatabase(':memory:');
     expect(loadSnapshot(db)).toEqual({ projects: [], tasks: [], sessions: [], events: [] });
-    expect((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(3);
+    expect((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(4);
   });
 
   it('round-trips the whole real-data fixture', () => {
@@ -43,6 +44,16 @@ describe('store', () => {
     const task = first.snapshot().tasks[0]!;
     const { changeId } = first.execute({ type: 'setStatus', taskId: task.id, to: 'blocked', notify: false });
     expect(new Daemon(db).reserveChangeId()).toBeGreaterThan(changeId);
+  });
+
+  it('keeps signed-in UI sessions across a restart, as hashes only', () => {
+    const db = openDatabase(':memory:');
+    const first = new UiSessions(60_000, Date.now, uiSessionStore(db));
+    const cookie = first.redeem(first.issueCode())!;
+    const rows = db.prepare('SELECT hash FROM ui_sessions').all() as { hash: string }[];
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.hash).not.toBe(cookie);
+    expect(new UiSessions(60_000, Date.now, uiSessionStore(db)).valid(cookie)).toBe(true);
   });
 
   it('rejects invalid commands without touching the database', () => {

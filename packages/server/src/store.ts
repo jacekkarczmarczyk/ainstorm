@@ -1,6 +1,7 @@
 import { MapSnapshot, type ChangeRecord, type MapEvent, type Project, type Session, type Task } from '@ainstorm/core';
 import type { DatabaseSync, SQLInputValue } from 'node:sqlite';
 import { transaction } from './db.ts';
+import type { UiSessionStore } from './security.ts';
 
 /**
  * Mapping between the SQLite tables and the MapSnapshot model. The daemon keeps the map in memory
@@ -195,6 +196,16 @@ export function clearProject(db: DatabaseSync, key: string) {
     db.prepare('DELETE FROM sessions WHERE project_key = ?').run(key);
     db.prepare('DELETE FROM projects WHERE key = ?').run(key);
   });
+}
+
+/** Signed-in UI sessions (hashes of the cookie values) kept across daemon restarts. */
+export function uiSessionStore(db: DatabaseSync): UiSessionStore {
+  return {
+    load: () => (db.prepare('SELECT hash, expires_at FROM ui_sessions').all() as { hash: string; expires_at: number }[])
+      .map(r => ({ hash: r.hash, expiresAt: Number(r.expires_at) })),
+    add: (hash, expiresAt) => { db.prepare('INSERT OR REPLACE INTO ui_sessions (hash, expires_at) VALUES (?, ?)').run(hash, expiresAt); },
+    remove: hash => { db.prepare('DELETE FROM ui_sessions WHERE hash = ?').run(hash); },
+  };
 }
 
 /** Write a whole snapshot (first import into an empty database). */

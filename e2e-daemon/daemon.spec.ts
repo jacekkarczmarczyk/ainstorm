@@ -47,3 +47,15 @@ test('a one-time link logs the browser in once; changes go through the daemon', 
 
   expect(external).toEqual([]);
 });
+
+test('a browser that loses its sign-in sees the sign-in screen instead of a stale map', async ({ page, request, context }) => {
+  await page.goto(await openLink(request));
+  await page.getByRole('button', { name: 'Open the map' }).click();
+  await page.goto('/s/ed08d5d7/tree');
+  await expect(page.locator('#row-PRJ-44')).toBeVisible();
+  // The cookie is the UI's only credential; without it the next change is refused
+  await context.clearCookies();
+  await page.locator('#row-PRJ-44').getByRole('combobox', { name: 'Status of PRJ-44' }).selectOption('blocked');
+  await expect(page.getByRole('heading', { name: 'Open the map from Claude Code' })).toBeVisible();
+  await expect(page.locator('#row-PRJ-44')).toHaveCount(0);
+});

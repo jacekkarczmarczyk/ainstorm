@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allowedHost, allowedOrigin, bearer, readCookie, sameSecret, UiSessions } from '../src/security.ts';
+import { allowedHost, allowedOrigin, bearer, readCookie, sameSecret, UiSessions, type UiSessionStore } from '../src/security.ts';
 
 describe('request checks', () => {
   it('allows only this daemon as Host (DNS rebinding)', () => {
@@ -57,5 +57,43 @@ describe('one-time UI links', () => {
     now = 1001;
     expect(sessions.redeem(code)).toBeNull();
     expect(sessions.redeem('guess')).toBeNull();
+  });
+});
+
+describe('UI sessions', () => {
+  // An in-memory stand-in for the ui_sessions table
+  const memoryStore = () => {
+    const rows = new Map<string, number>();
+    const store: UiSessionStore = {
+      load: () => [...rows].map(([hash, expiresAt]) => ({ hash, expiresAt })),
+      add: (hash, expiresAt) => { rows.set(hash, expiresAt); },
+      remove: hash => { rows.delete(hash); },
+    };
+    return { rows, store };
+  };
+
+  it('survive a restart, and the store holds only a hash of the cookie', () => {
+    const { rows, store } = memoryStore();
+    const before = new UiSessions(1000, () => 0, store);
+    const cookie = before.redeem(before.issueCode())!;
+    expect(rows.size).toBe(1);
+    expect([...rows.keys()][0]).not.toBe(cookie);
+    expect(new UiSessions(1000, () => 0, store).valid(cookie)).toBe(true);
+  });
+
+  it('expire, and expired ones leave the store', () => {
+    const { rows, store } = memoryStore();
+    let now = 0;
+    const sessions = new UiSessions(1000, () => now, store, 5000);
+    const cookie = sessions.redeem(sessions.issueCode())!;
+    now = 5000;
+    expect(sessions.valid(cookie)).toBe(true);
+    now = 5001;
+    expect(sessions.valid(cookie)).toBe(false);
+    expect(rows.size).toBe(0);
+    // Loading drops what expired while the daemon was down
+    store.add('a'.repeat(64), 10);
+    new UiSessions(1000, () => now, store);
+    expect(rows.size).toBe(0);
   });
 });

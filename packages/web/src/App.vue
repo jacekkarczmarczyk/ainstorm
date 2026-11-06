@@ -28,7 +28,8 @@ const resize = useResizable(body, computed({ get: () => ui.detailWidth, set: v =
 // The details panel appears only in a session view with a task selected; otherwise the view uses the full width
 const inSession = computed(() => route.params.sessionId !== undefined);
 const hasTask = computed(() => typeof route.params.taskId === 'string' && route.params.taskId !== '' && map.task(route.params.taskId) !== undefined);
-const showPanel = computed(() => inSession.value && hasTask.value && (isMobile.value || !ui.panelHidden));
+const blocked = computed(() => (map.connection === 'auth' ? 'auth' : map.loaded ? null : map.loadError));
+const showPanel = computed(() => !blocked.value && inSession.value && hasTask.value && (isMobile.value || !ui.panelHidden));
 
 watchEffect(() => {
   const root = document.documentElement;
@@ -61,12 +62,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
     <AppHeader />
     <div ref="body" class="body" :class="{ 'no-panel': !showPanel || isMobile }" :style="{ '--detail-w': `${ui.detailWidth}px` }">
       <main class="view">
-        <RouterView v-if="map.loaded" />
-        <div v-else-if="map.loadError" class="blocked" role="alert">
-          <h1>{{ $t(`load.${map.loadError}.title`) }}</h1>
-          <p>{{ $t(`load.${map.loadError}.text`) }}</p>
-          <CopyText v-if="map.loadError === 'auth'" value="/ainstorm:open"><code>/ainstorm:open</code></CopyText>
+        <!-- Signed out after loading (e.g. the session expired): the map would be stale, so the sign-in screen replaces it -->
+        <div v-if="blocked" class="blocked" role="alert">
+          <h1>{{ $t(`load.${blocked}.title`) }}</h1>
+          <p>{{ $t(`load.${blocked}.text`) }}</p>
+          <CopyText v-if="blocked === 'auth'" value="/ainstorm:open"><code>/ainstorm:open</code></CopyText>
         </div>
+        <template v-else-if="map.loaded">
+          <p v-if="map.connection === 'reconnecting'" class="lost" role="status">{{ $t('load.reconnecting') }}</p>
+          <RouterView />
+        </template>
       </main>
       <div
         v-if="showPanel && !isMobile" class="handle" role="separator" aria-orientation="vertical" tabindex="0"
@@ -94,6 +99,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 .blocked h1 { margin: 0; font-size: var(--fs-xxl); }
 .blocked p { margin: 0; color: var(--muted); }
 .blocked code { font-family: var(--f-mono); background: var(--sunk); padding: 4px 10px; border-radius: 5px; }
+.lost {
+  position: sticky; top: 0; z-index: 4; margin: 0 0 8px; padding: 8px 12px; border-radius: 6px; font-size: var(--fs-m);
+  background: color-mix(in srgb, var(--s-deferred) 14%, var(--panel)); border: 1px solid color-mix(in srgb, var(--s-deferred) 45%, transparent);
+}
 .handle { cursor: col-resize; position: relative; touch-action: none; }
 .handle::after { content: ""; position: absolute; top: 0; bottom: 0; left: 4px; width: 2px; border-radius: 1px; background: var(--line); transition: background .15s; }
 .handle:hover::after, .handle:focus-visible::after { background: var(--accent); }

@@ -20,6 +20,7 @@ export const enGB = {
   load: {
     auth: { title: 'Open the map from Claude Code', text: 'For safety the map opens only through a one-time link. In a Claude Code session, run:' },
     offline: { title: 'ainstorm is not running', text: 'The map service starts with your next Claude Code session. Reload this page then.' },
+    reconnecting: 'The connection to ainstorm is lost; reconnecting. Until then the map may be out of date and changes may fail.',
   },
   delivery: { pending: 'Waiting for {sessions}', delivered: 'Delivered', copied: 'Prompt copied', none: 'No open session' },
   time: { today: 'Today {time}', yesterday: 'Yesterday {time}' },

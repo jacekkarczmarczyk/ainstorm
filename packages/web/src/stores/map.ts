@@ -5,7 +5,7 @@ import { defineStore } from 'pinia';
 import { computed, shallowRef } from 'vue';
 import { NotAuthenticatedError } from '../api/httpApi.ts';
 import { useMapApi } from '../api/inject.ts';
-import type { Command } from '../api/types.ts';
+import type { Command, ConnectionState } from '../api/types.ts';
 
 const EMPTY: MapSnapshot = { projects: [], tasks: [], sessions: [], events: [] };
 
@@ -16,6 +16,8 @@ export const useMapStore = defineStore('map', () => {
   const loaded = shallowRef(false);
   /** Why the map could not be loaded: the UI needs a fresh link, or the daemon is not running */
   const loadError = shallowRef<'auth' | 'offline' | null>(null);
+  /** After loading: whether live updates arrive; signed out shows the sign-in screen instead of a stale map */
+  const connection = shallowRef<ConnectionState>('live');
 
   async function load() {
     try {
@@ -26,6 +28,7 @@ export const useMapStore = defineStore('map', () => {
     }
     loadError.value = null;
     loaded.value = true;
+    api.onConnection?.(state => { connection.value = state; });
     api.subscribe(next => { snapshot.value = next; });
   }
 
@@ -74,7 +77,7 @@ export const useMapStore = defineStore('map', () => {
   const eventsFor = (taskId: string) => snapshot.value.events.filter(e => e.taskId === taskId).slice().reverse();
 
   return {
-    snapshot, loaded, loadError, load, index, facets, marks, queued, summaries, summaryById, waitingSessions, forUser,
+    snapshot, loaded, loadError, connection, load, index, facets, marks, queued, summaries, summaryById, waitingSessions, forUser,
     task, session, project, eventsFor, sessionIndex, sessionParam, resolveSession,
     reserveChangeId: () => api.reserveChangeId(),
     execute: (command: Command, changeId?: number) => api.execute(command, changeId),

@@ -38,19 +38,40 @@ export function readCookie(header: string | undefined, name: string): string | n
 
 export const newSecret = (): string => randomBytes(32).toString('hex');
 
+/** How long a browser stays signed in after opening a one-time link */
+export const UI_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** Where signed-in UI sessions are kept between daemon runs: hashes of the cookie values only, never the values. */
+export interface UiSessionStore {
+  load(): { hash: string; expiresAt: number }[];
+  add(hash: string, expiresAt: number): void;
+  remove(hash: string): void;
+}
+
+const hashOf = (session: string) => createHash('sha256').update(session).digest('hex');
+
 /**
  * One-time links that turn into a UI cookie: issued to an authenticated client (the plugin),
- * valid for a short time, usable once. UI sessions live in memory; a daemon restart asks for a new link.
+ * valid for a short time, usable once. A UI session lasts UI_SESSION_TTL_MS; with a store it survives a restart.
  */
 export class UiSessions {
   private readonly codes = new Map<string, number>();
-  private readonly sessions = new Set<string>();
+  /** Hash of the cookie value → when it expires */
+  private readonly sessions = new Map<string, number>();
   private readonly ttlMs: number;
   private readonly now: () => number;
+  private readonly store: UiSessionStore | null;
+  readonly sessionTtlMs: number;
 
-  constructor(ttlMs = 60_000, now: () => number = Date.now) {
+  constructor(ttlMs = 60_000, now: () => number = Date.now, store: UiSessionStore | null = null, sessionTtlMs = UI_SESSION_TTL_MS) {
     this.ttlMs = ttlMs;
     this.now = now;
+    this.store = store;
+    this.sessionTtlMs = sessionTtlMs;
+    for (const { hash, expiresAt } of store?.load() ?? []) {
+      if (expiresAt >= now()) this.sessions.set(hash, expiresAt);
+      else store?.remove(hash);
+    }
   }
 
   issueCode(): string {
@@ -72,13 +93,22 @@ export class UiSessions {
     for (const [c, at] of this.codes) if (at < this.now()) this.codes.delete(c);
     if (expires === undefined || expires < this.now()) return null;
     const session = newSecret();
-    this.sessions.add(session);
+    const hash = hashOf(session);
+    const until = this.now() + this.sessionTtlMs;
+    this.sessions.set(hash, until);
+    this.store?.add(hash, until);
     return session;
   }
 
+  // Looked up by hash: a guess cannot steer the lookup towards a stored value, so no constant-time comparison is needed
   valid(session: string | null): boolean {
     if (session === null) return false;
-    for (const s of this.sessions) if (sameSecret(s, session)) return true;
+    const hash = hashOf(session);
+    const until = this.sessions.get(hash);
+    if (until === undefined) return false;
+    if (until >= this.now()) return true;
+    this.sessions.delete(hash);
+    this.store?.remove(hash);
     return false;
   }
 }

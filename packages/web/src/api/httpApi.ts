@@ -1,37 +1,74 @@
 import { MapSnapshot } from '@ainstorm/core';
-import type { MapApi } from './types.ts';
+import type { ConnectionState, MapApi } from './types.ts';
 
 /** The daemon refused the UI cookie: the map has to be opened again through a one-time link. */
 export class NotAuthenticatedError extends Error {}
 
-async function call<T>(path: string, body?: unknown): Promise<T> {
-  const response = await fetch(path, {
-    method: body === undefined ? 'GET' : 'POST',
-    credentials: 'same-origin',
-    headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
-    body: body === undefined ? null : JSON.stringify(body),
-  });
-  if (response.status === 401) throw new NotAuthenticatedError('Not authenticated');
-  const data = await response.json() as T & { error?: string };
-  if (!response.ok) throw new Error(data.error ?? `HTTP ${response.status}`);
-  return data;
-}
+const RETRY_MS = 3000;
 
 /**
  * MapApi over the daemon's HTTP API on the same origin. Changes made anywhere (UI, Claude sessions, hooks)
- * arrive as full snapshots over SSE; EventSource reconnects by itself after a daemon restart.
+ * arrive as full snapshots over SSE. EventSource reconnects by itself while the daemon is down; a refused
+ * reconnection (signed out, or an error) closes it for good, so that case is checked and retried here.
  */
 export function createHttpApi(): MapApi {
   const listeners = new Set<(s: MapSnapshot) => void>();
+  const connection = new Set<(state: ConnectionState) => void>();
   let source: EventSource | null = null;
+  let state: ConnectionState = 'live';
 
-  const connect = () => {
-    source = new EventSource('/events');
-    source.addEventListener('snapshot', event => {
+  const setState = (next: ConnectionState) => {
+    if (next === state) return;
+    state = next;
+    connection.forEach(listener => listener(next));
+  };
+
+  async function call<T>(path: string, body?: unknown): Promise<T> {
+    const response = await fetch(path, {
+      method: body === undefined ? 'GET' : 'POST',
+      credentials: 'same-origin',
+      headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+      body: body === undefined ? null : JSON.stringify(body),
+    });
+    if (response.status === 401) {
+      setState('auth');
+      throw new NotAuthenticatedError('Not authenticated');
+    }
+    const data = await response.json() as T & { error?: string };
+    if (!response.ok) throw new Error(data.error ?? `HTTP ${response.status}`);
+    return data;
+  }
+
+  /** The stream was refused: signed out (stays so until a new link), otherwise try again in a moment. */
+  async function recover() {
+    try {
+      if ((await fetch('/api/snapshot', { credentials: 'same-origin' })).status === 401) {
+        setState('auth');
+        return;
+      }
+    } catch {
+      // The daemon is still down
+    }
+    setTimeout(() => { if (listeners.size > 0 && source === null) connect(); }, RETRY_MS);
+  }
+
+  function connect() {
+    const current = new EventSource('/events');
+    source = current;
+    current.addEventListener('open', () => setState('live'));
+    current.addEventListener('snapshot', event => {
       const snapshot = MapSnapshot.parse(JSON.parse((event as MessageEvent<string>).data));
       listeners.forEach(listener => listener(snapshot));
     });
-  };
+    current.addEventListener('error', () => {
+      if (state === 'auth') return;
+      setState('reconnecting');
+      if (current.readyState === EventSource.CLOSED) {
+        source = null;
+        void recover();
+      }
+    });
+  }
 
   return {
     async load() {
@@ -59,6 +96,9 @@ export function createHttpApi(): MapApi {
           source = null;
         }
       };
+    },
+    onConnection(listener) {
+      connection.add(listener);
     },
   };
 }

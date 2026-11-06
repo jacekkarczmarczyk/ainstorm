@@ -151,7 +151,8 @@ export function createHttpServer(options: HttpOptions): Server {
       if (session === null) return sendHtml(res, 403, EXPIRED_PAGE);
       res.writeHead(303, {
         ...SECURITY_HEADERS, Location: '/', 'Cache-Control': 'no-store',
-        'Set-Cookie': `${COOKIE}=${session}; HttpOnly; SameSite=Strict; Path=/`,
+        // Kept by the browser as long as the daemon keeps the session
+        'Set-Cookie': `${COOKIE}=${session}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${Math.floor(sessions.sessionTtlMs / 1000)}`,
       });
       return res.end();
     }

@@ -25,4 +25,9 @@ export interface MapApi {
   markCopied(changeId: number): Promise<void>;
   /** Called with a fresh snapshot after every change, including changes made by sessions */
   subscribe(listener: (snapshot: MapSnapshot) => void): () => void;
+  /** State of the live connection, for APIs that have one (the daemon; not the in-memory fixture) */
+  onConnection?(listener: (state: ConnectionState) => void): void;
 }
+
+/** live: updates arrive; reconnecting: the daemon does not answer, the map may be out of date; auth: signed out */
+export type ConnectionState = 'live' | 'reconnecting' | 'auth';
