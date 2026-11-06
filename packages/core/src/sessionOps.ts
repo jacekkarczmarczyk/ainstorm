@@ -390,7 +390,15 @@ export function checkPrompt(engine: MapEngine, sessionId: string, prompt: string
   }
   if (project && header.projectName !== project.name) return block(`this prompt is for project ${header.projectName}, this session works in ${project.name}.`);
   const events = state.events.filter(e => e.changeId === header.changeId);
-  if (events.length === 0) return block(`change #${header.changeId} does not exist or was undone in the map.`);
+  if (events.length === 0) {
+    const fate = engine.changeFate(header.changeId);
+    if (fate === 'undone') return block(`change #${header.changeId} was undone in the map, so there is nothing to do.`);
+    if (fate === 'unconfirmed') {
+      return block(`change #${header.changeId} was never confirmed in the map: its dialog was closed without confirming, so nothing changed. `
+        + 'Make the change again in the map, confirm it, and paste the new prompt.');
+    }
+    return block(`change #${header.changeId} does not exist in the map.`);
+  }
   if (events.every(e => e.delivery?.deliveredTo.includes(sessionId))) return block(`change #${header.changeId} was already delivered to this session.`);
 
   const { record } = engine.record(sessionId, 'hook', ctx => {

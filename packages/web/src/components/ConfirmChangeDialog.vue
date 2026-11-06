@@ -91,6 +91,8 @@ const promptLabel = (sessionTitle: string | null) => (sessionTitle ? t('dialog.p
 
     <template #footer>
       <p v-if="blocked" class="help warn">{{ $t('dialog.copyFirst') }}</p>
+      <!-- Copied is not done: until confirmed, the change does not exist and the session refuses the pasted prompt -->
+      <p v-else-if="copied.size > 0" class="help warn" role="status">{{ $t('dialog.copiedNotSaved', { action: change.confirmLabel }) }}</p>
       <div class="footer-row">
         <label class="check" for="dont-ask"><input id="dont-ask" v-model="dontAskAgain" type="checkbox"> {{ $t('dialog.dontAskAgain') }}</label>
         <div class="actions">

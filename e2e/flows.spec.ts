@@ -93,6 +93,8 @@ test('deleting without automatic notification requires copying the prompt', asyn
   await expect(confirm).toBeDisabled();
   await dialog(page).getByRole('button', { name: 'Copy prompt' }).click();
   await expect(confirm).toBeEnabled();
+  // Copied is not done: the dialog says the change still has to be confirmed
+  await expect(dialog(page).getByText(/the change is not saved yet: click “Delete”/)).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^\[ainstorm #\d+ · session ed08d5d7 · shop\]/);
   await confirm.click();
   await expect(row(page, 'PRJ-45')).toHaveCount(0);

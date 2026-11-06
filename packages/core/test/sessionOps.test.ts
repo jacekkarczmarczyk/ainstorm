@@ -234,6 +234,14 @@ describe('prompt check', () => {
     expect(checkPrompt(engine, S2, prompt).block).toMatch(/another session/);
     expect(checkPrompt(engine, S1, prompt.replace('· shop]', '· pp]')).block).toMatch(/project pp/);
     engine.revert(changeId);
-    expect(checkPrompt(engine, S1, prompt).block).toMatch(/does not exist or was undone/);
+    expect(checkPrompt(engine, S1, prompt).block).toMatch(/was undone in the map/);
+  });
+
+  it('tells a prompt of a dialog closed without confirming from an unknown change', () => {
+    const { engine } = prompted();
+    const reserved = engine.reserveChangeId();
+    const header = (id: number) => `[ainstorm #${id} · session ${S1.slice(0, 8)} · shop]\nx`;
+    expect(checkPrompt(engine, S1, header(reserved)).block).toMatch(/never confirmed in the map/);
+    expect(checkPrompt(engine, S1, header(reserved + 50)).block).toMatch(/does not exist in the map/);
   });
 });

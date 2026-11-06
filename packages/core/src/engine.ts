@@ -95,6 +95,8 @@ export class MapEngine {
   private nextEventId: number;
   private nextChangeId: number;
   private readonly undo = new Map<number, UndoEntry>();
+  /** Changes undone since the engine started, so a prompt for one can say it was undone (not just missing) */
+  private readonly reverted = new Set<number>();
   private readonly now: () => string;
 
   constructor(initial: MapSnapshot, now: () => string = () => new Date().toISOString()) {
@@ -108,6 +110,12 @@ export class MapEngine {
   /** Reserve the id of the next change, so its prompt can be shown and copied before the change is made. */
   reserveChangeId(): number {
     return this.nextChangeId++;
+  }
+
+  /** What became of a change id that has no events: reserved for a dialog but never confirmed, undone, or unknown. */
+  changeFate(changeId: number): 'unconfirmed' | 'undone' | 'unknown' {
+    if (this.reverted.has(changeId)) return 'undone';
+    return changeId < this.nextChangeId ? 'unconfirmed' : 'unknown';
   }
 
   execute(command: UserCommand, changeId?: number, actor: Actor = 'user'): UserChangeRecord {
@@ -285,6 +293,7 @@ export class MapEngine {
     const entry = this.undo.get(changeId);
     if (!entry) return null;
     this.undo.delete(changeId);
+    this.reverted.add(changeId);
     const restore = <T extends { id: string }>(list: T[], saved: T[]) => list.map(x => saved.find(s => s.id === x.id) ?? x);
     this.state.tasks = restore(this.state.tasks, entry.tasks);
     this.state.sessions = restore(this.state.sessions, entry.sessions);

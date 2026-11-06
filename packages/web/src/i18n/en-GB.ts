@@ -167,6 +167,7 @@ export const enGB = {
     staysCrossed: 'It stays on the map, crossed out.', notify: 'Notify session automatically',
     notifyOn: 'The change is added to your next message in {sessions}.', notifyOff: 'Copy the prompt and paste it into that session yourself. Pasting it into another session is rejected.',
     noSession: 'No open session works on this task, so no session needs to know.', copyFirst: 'Copy the prompt first, or tick “Notify session automatically”.',
+    copiedNotSaved: 'Prompt copied, but the change is not saved yet: click “{action}”. Without it the session refuses the prompt.',
     copied: 'Copied', cancel: 'Cancel', delete: 'Delete', drop: 'Drop', dontAskAgain: 'Don’t ask again for this action',
   },
   resize: { label: 'Resize the details panel', hint: 'Drag to resize. Double-click to reset.' },
