@@ -12,6 +12,10 @@ test.beforeEach(async ({ page }) => {
 const dialog = (page: Page) => page.getByRole('dialog', { name: /\?$/ });
 const toast = (page: Page) => page.locator('.toast').last();
 const row = (page: Page, id: string) => page.locator(`#row-${id}`);
+const openSettings = async (page: Page, section: string) => {
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  await page.getByRole('navigation', { name: 'Settings sections' }).getByRole('button', { name: section }).click();
+};
 
 // Done is set from the status list of the row (the checkbox selects the task for bulk actions)
 const markDone = (page: Page, id: string) => row(page, id).getByRole('combobox', { name: `Status of ${id}` }).selectOption('done');
@@ -29,7 +33,7 @@ test('marking a task done asks for confirmation, applies it and can be undone', 
 
 test('an action without confirmation applies at once and offers "Always ask"', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
-  await page.getByRole('button', { name: 'Open settings' }).click();
+  await openSettings(page, 'Confirm in a dialog');
   await page.getByLabel('Status changes').uncheck();
   await page.keyboard.press('Escape');
   await markDone(page, 'PRJ-44');
@@ -136,10 +140,23 @@ const stubNotifications = (page: Page, answer: 'granted' | 'denied') => page.add
   });
 }, answer);
 
+test('settings show one section at a time and keep their size', async ({ page }) => {
+  await page.goto(`${SHOP}/tree`);
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  const settings = page.getByRole('dialog', { name: 'Settings' });
+  const sections = settings.getByRole('navigation', { name: 'Settings sections' });
+  await expect(sections.getByRole('button', { name: 'Display' })).toHaveAttribute('aria-current', 'page');
+  await expect(settings.getByLabel('Status changes')).toHaveCount(0);
+  const before = (await settings.boundingBox())!.height;
+  await sections.getByRole('button', { name: 'Confirm in a dialog' }).click();
+  await expect(settings.getByLabel('Status changes')).toBeVisible();
+  expect((await settings.boundingBox())!.height).toBe(before);
+});
+
 test('notifications are an option in the settings, off until turned on', async ({ page }) => {
   await stubNotifications(page, 'granted');
   await page.goto(`${SHOP}/tree`);
-  await page.getByRole('button', { name: 'Open settings' }).click();
+  await openSettings(page, 'Notifications');
   const box = page.getByRole('dialog', { name: 'Settings' }).getByLabel('Notify me when a session waits on me');
   await expect(box).not.toBeChecked();
   await box.click();
@@ -151,7 +168,7 @@ test('notifications are an option in the settings, off until turned on', async (
 test('notifications stay off when the browser blocks them, and say why', async ({ page }) => {
   await stubNotifications(page, 'denied');
   await page.goto(`${SHOP}/tree`);
-  await page.getByRole('button', { name: 'Open settings' }).click();
+  await openSettings(page, 'Notifications');
   const settings = page.getByRole('dialog', { name: 'Settings' });
   await settings.getByLabel('Notify me when a session waits on me').click();
   await expect(settings.getByLabel('Notify me when a session waits on me')).not.toBeChecked();
@@ -169,7 +186,7 @@ test('a session waiting on the user pulses, unless the system asks for reduced m
 
 test('prompts follow the prompt language from the settings', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
-  await page.getByRole('button', { name: 'Open settings' }).click();
+  await openSettings(page, 'Claude sessions');
   const settings = page.getByRole('dialog', { name: 'Settings' });
   await settings.getByLabel('Prompt language').selectOption('pl');
   await settings.getByRole('button', { name: 'Close' }).click();
@@ -372,7 +389,7 @@ test('focus belongs to the project and shows where it lives', async ({ page }) =
 
 test('the resume command goes to the project folder and uses the plugin folder from the settings', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
-  await page.getByRole('button', { name: 'Open settings' }).click();
+  await openSettings(page, 'Claude sessions');
   const settings = page.getByRole('dialog', { name: 'Settings' });
   await settings.getByLabel('Plugin folder (until the plugin is installed)').fill('C:\\Dev\\ainstorm\\plugin');
   await settings.getByRole('button', { name: 'Close' }).click();

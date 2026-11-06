@@ -184,7 +184,8 @@ export const enGB = {
   },
   resize: { label: 'Resize the details panel', hint: 'Drag to resize. Double-click to reset.' },
   settings: {
-    title: 'Settings', open: 'Open settings', confirmHeading: 'Confirm in a dialog', display: 'Display', sessions: 'Claude sessions', close: 'Close',
+    title: 'Settings', open: 'Open settings', sections: 'Settings sections',
+    section: { display: 'Display', notifications: 'Notifications', sessions: 'Claude sessions', confirm: 'Confirm in a dialog' }, confirmHeading: 'Confirm in a dialog', display: 'Display', sessions: 'Claude sessions', close: 'Close',
     showOutline: 'Show outline position next to ids', showOutlineHelp: 'For orientation only, e.g. PRJ-49(1/3/2). Claude and links use the id alone.',
     pluginDir: 'Plugin folder (until the plugin is installed)',
     pluginDirHelp: 'Added as --plugin-dir to copied resume commands. Leave empty once the plugin is installed.',
