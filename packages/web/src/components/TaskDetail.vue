@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
-  canRun, effectiveAreas, inherited, isClosed, issueNumber, issueUrl, isWorking, openQuestions, pathTo, progress, splitCommit, TASK_STATUSES,
-  type Task,
+  canRun, effectiveAreas, inherited, isClosed, issueNumber, issueUrl, isWorking, openQuestions, pathTo, progress, splitCommit, type Task,
 } from '@ainstorm/core';
 import { Ban, Crosshair, FolderTree, GitBranch, Hourglass, Pause, Pencil, Play, Plus, Trash2, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
@@ -30,6 +29,7 @@ import RunIndicator from './RunIndicator.vue';
 import SessionLabel from './SessionLabel.vue';
 import SplitButton from './SplitButton.vue';
 import StatusPill from './StatusPill.vue';
+import StatusSelect from './StatusSelect.vue';
 import TaskIdLabel from './TaskIdLabel.vue';
 import TaskLink from './TaskLink.vue';
 import TypeChip from './TypeChip.vue';
@@ -90,6 +90,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
     <div class="head">
       <CopyText :value="t.id" class="id"><TaskIdLabel :id="t.id" /></CopyText>
       <TypeChip v-if="type" :type="type.value" :inherited="type.fromId !== null" />
+      <StatusSelect :task="t" />
       <OwnerBadge :task="t" />
       <span v-if="isFocus" class="badge-focus focus-tag">
         <Crosshair :size="12" aria-hidden="true" /> {{ $t('detail.isFocus') }}
@@ -109,10 +110,6 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
     </nav>
 
     <div class="controls">
-      <label for="task-status" class="label">{{ $t('detail.status') }}</label>
-      <select id="task-status" class="input" :value="t.status" @change="actions.onStatusInput(t, $event)">
-        <option v-for="s in TASK_STATUSES" :key="s" :value="s">{{ $t(`status.${s}`) }}</option>
-      </select>
       <button v-if="mark?.self && isWorking(mark)" type="button" class="btn" @click="actions.requestSession('pause', t, runningSession)"><Pause :size="14" /> {{ $t('detail.pause') }}</button>
       <button v-else-if="mark?.self && mark.paused" type="button" class="btn primary" @click="actions.requestSession('run', t, runningSession)"><Play :size="14" /> {{ $t('detail.resume') }}</button>
       <button v-else-if="canRun(t) && session" type="button" class="btn primary" @click="actions.requestSession('run', t, session)"><Play :size="14" /> {{ $t('detail.run') }}</button>
@@ -315,7 +312,6 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 h2 { font-size: var(--fs-xl); line-height: 1.3; margin: 6px 0 2px; text-wrap: balance; }
 .path { font-size: var(--fs-s); color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
-.controls select { font-size: var(--fs-m); }
 .run-line { display: flex; gap: 8px; align-items: center; margin: 6px 0 0; font-size: var(--fs-m); color: var(--muted); }
 .block { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .block > h3 { margin: 0; display: flex; gap: 8px; align-items: center; }

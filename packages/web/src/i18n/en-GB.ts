@@ -49,7 +49,7 @@ export const enGB = {
     idleSelf: 'Last worked on in {session}, which is between turns', idleInside: 'Last worked on inside: {task} ({session}, between turns)',
   },
   detail: {
-    label: 'Task details', pick: 'Pick a task to see its details.', hide: 'Hide', close: 'Close', status: 'Status', run: 'Run', pause: 'Pause', resume: 'Resume',
+    label: 'Task details', pick: 'Pick a task to see its details.', hide: 'Hide', close: 'Close', run: 'Run', pause: 'Pause', resume: 'Resume',
     setFocus: 'Set as project focus', isFocus: 'Project focus', clearFocus: 'Clear project focus',
     clearFocusTitle: 'Clear the project focus?', clearFocusText: '{id} stops being the focus of {project}. The project will have no focus until you set one.', showMore: 'Show full description', showLess: 'Show less',
     owner: 'Owner', ownerMe: 'You ({ask})', ownerClaude: 'Claude', ownerClaudeProposal: 'Claude, proposal first (then your decision)', project: 'Project', areas: 'Areas', branch: 'Branch', plan: 'Plan',
