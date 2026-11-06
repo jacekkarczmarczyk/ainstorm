@@ -132,6 +132,37 @@ describe('MapEngine', () => {
     expect(engine.task('PRJ-2').description).toBe(before);
   });
 
+  it('adds a task to the session under a parent, with the id the UI proposed, and archives it on undo', () => {
+    const { engine, open } = setup();
+    const add = (taskId: string, run = false) => engine.execute({
+      type: 'createTask', taskId, sessionId: open.id, parentId: 'PRJ-2', title: ' New one ', description: 'why', taskType: 'fix',
+      owner: 'claude', ask: null, run, notify: true,
+    });
+    expect(() => add('PRJ-6')).toThrow(/just taken \(next is PRJ-7\)/);
+    const { changeId, taskIds } = add('PRJ-7');
+    expect(taskIds).toEqual(['PRJ-7']);
+    expect(engine.task('PRJ-7')).toMatchObject({ title: 'New one', parentId: 'PRJ-2', type: 'fix', sessionIds: [open.id], status: 'todo' });
+    expect(engine.state.events.at(-1)).toMatchObject({ type: 'create', text: 'New one', delivery: { state: 'pending', sessionIds: [open.id] } });
+    expect(engine.revert(changeId)!.taskIds).toEqual(['PRJ-7']);
+    expect(engine.task('PRJ-7').archivedAt).toBe(NOW);
+    // The id of an undone task is not handed out again; "add and run" also records the run request
+    const ran = add('PRJ-8', true);
+    expect(engine.state.events.filter(e => e.changeId === ran.changeId).map(e => [e.type, e.delivery?.state])).toEqual([['create', 'copied'], ['run', 'copied']]);
+  });
+
+  it('edits title, description and criteria, keeping the commit line, and refuses an edit that changes nothing', () => {
+    const { engine } = setup();
+    engine.task('PRJ-2').description = 'Old text\n\nCommit: fix: keep me';
+    const { changeId } = engine.execute({
+      type: 'editTask', taskId: 'PRJ-2', title: 'Renamed', description: 'New text', criteria: [{ text: 'tests pass', done: false }], notify: true,
+    });
+    expect(engine.task('PRJ-2')).toMatchObject({ title: 'Renamed', description: 'New text\n\nCommit: fix: keep me', criteria: [{ text: 'tests pass', done: false }] });
+    expect(engine.state.events.at(-1)).toMatchObject({ type: 'edit', text: 'edited: title, description, criteria' });
+    expect(() => engine.execute({ type: 'editTask', taskId: 'PRJ-2', title: 'Renamed', notify: true })).toThrow(/Nothing changed/);
+    engine.revert(changeId);
+    expect(engine.task('PRJ-2').title).toBe('Task PRJ-2');
+  });
+
   it('records a request to create or close a GitHub issue, only for a project with a repository', () => {
     const { engine, open } = setup();
     expect(() => engine.execute({ type: 'requestIssue', taskId: 'PRJ-1', request: 'create', notify: true })).toThrow(/no GitHub repository/);

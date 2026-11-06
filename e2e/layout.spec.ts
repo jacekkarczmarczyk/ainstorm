@@ -15,5 +15,5 @@ test('the task header and its actions stay in view while the panel scrolls', asy
   const panel = taskPanel(page);
   await panel.evaluate(el => el.scrollTo(0, el.scrollHeight / 2));
   await expect(panel.getByRole('button', { name: 'Copy PP-43' })).toBeInViewport();
-  await expect(panel.getByRole('button', { name: 'Delete…' })).toBeInViewport();
+  await expect(panel.getByRole('button', { name: 'Edit…' })).toBeInViewport();
 });

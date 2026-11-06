@@ -1,7 +1,16 @@
 import {
-  buildPrompt, canRun, descendants, inherited, isSessionOpen, issueNumber, newSessionCommand, splitCommit, targetSessions, unusualTransition,
+  buildPrompt, canRun, descendants, inherited, isSessionOpen, issueNumber, newSessionCommand, nextTaskId, splitCommit, targetSessions, unusualTransition,
   type Blocker, type PromptKind, type Question, type Session, type Task, type TaskStatus, type TaskType,
 } from '@ainstorm/core';
+
+/** What the add-task dialog asks for */
+export interface NewTaskFields {
+  title: string;
+  description: string;
+  type: TaskType | null;
+  owner: Task['owner'];
+  ask: Task['ask'];
+}
 import { useI18n } from 'vue-i18n';
 import type { Command } from '../api/types.ts';
 import { useDialogStore, type PreparedPrompt } from '../stores/dialog.ts';
@@ -325,6 +334,48 @@ export function useTaskActions() {
     }));
   }
 
+  /**
+   * A task the user adds to a session (under a parent or at the top level). "Add" tells the session about it;
+   * "Add and run" also asks the session to start it, as a prompt to paste like Run.
+   */
+  function createTask(fields: NewTaskFields, session: Session, parent: Task | null, start: boolean) {
+    // The prompt names the task before it exists: the next free id, which the daemon checks
+    const now = new Date().toISOString();
+    const task: Task = {
+      id: nextTaskId(map.snapshot.tasks, session.projectKey), projectKey: session.projectKey, title: fields.title.trim(), description: fields.description,
+      status: 'todo', type: fields.type, areas: [], owner: fields.owner, ask: fields.ask, parentId: parent?.id ?? null, fromId: null, deps: [],
+      planPath: null, planRef: null, branch: null, issue: null, pr: null, deferReason: null, criteria: [], decisions: [], commits: [],
+      sessionIds: [session.id], questions: [], archivedAt: null, createdAt: now, updatedAt: now, version: 0,
+    };
+    const target = isSessionOpen(session) ? session : null;
+    return perform({
+      action: start ? 'run' : 'create', task, prompt: { kind: 'create', task, parent, run: start },
+      command: notify => ({
+        type: 'createTask', taskId: task.id, sessionId: session.id, parentId: task.parentId, title: task.title, description: task.description,
+        taskType: task.type, owner: task.owner, ask: task.ask, run: start, notify,
+      }),
+      title: t(start ? 'create.runTitle' : 'create.title', { id: task.id }), confirmLabel: t(start ? 'dialog.copyAndRecord' : 'create.add'),
+      doneText: t(start ? 'create.runDone' : 'create.done', { id: task.id }),
+      session: target, ...(start ? { copyNow: true } : {}),
+    });
+  }
+
+  /** Title, description and "done when" criteria; only what differs is sent. */
+  function editTask(task: Task, fields: { title: string; description: string; criteria: Task['criteria'] }) {
+    const title = fields.title.trim();
+    const changes = {
+      ...(title !== task.title ? { title } : {}),
+      ...(fields.description !== splitCommit(task.description).text ? { description: fields.description } : {}),
+      ...(JSON.stringify(fields.criteria) !== JSON.stringify(task.criteria) ? { criteria: fields.criteria } : {}),
+    };
+    if (Object.keys(changes).length === 0) return Promise.resolve();
+    return perform({
+      action: 'edit', task, prompt: { kind: 'edit', task },
+      command: notify => ({ type: 'editTask', taskId: task.id, ...changes, notify }),
+      title: t('edit.confirmTitle', { id: task.id }), confirmLabel: t('edit.save'), doneText: t('edit.done', { id: task.id }),
+    });
+  }
+
   /** Focus and session archiving stay in the app; they are not sent to Claude, so no dialog. */
   async function setFocus(task: Task) {
     const project = map.project(task.projectKey);
@@ -345,5 +396,5 @@ export function useTaskActions() {
     toasts.show(t(archived ? 'toast.archived' : 'toast.restored', { session: session.title }), undoAction(changeId));
   }
 
-  return { targetsFor, setStatus, toggleDone, onStatusInput, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, runMany, requestIssue, requestSession, setFocus, clearFocus, setSessionArchived };
+  return { targetsFor, createTask, editTask, setStatus, toggleDone, onStatusInput, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, runMany, requestIssue, requestSession, setFocus, clearFocus, setSessionArchived };
 }

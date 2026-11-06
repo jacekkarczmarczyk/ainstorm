@@ -16,6 +16,12 @@ const openSettings = async (page: Page, section: string) => {
   await page.getByRole('navigation', { name: 'Settings sections' }).getByRole('button', { name: section }).click();
 };
 
+// Move, Drop and Delete sit in the menu of the panel's Edit button
+const panelMenu = async (page: Page, item: string) => {
+  await taskPanel(page).getByRole('button', { name: 'More actions' }).click();
+  await page.getByRole('menuitem', { name: item }).click();
+};
+
 // Done is set from the status list of the row (the checkbox selects the task for bulk actions)
 const markDone = (page: Page, id: string) => row(page, id).getByRole('combobox', { name: `Status of ${id}` }).selectOption('done');
 
@@ -96,7 +102,7 @@ test('ticked tasks get bulk actions: one dialog and one Undo for all, Run in the
 
 test('deleting without automatic notification requires copying the prompt', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-45`);
-  await page.getByRole('button', { name: 'Delete…' }).click();
+  await panelMenu(page, 'Delete…');
   await dialog(page).getByLabel('Notify session automatically').uncheck();
   const confirm = dialog(page).getByRole('button', { name: 'Delete', exact: true });
   await expect(confirm).toBeDisabled();
@@ -214,6 +220,46 @@ test('Run prompts sent one after another queue up in the session, in the order s
   await expect(row(page, 'PRJ-45').getByText('Queued in session · 1 ahead')).toBeVisible();
 });
 
+test('a subtask is added from the panel, and Undo takes it away', async ({ page }) => {
+  await page.goto(`${SHOP}/tree/PRJ-45`);
+  await taskPanel(page).getByRole('button', { name: 'Add subtask' }).click();
+  const form = page.getByRole('dialog', { name: 'Add a subtask under PRJ-45' });
+  await form.getByLabel('Title').fill('Inventory: check stock levels');
+  await form.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(row(page, 'PRJ-53')).toContainText('Inventory: check stock levels');
+  await toast(page).getByRole('button', { name: 'Undo' }).click();
+  await expect(row(page, 'PRJ-53')).toHaveCount(0);
+});
+
+test('"Add and run" adds a task and copies the prompt that starts it', async ({ page }) => {
+  await page.goto(`${SHOP}/tree`);
+  await page.getByRole('button', { name: 'Add task' }).click();
+  await page.getByRole('dialog', { name: 'Add a task' }).getByLabel('Title').fill('New top task');
+  await page.getByRole('button', { name: 'Add and run' }).click();
+  await expect(dialog(page).getByLabel('Notify session automatically')).toHaveCount(0);
+  await dialog(page).getByRole('button', { name: 'Copy and record' }).click();
+  expect(await clipboardText(page)).toMatch(shopPrompt('In the ainstorm map I added PRJ-53 “New top task” to the top level. Start working on it'));
+  await expect(row(page, 'PRJ-53')).toBeVisible();
+});
+
+test('the Edit button changes title and criteria; the other actions are in its menu', async ({ page }) => {
+  await page.goto(`${SHOP}/tree/PRJ-45`);
+  const panel = taskPanel(page);
+  await panel.getByRole('button', { name: 'Edit…' }).click();
+  const form = page.getByRole('dialog', { name: 'Edit PRJ-45' });
+  await form.getByLabel('Title').fill('Inventory: refactoring, part 1');
+  await form.getByRole('button', { name: 'Add a criterion' }).click();
+  await form.getByLabel('Criterion 1', { exact: true }).fill('tests pass');
+  await form.getByRole('button', { name: 'Save' }).click();
+  await expect(panel.getByRole('heading', { level: 2 })).toHaveText('Inventory: refactoring, part 1');
+  await expect(panel.getByText('Next: tests pass')).toBeVisible();
+  // The menu behind the arrow: Esc closes it
+  await panel.getByRole('button', { name: 'More actions' }).click();
+  await expect(page.getByRole('menuitem')).toHaveText(['Move…', 'Drop…', 'Delete…']);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('menu')).toHaveCount(0);
+});
+
 test('Run says the prompt must be pasted, and copies it on confirm', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-45`);
   const panel = taskPanel(page);
@@ -310,7 +356,7 @@ test('a decision of no drops the task', async ({ page }) => {
 
 test('a task moves under another parent, never under its own subtask', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-1`);
-  await page.getByRole('button', { name: 'Move…' }).click();
+  await panelMenu(page, 'Move…');
   const picker = page.getByRole('dialog', { name: 'Move PRJ-1 under…' });
   await picker.getByRole('searchbox').fill('PRJ-45');
   await expect(picker.getByText('No task matches.')).toBeVisible();
@@ -318,7 +364,7 @@ test('a task moves under another parent, never under its own subtask', async ({ 
   await expect(picker).toBeHidden();
 
   await page.goto(`${SHOP}/tree/PRJ-45`);
-  await page.getByRole('button', { name: 'Move…' }).click();
+  await panelMenu(page, 'Move…');
   await page.getByRole('dialog', { name: 'Move PRJ-45 under…' }).getByRole('button', { name: 'Top level of the session' }).click();
   await dialog(page).getByRole('button', { name: 'Move', exact: true }).click();
   await expect(row(page, 'PRJ-45')).toHaveClass(/\broot\b/);

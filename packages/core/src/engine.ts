@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import {
-  Delivery, isClosed, MapSnapshot, ProjectKey, Session, SessionId, Task, TaskId, TaskStatus, TaskType,
+  Ask, Criterion, Delivery, isClosed, MapSnapshot, Owner, ProjectKey, Session, SessionId, Task, TaskId, TaskStatus, TaskType,
   type Actor, type EventType, type MapEvent, type Project,
 } from './model.ts';
-import { withCommit } from './commitMessage.ts';
+import { splitCommit, withCommit } from './commitMessage.ts';
 import { issueNumber } from './github.ts';
-import { projectAreas } from './sessionOps.ts';
+import { nextTaskId, projectAreas } from './sessionOps.ts';
 import { isSessionOpen, targetSessions } from './sessions.ts';
 import { openQuestions } from './status.ts';
 import { buildTaskIndex, descendants, wouldCreateParentCycle } from './tree.ts';
@@ -42,6 +42,20 @@ export const UserCommand = z.discriminatedUnion('type', [
   z.object({ type: z.literal('moveMany'), taskIds: z.array(TaskId).min(1).max(100), parentId: TaskId.nullable(), notify: z.boolean() }),
   /** Run several tasks in order with one pasted prompt (ticked in the tree); only recorded, one change for all */
   z.object({ type: z.literal('requestRunMany'), taskIds: z.array(TaskId).min(1).max(20), sessionId: SessionId.nullable() }),
+  /**
+   * A task the user adds to a session. The UI proposes the next free id (its prompt names it before the change is
+   * made); a stale id is a conflict. With run, the session is also asked to start it (a prompt to paste).
+   */
+  z.object({
+    type: z.literal('createTask'), taskId: TaskId, sessionId: SessionId, parentId: TaskId.nullable(),
+    title: z.string().trim().min(1).max(200), description: z.string().max(20000), taskType: TaskType.nullable(),
+    owner: Owner, ask: Ask.nullable(), run: z.boolean(), notify: z.boolean(),
+  }),
+  /** Title, description (its commit line is kept) and "done when" criteria; only the fields given change */
+  z.object({
+    type: z.literal('editTask'), taskId: TaskId, title: z.string().trim().min(1).max(200).optional(),
+    description: z.string().max(20000).optional(), criteria: z.array(Criterion).max(30).optional(), notify: z.boolean(),
+  }),
 ]);
 export type UserCommand = z.infer<typeof UserCommand>;
 
@@ -62,6 +76,8 @@ export type UserChangeRecord = ChangeRecord & { changeId: number };
 
 interface UndoEntry {
   tasks: Task[];
+  /** Tasks the change added; undoing archives them (their ids are never handed out again) */
+  created: string[];
   sessions: Session[];
   focus: { projectKey: string; taskId: string | null } | null;
   eventIds: number[];
@@ -316,6 +332,44 @@ export class MapEngine {
           }));
         });
       }
+      case 'createTask': {
+        const s = this.session(command.sessionId);
+        if (!command.title.trim()) throw new EngineError('A task needs a title', 'invalid');
+        const parent = command.parentId === null ? null : this.task(command.parentId);
+        if (parent && parent.projectKey !== s.projectKey) throw new EngineError(`${parent.id} belongs to another project`, 'invalid');
+        const expected = nextTaskId(this.state.tasks, s.projectKey);
+        if (command.taskId !== expected) throw new EngineError(`${command.taskId} was just taken (next is ${expected}); add the task again`, 'conflict');
+        return this.change(id, actor, [], [], null, log => {
+          const now = this.now();
+          const t: Task = {
+            id: command.taskId, projectKey: s.projectKey, title: command.title.trim(), description: command.description, status: 'todo',
+            type: command.taskType, areas: [], owner: command.owner, ask: command.ask, parentId: command.parentId, fromId: null, deps: [],
+            planPath: null, planRef: null, branch: null, issue: null, pr: null, deferReason: null, criteria: [], decisions: [], commits: [],
+            sessionIds: [s.id], questions: [], archivedAt: null, createdAt: now, updatedAt: now, version: 0,
+          };
+          this.state.tasks.push(t);
+          // Add and run: the prompt to paste asks the session to start it, like Run
+          log({ taskId: t.id, type: 'create', text: t.title, delivery: command.run ? { state: 'copied', sessionIds: [s.id] } : this.delivery(t, command.notify) });
+          if (command.run) log({ taskId: t.id, type: 'run', text: 'run', delivery: { state: 'copied', sessionIds: [s.id] } });
+        }, [command.taskId]);
+      }
+      case 'editTask': {
+        const t = this.task(command.taskId);
+        const changed = [
+          command.title !== undefined && command.title !== t.title ? 'title' : null,
+          command.description !== undefined && command.description !== splitCommit(t.description).text ? 'description' : null,
+          command.criteria !== undefined && JSON.stringify(command.criteria) !== JSON.stringify(t.criteria) ? 'criteria' : null,
+        ].filter((x): x is string => x !== null);
+        if (changed.length === 0) throw new EngineError(`Nothing changed in ${t.id}`, 'invalid');
+        return this.change(id, actor, [t.id], [], null, log => {
+          if (command.title !== undefined) t.title = command.title.trim();
+          // The description is edited without its commit line, which stays as it was
+          if (command.description !== undefined) t.description = withCommit(command.description, splitCommit(t.description).message ?? '');
+          if (command.criteria !== undefined) t.criteria = command.criteria;
+          this.touch(t);
+          log({ taskId: t.id, type: 'edit', text: `edited: ${changed.join(', ')}`, delivery: this.delivery(t, command.notify) });
+        });
+      }
     }
   }
 
@@ -327,6 +381,12 @@ export class MapEngine {
     this.reverted.add(changeId);
     const restore = <T extends { id: string }>(list: T[], saved: T[]) => list.map(x => saved.find(s => s.id === x.id) ?? x);
     this.state.tasks = restore(this.state.tasks, entry.tasks);
+    for (const t of this.state.tasks) {
+      if (entry.created.includes(t.id)) {
+        t.archivedAt = this.now();
+        this.touch(t);
+      }
+    }
     this.state.sessions = restore(this.state.sessions, entry.sessions);
     if (entry.focus) {
       const project = this.state.projects.find(p => p.key === entry.focus!.projectKey);
@@ -334,7 +394,7 @@ export class MapEngine {
     }
     this.state.events = this.state.events.filter(e => !entry.eventIds.includes(e.id));
     return {
-      changeId, taskIds: entry.tasks.map(t => t.id), sessionIds: entry.sessions.map(s => s.id),
+      changeId, taskIds: [...entry.tasks.map(t => t.id), ...entry.created], sessionIds: entry.sessions.map(s => s.id),
       projectKeys: entry.focus ? [entry.focus.projectKey] : [], addedEventIds: [], removedEventIds: entry.eventIds, updatedEventIds: [],
     };
   }
@@ -365,9 +425,13 @@ export class MapEngine {
   }
 
   /** Runs a mutation, saving what it touches so the change can be reverted. */
-  private change(changeId: number, actor: Actor, taskIds: string[], sessionIds: string[], focusProject: string | null, mutate: (log: (e: NewEvent) => void) => void): UserChangeRecord {
+  private change(
+    changeId: number, actor: Actor, taskIds: string[], sessionIds: string[], focusProject: string | null,
+    mutate: (log: (e: NewEvent) => void) => void, created: string[] = [],
+  ): UserChangeRecord {
     const entry: UndoEntry = {
       tasks: taskIds.map(id => Task.parse(this.task(id))),
+      created,
       sessions: sessionIds.map(id => Session.parse(this.session(id))),
       focus: focusProject === null ? null : { projectKey: focusProject, taskId: this.state.projects.find(p => p.key === focusProject)?.focusTaskId ?? null },
       eventIds: [],
@@ -375,7 +439,7 @@ export class MapEngine {
     mutate(e => entry.eventIds.push(this.addEvent(e, actor, null, changeId)));
     this.undo.set(changeId, entry);
     return {
-      changeId, taskIds, sessionIds, projectKeys: focusProject === null ? [] : [focusProject],
+      changeId, taskIds: [...taskIds, ...created], sessionIds, projectKeys: focusProject === null ? [] : [focusProject],
       addedEventIds: entry.eventIds, removedEventIds: [], updatedEventIds: [],
     };
   }

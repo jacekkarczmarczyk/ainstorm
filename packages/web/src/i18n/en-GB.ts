@@ -37,7 +37,7 @@ export const enGB = {
     quickLabel: { open: 'Open', inProgress: 'In progress' },
     quickHelp: { open: 'Only open tasks: to do, in progress, blocked or deferred', inProgress: 'Only tasks in progress or blocked' },
   },
-  tree: { hideClosed: 'Hide closed branches', empty: 'Nothing matches these filters.', expand: 'Expand {id}', collapse: 'Collapse {id}' },
+  tree: { addTask: 'Add task', hideClosed: 'Hide closed branches', empty: 'Nothing matches these filters.', expand: 'Expand {id}', collapse: 'Collapse {id}' },
   task: {
     markDone: 'Mark {id} as done', select: 'Select {id}', changeStatus: 'Status of {id}', you: 'You · {ask}', waitsForLabel: 'waits for', focus: 'focus',
     proposal: 'Claude · proposal', proposalHelp: 'Claude presents an opinion and options first; then it becomes your decision.',
@@ -58,7 +58,7 @@ export const enGB = {
     subtasks: 'Subtasks', dependencies: 'Dependencies', waitsFor: 'Waits for', waitedFor: 'Waited for (done)', blocks: 'Blocks', origin: 'Origin', foundDuring: 'From',
     foundHere: 'Found while working on this', commits: 'Commits', earlier: 'Earlier versions ({n}): squashed, amended or removed',
     otherSessions: 'Also in other sessions', history: 'History', noEvents: 'No events yet.', inApp: 'in the app',
-    drop: 'Drop…', delete: 'Delete…', questions: 'Questions from Claude', open: '{n} open', copyId: 'Copy {id}', copyPathOf: 'Copy the path {path}',
+    drop: 'Drop…', delete: 'Delete…', edit: 'Edit…', addSubtask: 'Add subtask', moreActions: 'More actions', questions: 'Questions from Claude', open: '{n} open', copyId: 'Copy {id}', copyPathOf: 'Copy the path {path}',
   },
   question: {
     asked: 'Asked {when} ·', pickOne: 'Pick one, or write your own.', pickAny: 'Pick any that apply.',
@@ -109,6 +109,19 @@ export const enGB = {
     multi: 'Edit as several lines (subject and body)', single: 'Edit as one line', singleBlocked: 'Remove the extra lines to switch to one line',
     hintSingle: 'Enter saves, Esc cancels', hintMulti: 'Ctrl+Enter saves, Esc cancels',
     dialogTitle: 'Change the commit message of {id}', saved: 'Commit message of {id} saved',
+  },
+  create: {
+    dialog: 'Add a task', dialogUnder: 'Add a subtask under {id}', topLevel: 'At the top level of „{session}”',
+    titleLabel: 'Title', description: 'Description (optional)', type: 'Type', owner: 'For', ask: 'What is asked of you',
+    add: 'Add', addRun: 'Add and run',
+    help: '“Add” only tells the session about the task. “Add and run” also copies a prompt that asks it to start the task.',
+    helpMine: 'A task of yours: the session learns about it with your next message.',
+    title: 'Add {id}?', runTitle: 'Add {id} and ask Claude to start it?', done: '{id} added.',
+    runDone: '{id} added. The prompt that starts it is copied: paste it into the session.',
+  },
+  edit: {
+    dialog: 'Edit {id}', confirmTitle: 'Save the changes to {id}?', save: 'Save', done: '{id} saved.',
+    criterion: 'Criterion {n}', met: 'Criterion {n} met', removeCriterion: 'Remove criterion {n}', addCriterion: 'Add a criterion',
   },
   action: {
     title: 'Your action', help: 'Done it? Confirm it here; the change goes to Claude like any status change.', done: 'Mark as done',
@@ -198,7 +211,7 @@ export const enGB = {
     promptLanguageHelp: 'Language of the prompts copied into Claude sessions. Claude answers in the language of your conversation anyway.',
     confirmHelp: 'Changes sent to Claude. Unticked actions are applied straight away, with Undo in the toast.',
     actions: {
-      status: 'Status changes', type: 'Type changes', area: 'Adding or removing an area', answer: 'Answers to questions', recheck: 'Asking whether a question still applies', decide: 'Your decisions (hand to Claude or drop)', promote: 'Moving a deferred task into the plan', move: 'Moving a task under another parent',
+      create: 'Adding a task', edit: 'Editing a task (title, description, criteria)', status: 'Status changes', type: 'Type changes', area: 'Adding or removing an area', answer: 'Answers to questions', recheck: 'Asking whether a question still applies', decide: 'Your decisions (hand to Claude or drop)', promote: 'Moving a deferred task into the plan', move: 'Moving a task under another parent',
       commit: 'Changing the commit message of a task', issue: 'Creating or closing a GitHub issue', run: 'Run', pause: 'Pause', goAhead: 'Approve a prepared plan and start', delete: 'Delete', drop: 'Drop',
     },
   },

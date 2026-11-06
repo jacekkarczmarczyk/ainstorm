@@ -9,12 +9,15 @@ export type Theme = 'auto' | 'light' | 'dark';
 export const DETAIL_WIDTH = { default: 420, min: 300, minView: 380 } as const;
 
 /** Changes the UI sends to Claude sessions; each can be confirmed in a dialog or applied straight away. */
-export const SESSION_ACTIONS = ['status', 'type', 'area', 'answer', 'recheck', 'decide', 'promote', 'move', 'commit', 'issue', 'run', 'pause', 'goAhead', 'delete', 'drop'] as const;
+export const SESSION_ACTIONS = ['create', 'edit', 'status', 'type', 'area', 'answer', 'recheck', 'decide', 'promote', 'move', 'commit', 'issue', 'run', 'pause', 'goAhead', 'delete', 'drop'] as const;
 export type SessionAction = (typeof SESSION_ACTIONS)[number];
 export type ConfirmSettings = Record<SessionAction, boolean>;
 
-// Editing the commit message is a small, frequent change: applied straight away, with Undo in the toast
-const DEFAULT_CONFIRM: ConfirmSettings = { ...Object.fromEntries(SESSION_ACTIONS.map(a => [a, true])) as ConfirmSettings, commit: false };
+// Editing the commit message is a small, frequent change, and adding or editing a task already has its own dialog:
+// applied straight away, with Undo in the toast
+const DEFAULT_CONFIRM: ConfirmSettings = {
+  ...Object.fromEntries(SESSION_ACTIONS.map(a => [a, true])) as ConfirmSettings, commit: false, create: false, edit: false,
+};
 
 // Stored settings may come from an older version with fewer actions: missing ones get the default
 function isConfirmSettings(value: unknown): value is Partial<ConfirmSettings> {

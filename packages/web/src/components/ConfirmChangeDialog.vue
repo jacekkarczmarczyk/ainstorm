@@ -77,11 +77,12 @@ const promptLabel = (sessionTitle: string | null) => (sessionTitle ? t('dialog.p
         <CommitMessageField :task="task" in-dialog />
       </div>
     </section>
-    <template v-else-if="needsSessions">
+    <!-- A prompt to paste is never delivered automatically -->
+    <template v-else-if="needsSessions && !pasteOnly">
       <label class="check" for="notify-auto"><input id="notify-auto" v-model="ui.notifyAuto" type="checkbox"> {{ $t('dialog.notify') }}</label>
       <p class="help">{{ ui.notifyAuto ? $t('dialog.notifyOn', { sessions: change.targets.map(s => s.title).join(', ') }) : $t('dialog.notifyOff') }}</p>
     </template>
-    <p v-else class="help">{{ $t('dialog.noSession') }}</p>
+    <p v-else-if="!pasteOnly" class="help">{{ $t('dialog.noSession') }}</p>
 
     <div v-for="(prompt, i) in change.prompts" :key="i" class="prompt">
       <span class="label">{{ promptLabel(prompt.session?.title ?? null) }}</span>

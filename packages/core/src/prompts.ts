@@ -60,7 +60,10 @@ export type PromptKind =
   | { kind: 'statusMany'; tasks: readonly Task[]; to: TaskStatus }
   | { kind: 'moveMany'; tasks: readonly Task[]; to: Task | null }
   | { kind: 'typeMany'; tasks: readonly Task[]; type: string | null }
-  | { kind: 'areaMany'; tasks: readonly Task[]; area: string; on: boolean };
+  | { kind: 'areaMany'; tasks: readonly Task[]; area: string; on: boolean }
+  /** A task the user added; with run, the session is asked to start it */
+  | { kind: 'create'; task: Task; parent: Task | null; run: boolean }
+  | { kind: 'edit'; task: Task };
 
 export { PROMPT_LANGUAGES, PROMPT_PHRASES, isPromptLanguage, type PromptLanguage } from './promptLanguages.ts';
 
@@ -120,6 +123,10 @@ function render(p: PromptKind, l: PromptPhrases, ref: (t: Task) => string, q: (s
       const text = fill(p.approve ? l.decideYes : l.decideNo, { task: ref(p.task) });
       return p.note.trim() ? `${text}\n${fill(l.note, { note: q(p.note) })}` : text;
     }
+    case 'create': return fill(p.run ? l.createdRun : l.created, {
+      task: ref(p.task), where: p.parent ? fill(l.under, { task: ref(p.parent) }) : l.topLevel,
+    });
+    case 'edit': return fill(l.edited, { task: ref(p.task) });
   }
 }
 

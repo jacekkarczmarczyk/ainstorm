@@ -3,7 +3,7 @@ import {
   canRun, effectiveAreas, inherited, isClosed, issueNumber, issueUrl, isWorking, openQuestions, pathTo, progress, splitCommit, TASK_STATUSES,
   type Task,
 } from '@ainstorm/core';
-import { Crosshair, FolderTree, GitBranch, Hourglass, Pause, Play, X } from '@lucide/vue';
+import { Ban, Crosshair, FolderTree, GitBranch, Hourglass, Pause, Pencil, Play, Plus, Trash2, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useFormat } from '../composables/useFormat.ts';
 import { useScopedIndex } from '../composables/useScopedIndex.ts';
@@ -12,12 +12,14 @@ import { useTaskActions } from '../composables/useTaskActions.ts';
 import { useMapStore } from '../stores/map.ts';
 import { useUiStore } from '../stores/ui.ts';
 import ActionBox from './ActionBox.vue';
+import AddTaskDialog from './AddTaskDialog.vue';
 import AppModal from './AppModal.vue';
 import AreaTag from './AreaTag.vue';
 import CommitMessageField from './CommitMessageField.vue';
 import CopyText from './CopyText.vue';
 import DecisionBox from './DecisionBox.vue';
 import DoneCheckbox from './DoneCheckbox.vue';
+import EditTaskDialog from './EditTaskDialog.vue';
 import IssueText from './IssueText.vue';
 import MoveTaskDialog from './MoveTaskDialog.vue';
 import OwnerBadge from './OwnerBadge.vue';
@@ -26,6 +28,7 @@ import ProgressBar from './ProgressBar.vue';
 import QuestionCard from './QuestionCard.vue';
 import RunIndicator from './RunIndicator.vue';
 import SessionLabel from './SessionLabel.vue';
+import SplitButton from './SplitButton.vue';
 import StatusPill from './StatusPill.vue';
 import TaskIdLabel from './TaskIdLabel.vue';
 import TaskLink from './TaskLink.vue';
@@ -43,6 +46,8 @@ const scoped = useScopedIndex();
 const DESC_CLAMP = 240;
 const descOpen = ref(false);
 const moving = ref(false);
+const editing = ref(false);
+const addingSubtask = ref(false);
 const clearingFocus = ref(false);
 const projectName = computed(() => map.project(t.value.projectKey)?.name ?? t.value.projectKey);
 
@@ -265,12 +270,19 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
       <p v-else class="empty">{{ $t('detail.noEvents') }}</p>
     </section>
 
-    <div class="danger">
-      <button type="button" class="btn neutral" @click="moving = true"><FolderTree :size="14" aria-hidden="true" /> {{ $t('move.open') }}</button>
-      <button v-if="!isClosed(t.status)" type="button" class="btn" @click="actions.drop(t)">{{ $t('detail.drop') }}</button>
-      <button type="button" class="btn" @click="actions.remove(t)">{{ $t('detail.delete') }}</button>
+    <!-- Pinned bar: adding a subtask, and editing with the rarer actions behind the arrow -->
+    <div class="actions-bar">
+      <button v-if="session" type="button" class="btn" @click="addingSubtask = true"><Plus :size="14" aria-hidden="true" /> {{ $t('detail.addSubtask') }}</button>
+      <SplitButton class="edit" :label="$t('detail.edit')" :menu-label="$t('detail.moreActions')" @main="editing = true">
+        <template #icon><Pencil :size="14" aria-hidden="true" /></template>
+        <button type="button" role="menuitem" @click="moving = true"><FolderTree :size="14" aria-hidden="true" /> {{ $t('move.open') }}</button>
+        <button v-if="!isClosed(t.status)" type="button" role="menuitem" class="destructive" @click="actions.drop(t)"><Ban :size="14" aria-hidden="true" /> {{ $t('detail.drop') }}</button>
+        <button type="button" role="menuitem" class="destructive" @click="actions.remove(t)"><Trash2 :size="14" aria-hidden="true" /> {{ $t('detail.delete') }}</button>
+      </SplitButton>
     </div>
     <MoveTaskDialog v-if="moving" :tasks="[t]" @close="moving = false" />
+    <EditTaskDialog v-if="editing" :task="t" @close="editing = false" />
+    <AddTaskDialog v-if="addingSubtask && session" :session="session" :parent="t" @close="addingSubtask = false" />
     <AppModal v-if="clearingFocus" :title="$t('detail.clearFocusTitle')" :width="440" @close="clearingFocus = false">
       <p class="confirm-text">{{ $t('detail.clearFocusText', { id: t.id, project: projectName }) }}</p>
       <template #footer>
@@ -354,11 +366,10 @@ code { font-family: var(--f-mono); font-size: var(--fs-s); }
 .delivery.pending { color: var(--s-deferred); }
 .delivery.delivered { color: var(--s-done); }
 /* Pinned to the bottom of the scrolling panel, edge to edge across its padding */
-.danger {
-  display: flex; gap: 8px; position: sticky; bottom: calc(-1 * var(--pad-b, 16px)); z-index: 1;
+.actions-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; position: sticky; bottom: calc(-1 * var(--pad-b, 16px)); z-index: 1;
   margin: 22px calc(-1 * var(--pad-x, 18px)) calc(-1 * var(--pad-b, 16px)); padding: 10px var(--pad-x, 18px) var(--pad-b, 16px);
   background: var(--panel); border-top: 1px solid var(--line);
 }
-.danger .btn { color: var(--s-blocked); }
-.danger .btn.neutral { color: var(--ink); margin-right: auto; }
+.actions-bar .edit { margin-left: auto; }
 </style>

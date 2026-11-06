@@ -44,6 +44,9 @@ export interface PromptPhrases {
   decideYes: string;
   decideNo: string;
   note: string;
+  created: string;
+  createdRun: string;
+  edited: string;
 }
 
 const en: PromptPhrases = {
@@ -81,6 +84,9 @@ const en: PromptPhrases = {
   decideYes: 'Decision on {task}: yes. I am handing it over to you, take care of it.',
   decideNo: 'Decision on {task}: no. I am dropping it, do not carry it out.',
   note: 'Notes: {note}',
+  created: 'In the ainstorm map I added {task} {where}. Take it into account in the plan; do not start it until I ask.',
+  createdRun: 'In the ainstorm map I added {task} {where}. Start working on it: set it as the task you are working on and keep the map up to date.',
+  edited: 'In the ainstorm map I edited {task} (title, description or “done when” criteria). Read it again (task_get) and take the changes into account.',
 };
 
 const de: PromptPhrases = {
@@ -118,6 +124,9 @@ const de: PromptPhrases = {
   decideYes: 'Entscheidung zu {task}: ja. Ich übergebe sie dir, kümmere dich darum.',
   decideNo: 'Entscheidung zu {task}: nein. Ich verwerfe sie, setze sie nicht um.',
   note: 'Anmerkungen: {note}',
+  created: 'In der ainstorm-Karte habe ich {task} {where} hinzugefügt. Berücksichtige sie im Plan; beginne erst damit, wenn ich darum bitte.',
+  createdRun: 'In der ainstorm-Karte habe ich {task} {where} hinzugefügt. Beginne mit der Arbeit daran: setze sie als die Aufgabe, an der du arbeitest, und halte die Karte aktuell.',
+  edited: 'In der ainstorm-Karte habe ich {task} bearbeitet (Titel, Beschreibung oder Abschlusskriterien). Lies sie erneut (task_get) und berücksichtige die Änderungen.',
 };
 
 const fr: PromptPhrases = {
@@ -155,6 +164,9 @@ const fr: PromptPhrases = {
   decideYes: 'Décision sur {task} : oui. Je te la confie, occupe-t’en.',
   decideNo: 'Décision sur {task} : non. Je l’abandonne, ne la réalise pas.',
   note: 'Remarques : {note}',
+  created: 'Dans la carte ainstorm, j’ai ajouté {task} {where}. Prends-la en compte dans le plan ; ne la commence pas avant que je le demande.',
+  createdRun: 'Dans la carte ainstorm, j’ai ajouté {task} {where}. Commence à y travailler : définis-la comme la tâche en cours et tiens la carte à jour.',
+  edited: 'Dans la carte ainstorm, j’ai modifié {task} (titre, description ou critères de fin). Relis-la (task_get) et prends les changements en compte.',
 };
 
 const es: PromptPhrases = {
@@ -192,6 +204,9 @@ const es: PromptPhrases = {
   decideYes: 'Decisión sobre {task}: sí. Te la paso, encárgate de ella.',
   decideNo: 'Decisión sobre {task}: no. La descarto, no la realices.',
   note: 'Notas: {note}',
+  created: 'En el mapa de ainstorm añadí {task} {where}. Tenla en cuenta en el plan; no la empieces hasta que te lo pida.',
+  createdRun: 'En el mapa de ainstorm añadí {task} {where}. Empieza a trabajar en ella: márcala como la tarea en la que trabajas y mantén el mapa al día.',
+  edited: 'En el mapa de ainstorm edité {task} (título, descripción o criterios de finalización). Vuelve a leerla (task_get) y ten en cuenta los cambios.',
 };
 
 const ptBR: PromptPhrases = {
@@ -229,6 +244,9 @@ const ptBR: PromptPhrases = {
   decideYes: 'Decisão sobre {task}: sim. Estou passando para você, cuide dela.',
   decideNo: 'Decisão sobre {task}: não. Vou descartá-la, não a execute.',
   note: 'Observações: {note}',
+  created: 'No mapa do ainstorm adicionei {task} {where}. Leve-a em conta no plano; não a comece até eu pedir.',
+  createdRun: 'No mapa do ainstorm adicionei {task} {where}. Comece a trabalhar nela: defina-a como a tarefa em andamento e mantenha o mapa atualizado.',
+  edited: 'No mapa do ainstorm editei {task} (título, descrição ou critérios de conclusão). Leia-a de novo (task_get) e leve as mudanças em conta.',
 };
 
 const it: PromptPhrases = {
@@ -266,6 +284,9 @@ const it: PromptPhrases = {
   decideYes: 'Decisione su {task}: sì. Te lo passo, occupatene tu.',
   decideNo: 'Decisione su {task}: no. Lo abbandono, non realizzarlo.',
   note: 'Note: {note}',
+  created: 'Nella mappa di ainstorm ho aggiunto {task} {where}. Tienine conto nel piano; non iniziarlo finché non te lo chiedo.',
+  createdRun: 'Nella mappa di ainstorm ho aggiunto {task} {where}. Inizia a lavorarci: impostalo come il compito su cui lavori e tieni aggiornata la mappa.',
+  edited: 'Nella mappa di ainstorm ho modificato {task} (titolo, descrizione o criteri di completamento). Rileggilo (task_get) e tieni conto delle modifiche.',
 };
 
 const nl: PromptPhrases = {
@@ -303,6 +324,9 @@ const nl: PromptPhrases = {
   decideYes: 'Besluit over {task}: ja. Ik draag hem aan jou over, pak hem op.',
   decideNo: 'Besluit over {task}: nee. Ik schrap hem, voer hem niet uit.',
   note: 'Opmerkingen: {note}',
+  created: 'In de ainstorm-kaart heb ik {task} {where} toegevoegd. Houd er rekening mee in het plan; begin er pas aan als ik het vraag.',
+  createdRun: 'In de ainstorm-kaart heb ik {task} {where} toegevoegd. Begin eraan: stel hem in als de taak waaraan je werkt en houd de kaart bij.',
+  edited: 'In de ainstorm-kaart heb ik {task} bewerkt (titel, beschrijving of afrondingscriteria). Lees hem opnieuw (task_get) en houd rekening met de wijzigingen.',
 };
 
 const pl: PromptPhrases = {
@@ -340,6 +364,9 @@ const pl: PromptPhrases = {
   decideYes: 'Decyzja w sprawie {task}: tak. Przekazuję je Tobie, zajmij się nim.',
   decideNo: 'Decyzja w sprawie {task}: nie. Porzucam je, nie realizuj go.',
   note: 'Uwagi: {note}',
+  created: 'W mapie ainstorm dodałem {task} {where}. Uwzględnij je w planie; nie zaczynaj go, dopóki nie poproszę.',
+  createdRun: 'W mapie ainstorm dodałem {task} {where}. Zacznij nad nim pracę: ustaw je jako zadanie, nad którym pracujesz, i prowadź mapę na bieżąco.',
+  edited: 'W mapie ainstorm zmieniłem {task} (tytuł, opis albo kryteria ukończenia). Przeczytaj je jeszcze raz (task_get) i uwzględnij zmiany.',
 };
 
 const uk: PromptPhrases = {
@@ -377,6 +404,9 @@ const uk: PromptPhrases = {
   decideYes: 'Рішення щодо {task}: так. Передаю його тобі, займися ним.',
   decideNo: 'Рішення щодо {task}: ні. Скасовую його, не виконуй.',
   note: 'Примітки: {note}',
+  created: 'У мапі ainstorm я додав {task} {where}. Врахуй це в плані; не починай, доки я не попрошу.',
+  createdRun: 'У мапі ainstorm я додав {task} {where}. Почни над ним працювати: встанови його як завдання, над яким працюєш, і веди мапу актуальною.',
+  edited: 'У мапі ainstorm я змінив {task} (назву, опис або критерії завершення). Прочитай його ще раз (task_get) і врахуй зміни.',
 };
 
 const cs: PromptPhrases = {
@@ -414,6 +444,9 @@ const cs: PromptPhrases = {
   decideYes: 'Rozhodnutí o {task}: ano. Předávám ho tobě, postarej se o něj.',
   decideNo: 'Rozhodnutí o {task}: ne. Ruším ho, neprováděj ho.',
   note: 'Poznámky: {note}',
+  created: 'V mapě ainstorm jsem přidal {task} {where}. Zohledni to v plánu; nezačínej s tím, dokud tě nepožádám.',
+  createdRun: 'V mapě ainstorm jsem přidal {task} {where}. Začni na něm pracovat: nastav ho jako úkol, na kterém pracuješ, a udržuj mapu aktuální.',
+  edited: 'V mapě ainstorm jsem upravil {task} (název, popis nebo kritéria dokončení). Přečti si ho znovu (task_get) a zohledni změny.',
 };
 
 const sv: PromptPhrases = {
@@ -451,6 +484,9 @@ const sv: PromptPhrases = {
   decideYes: 'Beslut om {task}: ja. Jag lämnar över den till dig, ta hand om den.',
   decideNo: 'Beslut om {task}: nej. Jag stryker den, genomför den inte.',
   note: 'Anteckningar: {note}',
+  created: 'I ainstorm-kartan har jag lagt till {task} {where}. Ta hänsyn till den i planen; börja inte med den förrän jag ber om det.',
+  createdRun: 'I ainstorm-kartan har jag lagt till {task} {where}. Börja arbeta med den: ange den som uppgiften du arbetar med och håll kartan uppdaterad.',
+  edited: 'I ainstorm-kartan har jag redigerat {task} (titel, beskrivning eller klarkriterier). Läs den igen (task_get) och ta hänsyn till ändringarna.',
 };
 
 const tr: PromptPhrases = {
@@ -488,6 +524,9 @@ const tr: PromptPhrases = {
   decideYes: '{task} hakkında karar: evet. Sana devrediyorum, ilgilen.',
   decideNo: '{task} hakkında karar: hayır. İptal ediyorum, uygulama.',
   note: 'Notlar: {note}',
+  created: 'ainstorm haritasında {task} görevini {where} ekledim. Planda dikkate al; ben isteyene kadar başlama.',
+  createdRun: 'ainstorm haritasında {task} görevini {where} ekledim. Üzerinde çalışmaya başla: üzerinde çalıştığın görev olarak ayarla ve haritayı güncel tut.',
+  edited: 'ainstorm haritasında {task} görevini düzenledim (başlık, açıklama veya bitirme ölçütleri). Yeniden oku (task_get) ve değişiklikleri dikkate al.',
 };
 
 const ja: PromptPhrases = {
@@ -525,6 +564,9 @@ const ja: PromptPhrases = {
   decideYes: '{task} についての決定: はい。あなたに任せますので対応してください。',
   decideNo: '{task} についての決定: いいえ。中止しますので実施しないでください。',
   note: 'メモ: {note}',
+  created: 'ainstorm のマップで {task} を{where}追加しました。計画に反映してください。私が頼むまで着手しないでください。',
+  createdRun: 'ainstorm のマップで {task} を{where}追加しました。作業を始めてください: 作業中のタスクとして設定し、マップを最新に保ってください。',
+  edited: 'ainstorm のマップで {task} を編集しました (タイトル、説明、または完了条件)。もう一度読み (task_get)、変更を反映してください。',
 };
 
 const ko: PromptPhrases = {
@@ -562,6 +604,9 @@ const ko: PromptPhrases = {
   decideYes: '{task}에 대한 결정: 예. 맡길 테니 처리해 주세요.',
   decideNo: '{task}에 대한 결정: 아니요. 취소하니 진행하지 마세요.',
   note: '메모: {note}',
+  created: 'ainstorm 맵에서 {task}을(를) {where} 추가했습니다. 계획에 반영하고, 제가 요청할 때까지 시작하지 마세요.',
+  createdRun: 'ainstorm 맵에서 {task}을(를) {where} 추가했습니다. 작업을 시작하세요: 작업 중인 작업으로 설정하고 맵을 최신으로 유지하세요.',
+  edited: 'ainstorm 맵에서 {task}을(를) 수정했습니다 (제목, 설명 또는 완료 기준). 다시 읽고 (task_get) 변경 사항을 반영하세요.',
 };
 
 const zhCN: PromptPhrases = {
@@ -599,6 +644,9 @@ const zhCN: PromptPhrases = {
   decideYes: '关于 {task} 的决定：是。交给你了，请处理。',
   decideNo: '关于 {task} 的决定：否。我放弃它，不要执行。',
   note: '备注：{note}',
+  created: '我在 ainstorm 地图中把 {task} 添加到{where}。请在计划中考虑它；在我要求之前不要开始。',
+  createdRun: '我在 ainstorm 地图中把 {task} 添加到{where}。开始处理它：把它设为你正在处理的任务，并保持地图最新。',
+  edited: '我在 ainstorm 地图中编辑了 {task}（标题、描述或完成条件）。请重新读取 (task_get) 并考虑这些更改。',
 };
 
 /** Languages of the prompts; English is the default. Translations are plain and meant for Claude, not polished copy. */
