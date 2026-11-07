@@ -44,5 +44,15 @@ describe('session context', () => {
     const text = deliveriesText(state, [makeEvent(1, { changeId: 1001, type: 'done', taskId: 'PRJ-1', text: 'todo → done' })])!;
     expect(text).toContain('- #1001 done PRJ-1');
     expect(text).toContain('ask the user before acting');
+    expect(text).not.toContain('rulings');
+  });
+
+  it('tells the session that answers and decisions are the user\'s rulings to act on', () => {
+    const decided = deliveriesText(state, [makeEvent(1, { changeId: 1002, type: 'answer', taskId: 'PRJ-3', text: 'decided: yes — bez inno setup' })])!;
+    expect(decided).toContain('- #1002 answer PRJ-3');
+    expect(decided).toMatch(/the user's rulings on what you asked.*already recorded/s);
+    expect(decided).toContain('Act on them now');
+    const declined = deliveriesText(state, [makeEvent(1, { changeId: 1003, type: 'drop', taskId: 'PRJ-3', text: 'decided: no' })])!;
+    expect(declined).toContain('Act on them now');
   });
 });

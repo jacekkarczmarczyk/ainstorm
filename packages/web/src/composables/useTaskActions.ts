@@ -199,14 +199,14 @@ export function useTaskActions() {
     });
   }
 
-  /** The user's decision on their own task: yes hands it to Claude, no drops it. */
+  /** The user's decision on their own task: it closes the task (yes: done, no: dropped) and is recorded in it. */
   function decide(task: Task, approve: boolean, note: string) {
     return perform({
       action: 'decide', task, prompt: { kind: 'decide', task, approve, note },
       command: notify => ({ type: 'decideTask', taskId: task.id, approve, note, notify }),
-      title: t(approve ? 'decide.yesTitle' : 'dialog.dropTitle', { id: task.id }),
-      confirmLabel: t(approve ? 'decide.yes' : 'decide.no'), danger: !approve,
-      doneText: t(approve ? 'toast.handedOver' : 'toast.dropped', { id: task.id }),
+      title: t(approve ? 'decide.yesTitle' : 'decide.noTitle', { id: task.id }),
+      confirmLabel: t(approve ? 'decide.yes' : 'decide.no'),
+      doneText: t('toast.decided', { id: task.id }),
     });
   }
 

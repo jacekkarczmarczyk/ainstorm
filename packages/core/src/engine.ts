@@ -28,7 +28,7 @@ export const UserCommand = z.discriminatedUnion('type', [
   z.object({ type: z.literal('requestSession'), request: z.enum(['run', 'pause', 'goAhead']), taskId: TaskId, sessionId: SessionId.nullable() }),
   /** Ask the session whether an open question still applies; only recorded, the session answers or closes it */
   z.object({ type: z.literal('recheckQuestion'), taskId: TaskId, questionId: z.string().min(1).max(100), notify: z.boolean() }),
-  /** The user's decision on their own task: yes hands it to Claude, no drops it */
+  /** The user's decision on their own task (without a question): yes closes it as done, no drops it; both are recorded */
   z.object({ type: z.literal('decideTask'), taskId: TaskId, approve: z.boolean(), note: z.string().max(2000), notify: z.boolean() }),
   /** The commit message a code task intends to make (end of its description) */
   z.object({ type: z.literal('setCommitMessage'), taskId: TaskId, message: z.string().max(5000), notify: z.boolean() }),
@@ -175,13 +175,15 @@ export class MapEngine {
         if (question.answer) throw new EngineError(`Question ${question.id} is already answered`, 'invalid');
         return this.change(id, actor, [t.id], this.waitingOn(t.id), null, log => {
           question.answer = { text: command.answer, at: this.now() };
-          // Answering the last question of a decision task closes it
+          // Answering the last question of a decision task closes it, and the answer is recorded as the decision
           if (t.owner === 'me' && t.ask === 'decision' && openQuestions(t).length === 0 && !isClosed(t.status)) {
             t.status = 'done';
+            t.decisions.push({ at: this.now(), summary: oneLine(command.answer, 200), detail: `${question.text}\n→ ${command.answer}`.slice(0, 5000) });
             this.resolveWaiting(t);
           }
           this.touch(t);
-          log({ taskId: t.id, type: 'answer', text: command.answer, delivery: this.questionDelivery(question.sessionId, true) });
+          // The question goes along, so the session reads the answer in its context
+          log({ taskId: t.id, type: 'answer', text: `${oneLine(question.text, 300)} → ${command.answer}`.slice(0, 2000), delivery: this.questionDelivery(question.sessionId, true) });
         });
       }
       case 'promoteTask': {
@@ -217,16 +219,14 @@ export class MapEngine {
         const t = this.task(command.taskId);
         if (t.owner !== 'me' || isClosed(t.status)) throw new EngineError(`${t.id} is not an open task of yours`, 'invalid');
         return this.change(id, actor, [t.id], this.waitingOn(t.id), null, log => {
-          if (command.approve) {
-            t.owner = 'claude';
-            t.ask = null;
-          } else {
-            t.status = 'dropped';
-          }
+          // The decision is the task: answering closes it and records the answer; work that waits for it can go on
+          const note = command.note.trim();
+          const answer = command.approve ? 'yes' : 'no';
+          t.status = command.approve ? 'done' : 'dropped';
+          t.decisions.push({ at: this.now(), summary: oneLine(`${answer}${note ? ` — ${note}` : ''}`, 200), detail: note });
           this.touch(t);
           this.resolveWaiting(t);
-          const note = command.note.trim();
-          log({ taskId: t.id, type: command.approve ? 'answer' : 'drop', text: `${command.approve ? 'decided: yes' : 'decided: no'}${note ? ` — ${note}` : ''}`, delivery: this.delivery(t, command.notify) });
+          log({ taskId: t.id, type: command.approve ? 'answer' : 'drop', text: `decided: ${answer}${note ? ` — ${note}` : ''}`, delivery: this.delivery(t, command.notify) });
         });
       }
       case 'archiveSession':
@@ -504,5 +504,11 @@ export class MapEngine {
     return released;
   }
 }
+
+/** One line of at most `max` characters, for decision summaries and event texts */
+const oneLine = (text: string, max: number) => {
+  const line = text.replace(/\s+/g, ' ').trim();
+  return line.length > max ? `${line.slice(0, max - 1)}…` : line;
+};
 
 const statusEvent = (to: Task['status']): EventType => (to === 'done' ? 'done' : to === 'dropped' ? 'drop' : 'status');

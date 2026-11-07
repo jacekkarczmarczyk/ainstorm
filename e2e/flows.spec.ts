@@ -327,15 +327,18 @@ test('#1234 links to the project\'s GitHub issue; Create issue sends Claude a re
   await expect(toast(page)).toContainText('Sent to Claude: issue of PRJ-45');
 });
 
-test('a decision of the user\'s hands the task to Claude, who can then run it', async ({ page }) => {
+test('a decision of the user\'s closes the task and is recorded in it', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-52`);
+  const panel = taskPanel(page);
   await page.getByPlaceholder('Note for Claude (optional)…').fill('remove them');
-  await page.getByRole('button', { name: 'Yes, hand to Claude' }).click();
-  await expect(dialog(page).locator('pre')).toContainText('Decision on PRJ-52');
+  await panel.getByRole('button', { name: 'Yes', exact: true }).click();
+  await expect(dialog(page).locator('pre')).toContainText('My decision on PRJ-52');
+  await expect(dialog(page).locator('pre')).toContainText('Act on it');
   await expect(dialog(page).locator('pre')).toContainText('Notes: remove them');
-  await dialog(page).getByRole('button', { name: 'Yes, hand to Claude' }).click();
-  await expect(page.getByRole('button', { name: 'Yes, hand to Claude' })).toHaveCount(0);
-  await expect(taskPanel(page).getByRole('button', { name: 'Run', exact: true })).toBeVisible();
+  await dialog(page).getByRole('button', { name: 'Yes', exact: true }).click();
+  await expect(panel.getByRole('button', { name: 'Yes', exact: true })).toHaveCount(0);
+  await expect(rowTitle(page, 'PRJ-52')).toHaveClass(/t-done/);
+  await expect(panel.getByText('Latest: yes — remove them')).toBeVisible();
 });
 
 test('an action of the user\'s is marked done from the panel, and can be undone', async ({ page }) => {
@@ -354,8 +357,8 @@ test('an action of the user\'s is marked done from the panel, and can be undone'
 
 test('a decision of no drops the task', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-52`);
-  await page.getByRole('button', { name: 'No, drop it' }).click();
-  await dialog(page).getByRole('button', { name: 'No, drop it' }).click();
+  await taskPanel(page).getByRole('button', { name: 'No', exact: true }).click();
+  await dialog(page).getByRole('button', { name: 'No', exact: true }).click();
   await expect(rowTitle(page, 'PRJ-52')).toHaveClass(/t-dropped/);
 });
 

@@ -86,6 +86,9 @@ describe('MapEngine', () => {
     const { engine } = setup();
     const { changeId } = engine.execute({ type: 'answerQuestion', taskId: 'PRJ-4', questionId: 'q', answer: 'a' });
     expect(engine.task('PRJ-4')).toMatchObject({ status: 'done', questions: [{ answer: { text: 'a', at: NOW } }] });
+    // The answer is the decision, recorded in the task; the event carries the question for the session
+    expect(engine.task('PRJ-4').decisions).toEqual([{ at: NOW, summary: 'a', detail: '?\n→ a' }]);
+    expect(engine.state.events.at(-1)).toMatchObject({ type: 'answer', text: '? → a' });
     expect(engine.state.sessions[0]).toMatchObject({ status: 'idle', waiting: null });
     expect(() => engine.execute({ type: 'answerQuestion', taskId: 'PRJ-4', questionId: 'q', answer: 'b' })).toThrow(/already answered/);
     engine.revert(changeId);
@@ -107,19 +110,19 @@ describe('MapEngine', () => {
     expect(engine.task('PRJ-4').version).toBe(1);
   });
 
-  it('a yes hands the user\'s task to Claude, a no drops it; both release a waiting session', () => {
+  it('a decision closes the user\'s task (yes: done, no: dropped), is recorded in it and releases a waiting session', () => {
     const { engine, open } = setup();
     engine.execute({ type: 'decideTask', taskId: 'PRJ-4', approve: true, note: ' bez force ', notify: true });
-    expect(engine.task('PRJ-4')).toMatchObject({ owner: 'claude', ask: null, status: 'todo' });
+    expect(engine.task('PRJ-4')).toMatchObject({ owner: 'me', status: 'done', decisions: [{ at: NOW, summary: 'yes — bez force', detail: 'bez force' }] });
     expect(engine.state.sessions[0]).toMatchObject({ waiting: null, status: 'idle' });
     expect(engine.state.events.at(-1)).toMatchObject({ type: 'answer', text: 'decided: yes — bez force', delivery: { state: 'pending', sessionIds: [open.id] } });
     expect(() => engine.execute({ type: 'decideTask', taskId: 'PRJ-4', approve: false, note: '', notify: true })).toThrow(/not an open task of yours/);
 
     const second = setup();
     const { changeId } = second.engine.execute({ type: 'decideTask', taskId: 'PRJ-4', approve: false, note: '', notify: true });
-    expect(second.engine.task('PRJ-4')).toMatchObject({ owner: 'me', status: 'dropped' });
+    expect(second.engine.task('PRJ-4')).toMatchObject({ owner: 'me', status: 'dropped', decisions: [{ summary: 'no', detail: '' }] });
     second.engine.revert(changeId);
-    expect(second.engine.task('PRJ-4').status).toBe('todo');
+    expect(second.engine.task('PRJ-4')).toMatchObject({ status: 'todo', decisions: [] });
   });
 
   it('changes the commit message at the end of the description, with undo and delivery', () => {

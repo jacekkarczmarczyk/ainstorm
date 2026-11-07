@@ -128,8 +128,9 @@ export const enGB = {
     title: 'Your action', help: 'Done it? Confirm it here; the change goes to Claude like any status change.', done: 'Mark as done',
   },
   decide: {
-    title: 'Your decision', note: 'Note for Claude (optional)…', yes: 'Yes, hand to Claude', no: 'No, drop it',
-    yesTitle: 'Hand {id} to Claude?',
+    title: 'Your decision', note: 'Note for Claude (optional)…', yes: 'Yes', no: 'No',
+    help: 'Your answer closes this task and is recorded in it; Claude acts on it.',
+    yesTitle: 'Decide yes on {id}?', noTitle: 'Decide no on {id}?',
   },
   move: {
     open: 'Move…', title: 'Move {id} under…', search: 'Find a task by number or title…', topLevel: 'top level',
@@ -169,7 +170,7 @@ export const enGB = {
   toast: {
     statusChanged: '{id}: {from} → {to}.', undo: 'Undo', alwaysAsk: 'Always ask', copyPrompt: 'Copy prompt', copyFor: 'Copy for {session}', dismiss: 'Dismiss',
     copied: 'Copied to clipboard.', clipboardBlocked: 'The clipboard is blocked here. Select the text and copy it by hand.',
-    deleted: '{id} deleted.', dropped: '{id} dropped.', moved: '{id} moved under {to}.', handedOver: '{id} handed to Claude.', rechecked: 'Asked Claude to recheck the question on {id}.', answered: 'Answer sent.', focusSet: 'Focus of {project} is now {id}.', focusCleared: '{project} has no focus now.',
+    deleted: '{id} deleted.', dropped: '{id} dropped.', moved: '{id} moved under {to}.', decided: 'Decision on {id} recorded.',rechecked: 'Asked Claude to recheck the question on {id}.', answered: 'Answer sent.', focusSet: 'Focus of {project} is now {id}.', focusCleared: '{project} has no focus now.',
     promoted: '{id} is back in the plan.', archived: 'Session {session} archived.', restored: 'Session {session} restored.',
     runCopied: 'Prompt for {session} copied. Paste it into that session; only the request is recorded until then.',
     newSessionCopied: 'No open session works on {id}. A command that starts one is copied; only the request is recorded.',
@@ -212,7 +213,7 @@ export const enGB = {
     promptLanguageHelp: 'Language of the prompts copied into Claude sessions. Claude answers in the language of your conversation anyway.',
     confirmHelp: 'Changes sent to Claude. Unticked actions are applied straight away, with Undo in the toast.',
     actions: {
-      create: 'Adding a task', edit: 'Editing a task (title, description, criteria)', status: 'Status changes', type: 'Type changes', area: 'Adding or removing an area', answer: 'Answers to questions', recheck: 'Asking whether a question still applies', decide: 'Your decisions (hand to Claude or drop)', promote: 'Moving a deferred task into the plan', move: 'Moving a task under another parent',
+      create: 'Adding a task', edit: 'Editing a task (title, description, criteria)', status: 'Status changes', type: 'Type changes', area: 'Adding or removing an area', answer: 'Answers to questions', recheck: 'Asking whether a question still applies', decide: 'Your decisions (yes or no on a task of yours)', promote: 'Moving a deferred task into the plan', move: 'Moving a task under another parent',
       commit: 'Changing the commit message of a task', issue: 'Creating or closing a GitHub issue', run: 'Run', pause: 'Pause', goAhead: 'Approve a prepared plan and start', delete: 'Delete', drop: 'Drop',
     },
   },
