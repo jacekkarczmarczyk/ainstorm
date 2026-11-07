@@ -26,6 +26,8 @@ what was parked on the way, and what waits for them. Keep it true as you work. T
 - `fromId` says what a task came out of, by meaning: the task in whose work or result it was found. It is not simply
   the task you happen to be running. A new request from the user that has nothing to do with the running task gets
   no `fromId` (or the task it really relates to).
+- When the user asks to archive the session ("archive", "zarchiwizuj"), call `session_archive`, only then. Name the
+  tasks of the session still open from its result; they stay as they are.
 
 ## Where a new task goes in the tree
 

@@ -50,6 +50,8 @@ export const SessionOp = z.discriminatedUnion('op', [
   z.object({ op: z.literal('active') }),
   /** Stop hook: the turn ended; the session stays "waiting" if Claude said it waits on the user */
   z.object({ op: z.literal('stop') }),
+  /** The user asked to archive this session; its tasks stay as they are */
+  z.object({ op: z.literal('archive') }),
   z.object({ op: z.literal('setTitle'), title: Text(200) }),
   z.object({ op: z.literal('setRunning'), taskId: TaskId.nullable() }),
   /** The tasks the session takes up next, in order (the user asked for several in the conversation) */
@@ -168,6 +170,15 @@ export function applySessionOp(engine: MapEngine, sessionId: string, input: unkn
         s.status = s.waiting ? 'waiting' : 'idle';
         ctx.session(s);
         return { status: s.status };
+      });
+    case 'archive':
+      return run('claude', ctx => {
+        const s = session();
+        s.archivedAt ??= ctx.now;
+        ctx.session(s);
+        // Tasks of the session still open, for Claude to name to the user
+        const open = state.tasks.filter(t => t.sessionIds.includes(s.id) && t.archivedAt === null && !isClosed(t.status)).map(t => t.id);
+        return { archived: true, openTasks: open };
       });
     case 'setTitle':
       return run('claude', ctx => {

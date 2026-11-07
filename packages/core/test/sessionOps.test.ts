@@ -32,6 +32,15 @@ describe('session operations', () => {
     expect(() => op(S2, { op: 'setTitle', title: 'x' })).toThrow(/not tracked/);
   });
 
+  it('archives the session on request and names its tasks still open', () => {
+    const { engine, op } = setup();
+    op(S1, { op: 'createTask', title: 'Open one' });
+    op(S1, { op: 'createTask', title: 'Finished', status: 'done' });
+    expect(op(S1, { op: 'archive' }).value).toEqual({ archived: true, openTasks: ['PRJ-3'] });
+    expect(engine.session(S1).archivedAt).toBe(NOW);
+    expect(engine.task('PRJ-3').status).toBe('todo');
+  });
+
   it('a session that was not asked for only learns its project; one already in the map goes on being tracked', () => {
     const { engine, op } = setup();
     expect(op(S2, { op: 'start', cwd: 'C:/Users/me/dev/shop/shop', source: 'startup' }).value).toEqual({ project: 'PRJ', tracked: false });
