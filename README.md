@@ -52,11 +52,15 @@ cd /c/path/to/your/project
 claude --plugin-dir /c/path/to/ainstorm/plugin
 ```
 
-The first time in a project folder, Claude asks for a project key and name and registers it. Then, in the session:
+In the session:
 
-- `/ainstorm:open` prints a one-time link (valid once, for a minute) that signs the browser in to the map;
+- `/ainstorm:open` prints a one-time link (valid once, for a minute) that signs the browser in to the map and opens
+  the session's open tasks. In a folder that is no project yet, it first suggests a project key and name; Claude
+  registers the project once you agree (or give your own);
 - `/ainstorm:status` tells where the session stands;
-- `/ainstorm:defer "…"` parks a side issue for later.
+- `/ainstorm:defer "…"` parks a side issue for later;
+- `/ainstorm:backfill` rebuilds the tasks of the current conversation, for work begun before ainstorm was running
+  (to add an older session, resume it with `claude --resume` and run it there).
 
 Resume a session with `claude --resume <session id> --plugin-dir …`, or `claude --continue --plugin-dir …` for the
 last one in the folder. The map's "Copy resume command" button builds this command; set the plugin folder in the
