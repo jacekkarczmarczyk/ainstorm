@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { listSessions, projectStats, runMarks, sessionHighlights, sessionStatusKey } from '@ainstorm/core';
+import { EMPTY_FILTER, listSessions, projectStats, runMarks, sessionHighlights, sessionStatusKey, toggleQuickFilter } from '@ainstorm/core';
 import { ChevronLeft, ChevronRight, Search } from '@lucide/vue';
 import { computed, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -48,7 +48,9 @@ const stats = computed(() => ({
   ...projectStats(map.index, map.snapshot.sessions, projectKey.value ?? ''),
   forYou: map.forUser.filter(t => t.projectKey === projectKey.value).length,
 }));
-const goToPage = (n: number) => router.replace({ query: { ...route.query, page: n === 1 ? undefined : String(n) } });
+// A session card opens the tree with the "Open" quick filter on: what is still to be done
+const openOpenTasks = (sessionId: string) => openSession(sessionId, 'tree', undefined, toggleQuickFilter(EMPTY_FILTER, 'open'));
+const goToPage =(n: number) => router.replace({ query: { ...route.query, page: n === 1 ? undefined : String(n) } });
 const toggleArchived = () => router.replace({ query: { ...route.query, archived: showArchived.value ? undefined : '1', page: undefined } });
 </script>
 
@@ -84,7 +86,7 @@ const toggleArchived = () => router.replace({ query: { ...route.query, archived:
 
     <article
       v-for="x in shown" :key="x.session.id" class="card session" :class="`ses-${sessionStatusKey(x.session)}`" tabindex="0"
-      @click="openSession(x.session.id)" @keydown.enter="openSession(x.session.id)"
+      @click="openOpenTasks(x.session.id)" @keydown.enter="openOpenTasks(x.session.id)"
     >
       <header class="head">
         <span class="ses-dot"></span>

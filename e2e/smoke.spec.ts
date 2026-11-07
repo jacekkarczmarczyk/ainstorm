@@ -29,8 +29,11 @@ test('the project overview lists its session cards', async ({ page }) => {
   await page.goto('/p/PRJ');
   await expect(page.locator('article.session')).toHaveCount(1);
   await page.locator('article.session', { hasText: 'Cart and payments rework' }).locator('h2').click();
-  await expect(page).toHaveURL(new RegExp(`${SHOP}/tree$`));
+  // Only open tasks: the "Open" quick filter is on
+  await expect(page).toHaveURL(new RegExp(`${SHOP}/tree\\?status=todo&status=in_progress&status=blocked&status=deferred$`));
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(row(page, 'PRJ-1')).toBeVisible();
+  await expect(row(page, 'PRJ-2')).toHaveCount(0);
 });
 
 test('a link to a task opens it in its session', async ({ page }) => {
