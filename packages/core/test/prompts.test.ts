@@ -73,6 +73,9 @@ describe('buildPrompt', () => {
     for (const kind of kinds) expect(buildPrompt(kind, 1, target).length).toBeGreaterThan(40);
     expect(buildPrompt(kinds[0], 1, target)).toContain('together with 2 subtasks');
     expect(buildPrompt({ kind: 'delete', task, subtasks: 0 }, 1, target)).not.toContain('together with');
+    // The user's own answer to a decision is quoted, on one line
+    expect(buildPrompt({ kind: 'decide', task, approve: null, note: 'Option 1\nno shortcut' }, 1, target))
+      .toMatch(/My decision on PRJ-\d+ .*:\n> Option 1 no shortcut\nIt is recorded in the task/);
   });
 
   it('a value that looks like a placeholder is left as it is', () => {

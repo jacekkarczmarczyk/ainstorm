@@ -29,7 +29,8 @@ export const UserCommand = z.discriminatedUnion('type', [
   /** Ask the session whether an open question still applies; only recorded, the session answers or closes it */
   z.object({ type: z.literal('recheckQuestion'), taskId: TaskId, questionId: z.string().min(1).max(100), notify: z.boolean() }),
   /** The user's decision on their own task (without a question): yes closes it as done, no drops it; both are recorded */
-  z.object({ type: z.literal('decideTask'), taskId: TaskId, approve: z.boolean(), note: z.string().max(2000), notify: z.boolean() }),
+  // approve null: the user's own answer, written in note
+  z.object({ type: z.literal('decideTask'), taskId: TaskId, approve: z.boolean().nullable(), note: z.string().max(2000), notify: z.boolean() }),
   /** The commit message a code task intends to make (end of its description) */
   z.object({ type: z.literal('setCommitMessage'), taskId: TaskId, message: z.string().max(5000), notify: z.boolean() }),
   /** Ask the session to create or close the task's GitHub issue (with gh); only recorded and delivered */
@@ -218,15 +219,17 @@ export class MapEngine {
       case 'decideTask': {
         const t = this.task(command.taskId);
         if (t.owner !== 'me' || isClosed(t.status)) throw new EngineError(`${t.id} is not an open task of yours`, 'invalid');
+        const note = command.note.trim();
+        if (command.approve === null && !note) throw new EngineError('An answer of your own needs some text', 'invalid');
         return this.change(id, actor, [t.id], this.waitingOn(t.id), null, log => {
-          // The decision is the task: answering closes it and records the answer; work that waits for it can go on
-          const note = command.note.trim();
-          const answer = command.approve ? 'yes' : 'no';
-          t.status = command.approve ? 'done' : 'dropped';
-          t.decisions.push({ at: this.now(), summary: oneLine(`${answer}${note ? ` — ${note}` : ''}`, 200), detail: note });
+          // The decision is the task: answering closes it and records the answer; work that waits for it can go on.
+          // A no drops it; yes and an answer of the user's own close it as done.
+          const text = command.approve === null ? note : `${command.approve ? 'yes' : 'no'}${note ? ` — ${note}` : ''}`;
+          t.status = command.approve === false ? 'dropped' : 'done';
+          t.decisions.push({ at: this.now(), summary: oneLine(text, 200), detail: note });
           this.touch(t);
           this.resolveWaiting(t);
-          log({ taskId: t.id, type: command.approve ? 'answer' : 'drop', text: `decided: ${answer}${note ? ` — ${note}` : ''}`, delivery: this.delivery(t, command.notify) });
+          log({ taskId: t.id, type: command.approve === false ? 'drop' : 'answer', text: `decided: ${text}`.slice(0, 2000), delivery: this.delivery(t, command.notify) });
         });
       }
       case 'archiveSession':

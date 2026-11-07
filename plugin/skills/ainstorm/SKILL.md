@@ -73,10 +73,11 @@ what was parked on the way, and what waits for them. Keep it true as you work. T
 ## When you need the user
 
 - A choice or an answer: `question_ask` (with options when there are clear choices), then `session_wait`, then end the turn.
-- A decision of the user's: a task with `owner: "me"`, `ask: "decision"`, and right away its question (`question_ask`)
-  with options you will understand without doubt: each option one clear course (e.g. "Yes, all of them" / "Yes, but
-  without the installer" / "No, let's talk"); the user can still write their own answer. Then `session_wait`, end the
-  turn. Their answer closes the task and is recorded in it. A yes/no without a question also works, but is vaguer.
+- A decision of the user's: `task_create` with `owner: "me"`, `ask: "decision"` and `options` (and `question` when the
+  title is not the question), so the task comes with its question. Make each option one clear course you will
+  understand without doubt (e.g. "1. Built into mdread.exe" / "2. Inno Setup" / "3. WiX/MSI", or "Yes, all of them" /
+  "Yes, but without the installer" / "No, let's talk"); the user picks one and can add a comment or their own answer.
+  Then `session_wait`, end the turn. Their answer closes the task and is recorded in it.
 - Work that depends on that decision is a separate task of yours that waits for it (`task_link`), not the decision
   task itself.
 - Something only they can do, or approval to start: a task with `owner: "me"` and `ask: "action"`, then `session_wait`,

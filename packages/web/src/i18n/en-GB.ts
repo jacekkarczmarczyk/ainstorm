@@ -128,9 +128,9 @@ export const enGB = {
     title: 'Your action', help: 'Done it? Confirm it here; the change goes to Claude like any status change.', done: 'Mark as done',
   },
   decide: {
-    title: 'Your decision', note: 'Note for Claude (optional)…', yes: 'Yes', no: 'No',
+    title: 'Your decision', answer: 'Your answer, or a note to Yes / No…', yes: 'Yes', no: 'No', send: 'Send answer',
     help: 'Your answer closes this task and is recorded in it; Claude acts on it.',
-    yesTitle: 'Decide yes on {id}?', noTitle: 'Decide no on {id}?',
+    yesTitle: 'Decide yes on {id}?', noTitle: 'Decide no on {id}?', answerTitle: 'Send your decision on {id}?',
   },
   move: {
     open: 'Move…', title: 'Move {id} under…', search: 'Find a task by number or title…', topLevel: 'top level',

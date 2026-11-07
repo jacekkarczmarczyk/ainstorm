@@ -330,7 +330,7 @@ test('#1234 links to the project\'s GitHub issue; Create issue sends Claude a re
 test('a decision of the user\'s closes the task and is recorded in it', async ({ page }) => {
   await page.goto(`${SHOP}/tree/PRJ-52`);
   const panel = taskPanel(page);
-  await page.getByPlaceholder('Note for Claude (optional)…').fill('remove them');
+  await page.getByPlaceholder('Your answer, or a note to Yes / No…').fill('remove them');
   await panel.getByRole('button', { name: 'Yes', exact: true }).click();
   await expect(dialog(page).locator('pre')).toContainText('My decision on PRJ-52');
   await expect(dialog(page).locator('pre')).toContainText('Act on it');
@@ -353,6 +353,18 @@ test('an action of the user\'s is marked done from the panel, and can be undone'
   // Not on Claude's tasks
   await page.goto(`${SHOP}/tree/PRJ-45`);
   await expect(taskPanel(page).getByRole('button', { name: 'Mark as done' })).toHaveCount(0);
+});
+
+test('a decision without a question takes an answer of the user\'s own', async ({ page }) => {
+  await page.goto(`${SHOP}/tree/PRJ-52`);
+  const panel = taskPanel(page);
+  await expect(panel.getByRole('button', { name: 'Send answer' })).toBeDisabled();
+  await page.getByPlaceholder('Your answer, or a note to Yes / No…').fill('Option 1, without the desktop shortcut');
+  await panel.getByRole('button', { name: 'Send answer' }).click();
+  await expect(dialog(page).locator('pre')).toContainText('> Option 1, without the desktop shortcut');
+  await dialog(page).getByRole('button', { name: 'Send answer' }).click();
+  await expect(rowTitle(page, 'PRJ-52')).toHaveClass(/t-done/);
+  await expect(panel.getByText('Latest: Option 1, without the desktop shortcut')).toBeVisible();
 });
 
 test('a decision of no drops the task', async ({ page }) => {

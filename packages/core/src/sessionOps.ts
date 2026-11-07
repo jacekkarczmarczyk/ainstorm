@@ -58,7 +58,11 @@ export const SessionOp = z.discriminatedUnion('op', [
   z.object({ op: z.literal('wait'), taskId: TaskId }),
   /** Notification hook: Claude Code shows a permission prompt in the terminal */
   z.object({ op: z.literal('waitPermission'), tool: Text(200), detail: z.string().max(500).default('') }),
-  z.object({ op: z.literal('createTask'), title: Text(200), parentId: TaskId.nullable().optional(), fromId: TaskId.nullable().optional(), status: TaskStatus.optional(), ...TaskFields }),
+  z.object({
+    op: z.literal('createTask'), title: Text(200), parentId: TaskId.nullable().optional(), fromId: TaskId.nullable().optional(), status: TaskStatus.optional(), ...TaskFields,
+    /** A decision comes with its question: the options (and the question, the title by default), asked right away */
+    options: z.array(Text(300)).min(2).max(20).optional(), multi: z.boolean().optional(), question: Text(5000).optional(),
+  }),
   z.object({ op: z.literal('updateTask'), taskId: TaskId, expectedVersion: z.number().int().positive().optional(), title: Text(200).optional(), status: TaskStatus.optional(), parentId: TaskId.nullable().optional(), ...TaskFields }),
   z.object({ op: z.literal('link'), taskId: TaskId, dependsOn: TaskId, remove: z.boolean().default(false) }),
   /** PostToolUse hook on `git commit`, or Claude; without a task, the task the session is running */
@@ -226,6 +230,21 @@ export function applySessionOp(engine: MapEngine, sessionId: string, input: unkn
         state.tasks.push(t);
         ctx.task(t);
         ctx.log({ taskId: id, type: t.status === 'deferred' ? 'defer' : 'create', text: t.title, delivery: null });
+        if (op.options) {
+          const text = op.question ?? op.title;
+          t.questions.push({ id: 'q1', sessionId, text, options: op.options, multi: op.multi ?? false, askedAt: ctx.now, answer: null, dismissed: null });
+          // As with question_ask: a proposal with its question on the table is the user's decision
+          if (t.owner === 'claude' && t.ask === 'proposal') {
+            t.owner = 'me';
+            t.ask = 'decision';
+          }
+          ctx.log({ taskId: id, type: 'wait', text, delivery: null });
+          return { taskId: id, questionId: 'q1' };
+        }
+        // A bare yes/no is vague for most decisions: say so while the session can still add the question
+        if (t.owner === 'me' && t.ask === 'decision') {
+          return { taskId: id, warning: `${id} is a decision without a question. Ask it now with question_ask (taskId ${id}) and options, each one clear course, so the user's answer is unambiguous.` };
+        }
         return { taskId: id };
       });
     }

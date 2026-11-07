@@ -1,29 +1,30 @@
 <script setup lang="ts">
 import type { Task } from '@ainstorm/core';
-import { Check, X } from '@lucide/vue';
+import { Check, Send, X } from '@lucide/vue';
 import { ref, useId } from 'vue';
 import { useTaskActions } from '../composables/useTaskActions.ts';
 
-// A decision of the user's on their own task without a question: yes or no, with an optional note. The answer closes the
-// task (done or dropped) and is recorded in it; the session acts on it.
+// A decision of the user's on their own task without a question: an answer of their own, or a quick yes / no (the text
+// then goes along as a note). The answer closes the task (no: dropped, otherwise done) and is recorded in it.
 const props = defineProps<{ task: Task }>();
 const actions = useTaskActions();
-const note = ref('');
+const text = ref('');
 const id = useId();
 
-const decide = (approve: boolean) => actions.decide(props.task, approve, note.value);
+const decide = (approve: boolean | null) => actions.decide(props.task, approve, text.value);
 </script>
 
 <template>
   <section class="decision" :aria-labelledby="`${id}-title`">
     <h3 :id="`${id}-title`" class="label">{{ $t('decide.title') }}</h3>
     <p class="help">{{ $t('decide.help') }}</p>
-    <label class="sr-only" :for="`${id}-note`">{{ $t('decide.note') }}</label>
-    <textarea :id="`${id}-note`" v-model="note" class="input" rows="2" :placeholder="$t('decide.note')"></textarea>
+    <label class="sr-only" :for="`${id}-answer`">{{ $t('decide.answer') }}</label>
+    <textarea :id="`${id}-answer`" v-model="text" class="input" rows="2" :placeholder="$t('decide.answer')"></textarea>
     <!-- Like the dialogs: aligned right, the main action last -->
     <div class="buttons">
       <button type="button" class="btn" @click="decide(false)"><X :size="14" aria-hidden="true" /> {{ $t('decide.no') }}</button>
-      <button type="button" class="btn claude" @click="decide(true)"><Check :size="14" aria-hidden="true" /> {{ $t('decide.yes') }}</button>
+      <button type="button" class="btn" @click="decide(true)"><Check :size="14" aria-hidden="true" /> {{ $t('decide.yes') }}</button>
+      <button type="button" class="btn claude" :disabled="!text.trim()" @click="decide(null)"><Send :size="14" aria-hidden="true" /> {{ $t('decide.send') }}</button>
     </div>
   </section>
 </template>

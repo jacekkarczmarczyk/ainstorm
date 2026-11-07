@@ -199,13 +199,17 @@ export function useTaskActions() {
     });
   }
 
-  /** The user's decision on their own task: it closes the task (yes: done, no: dropped) and is recorded in it. */
-  function decide(task: Task, approve: boolean, note: string) {
+  /**
+   * The user's decision on their own task: it closes the task (no: dropped, yes or an answer of their own: done) and is
+   * recorded in it. approve null: the answer is the note.
+   */
+  function decide(task: Task, approve: boolean | null, note: string) {
+    const kind = approve === null ? 'answer' : approve ? 'yes' : 'no';
     return perform({
       action: 'decide', task, prompt: { kind: 'decide', task, approve, note },
       command: notify => ({ type: 'decideTask', taskId: task.id, approve, note, notify }),
-      title: t(approve ? 'decide.yesTitle' : 'decide.noTitle', { id: task.id }),
-      confirmLabel: t(approve ? 'decide.yes' : 'decide.no'),
+      title: t(`decide.${kind}Title`, { id: task.id }),
+      confirmLabel: t(kind === 'answer' ? 'decide.send' : `decide.${kind}`),
       doneText: t('toast.decided', { id: task.id }),
     });
   }

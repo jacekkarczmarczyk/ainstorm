@@ -56,6 +56,21 @@ describe('session operations', () => {
     expect(engine.state.events.at(-1)).toMatchObject({ type: 'defer', actor: 'claude', sessionId: S1, delivery: null });
   });
 
+  it('a decision comes with its question; one without options gets a reminder', () => {
+    const { engine, op } = setup();
+    const withQuestion = op(S1, {
+      op: 'createTask', title: 'Installer: built in, Inno Setup or WiX?', owner: 'me', ask: 'decision',
+      options: ['1. Built into the exe', '2. Inno Setup', '3. WiX/MSI'],
+    }).value;
+    expect(withQuestion).toEqual({ taskId: 'PRJ-3', questionId: 'q1' });
+    expect(engine.task('PRJ-3').questions).toMatchObject([{ id: 'q1', text: 'Installer: built in, Inno Setup or WiX?', options: ['1. Built into the exe', '2. Inno Setup', '3. WiX/MSI'], multi: false, sessionId: S1 }]);
+    const bare = op(S1, { op: 'createTask', title: 'Approve?', owner: 'me', ask: 'decision' }).value as { warning: string };
+    expect(bare.warning).toMatch(/decision without a question.*question_ask \(taskId PRJ-4\)/);
+    // A proposal created with its question is the user's decision at once
+    op(S1, { op: 'createTask', title: 'Which variant?', ask: 'proposal', options: ['A', 'B'], question: 'A or B?' });
+    expect(engine.task('PRJ-5')).toMatchObject({ owner: 'me', ask: 'decision', questions: [{ text: 'A or B?' }] });
+  });
+
   it('refuses tasks of another project and invalid input', () => {
     const { op } = setup();
     expect(() => op(S1, { op: 'createTask', title: 'x', parentId: 'PP-1' })).toThrow(/another project/);

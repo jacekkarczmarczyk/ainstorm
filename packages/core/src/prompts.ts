@@ -53,7 +53,8 @@ export type PromptKind =
   | { kind: 'move'; task: Task; from: Task | null; to: Task | null }
   | { kind: 'answer'; task: Task; question: string; answer: string }
   | { kind: 'recheck'; task: Task; question: string }
-  | { kind: 'decide'; task: Task; approve: boolean; note: string }
+  /** approve null: the user's own answer, in note */
+  | { kind: 'decide'; task: Task; approve: boolean | null; note: string }
   | { kind: 'runMany'; tasks: readonly Task[] }
   | { kind: 'commitMessage'; task: Task; message: string }
   | { kind: 'issue'; task: Task; request: 'create' | 'close'; repoUrl: string; number: number | null }
@@ -120,6 +121,7 @@ function render(p: PromptKind, l: PromptPhrases, ref: (t: Task) => string, q: (s
       l.statusManyOther,
     ].join('\n');
     case 'decide': {
+      if (p.approve === null) return fill(l.decideAnswer, { task: ref(p.task), answer: q(p.note) });
       const text = fill(p.approve ? l.decideYes : l.decideNo, { task: ref(p.task) });
       return p.note.trim() ? `${text}\n${fill(l.note, { note: q(p.note) })}` : text;
     }

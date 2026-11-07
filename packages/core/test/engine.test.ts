@@ -123,6 +123,13 @@ describe('MapEngine', () => {
     expect(second.engine.task('PRJ-4')).toMatchObject({ owner: 'me', status: 'dropped', decisions: [{ summary: 'no', detail: '' }] });
     second.engine.revert(changeId);
     expect(second.engine.task('PRJ-4')).toMatchObject({ status: 'todo', decisions: [] });
+
+    // An answer of the user's own: done, recorded as it was written
+    const third = setup();
+    expect(() => third.engine.execute({ type: 'decideTask', taskId: 'PRJ-4', approve: null, note: '  ', notify: true })).toThrow(/needs some text/);
+    third.engine.execute({ type: 'decideTask', taskId: 'PRJ-4', approve: null, note: 'Option 1, no shortcut', notify: true });
+    expect(third.engine.task('PRJ-4')).toMatchObject({ status: 'done', decisions: [{ summary: 'Option 1, no shortcut' }] });
+    expect(third.engine.state.events.at(-1)).toMatchObject({ type: 'answer', text: 'decided: Option 1, no shortcut' });
   });
 
   it('changes the commit message at the end of the description, with undo and delivery', () => {
