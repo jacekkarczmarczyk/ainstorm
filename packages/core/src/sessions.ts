@@ -130,6 +130,8 @@ export interface QueuedRun {
 
 /** A Run request from the UI: "run" for one task, "run i/n" for tasks sent together in one prompt */
 const RUN_REQUEST = /^run(?: \d+\/\d+)?$/;
+/** The session's own queue (session_queue): the tasks it takes up next, in order */
+const SESSION_QUEUE = /^queued \d+\/\d+$/;
 
 /**
  * Tasks the user asked a session to run that it has not started yet, in the order they were sent: one Run prompt
@@ -139,11 +141,13 @@ const RUN_REQUEST = /^run(?: \d+\/\d+)?$/;
  */
 export function queuedRuns(tasks: readonly Task[], events: readonly MapEvent[], marks: ReadonlyMap<string, RunMark>): Map<string, QueuedRun> {
   const byId = new Map(tasks.map(t => [t.id, t]));
-  // The latest request per task, unless the session started the task after it
+  // The latest request per task (a Run from the UI, or the session queueing it itself), unless the session started the
+  // task after it
   const latest = new Map<string, MapEvent>();
   for (const e of events) {
     if (e.type !== 'run') continue;
-    if (e.actor === 'user' && e.changeId !== null && RUN_REQUEST.test(e.text)) latest.set(e.taskId, e);
+    const request = e.actor === 'user' ? e.changeId !== null && RUN_REQUEST.test(e.text) : e.sessionId !== null && SESSION_QUEUE.test(e.text);
+    if (request) latest.set(e.taskId, e);
     else if (e.actor !== 'user' && e.sessionId !== null && (latest.get(e.taskId)?.id ?? Infinity) < e.id) latest.delete(e.taskId);
   }
   const waiting = (id: string) => {
@@ -151,13 +155,14 @@ export function queuedRuns(tasks: readonly Task[], events: readonly MapEvent[], 
     const mark = marks.get(id);
     return t !== undefined && t.archivedAt === null && !isClosed(t.status) && t.status !== 'in_progress' && !(mark?.self && !mark.idle);
   };
-  const queueOf = (e: MapEvent) => e.delivery?.sessionIds[0] ?? `change ${e.changeId}`;
+  const sessionsOf = (e: MapEvent) => e.delivery?.sessionIds ?? (e.sessionId ? [e.sessionId] : []);
+  const queueOf = (e: MapEvent) => sessionsOf(e)[0] ?? `change ${e.changeId}`;
   const result = new Map<string, QueuedRun>();
   for (const [taskId, e] of latest) {
     if (!waiting(taskId)) continue;
     // Event ids follow the order of sending, and within one prompt the order of its tasks
     const ahead = [...latest.values()].filter(o => queueOf(o) === queueOf(e) && o.id < e.id && waiting(o.taskId)).length;
-    result.set(taskId, { ahead, sessionIds: e.delivery?.sessionIds ?? [] });
+    result.set(taskId, { ahead, sessionIds: sessionsOf(e) });
   }
   return result;
 }

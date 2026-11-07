@@ -119,6 +119,15 @@ describe('queuedRuns', () => {
     expect([...q].map(([id, x]) => [id, x.ahead])).toEqual([['B', 0], ['C', 1], ['D', 2], ['E', 3]]);
   });
 
+  it('a session can queue tasks itself; they join its queue and leave it when it starts them', () => {
+    const queued = (id: number, taskId: string, text: string) => makeEvent(id, { taskId, type: 'run', text, sessionId: s1.id, actor: 'claude' });
+    const tasks = [todo('A'), todo('B'), todo('C')];
+    const events = [run(1, 'A', 'run', 2001), queued(2, 'B', 'queued 1/2'), queued(3, 'C', 'queued 2/2')];
+    expect([...queuedRuns(tasks, events, new Map())].map(([id, x]) => [id, x.ahead, x.sessionIds])).toEqual([['A', 0, [s1.id]], ['B', 1, [s1.id]], ['C', 2, [s1.id]]]);
+    const started = makeEvent(4, { taskId: 'B', type: 'run', text: 'running', sessionId: s1.id, actor: 'claude' });
+    expect([...queuedRuns(tasks, [...events, started], new Map())].map(([id, x]) => [id, x.ahead])).toEqual([['A', 0], ['C', 1]]);
+  });
+
   it('a request is used up once the session starts the task, even if it is open again later', () => {
     const started = makeEvent(2, { taskId: 'A', type: 'run', text: 'running', sessionId: s1.id, actor: 'claude' });
     expect(queuedRuns([todo('A')], [run(1, 'A', 'run', 2001), started], new Map()).size).toBe(0);

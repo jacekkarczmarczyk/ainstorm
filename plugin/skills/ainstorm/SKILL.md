@@ -12,6 +12,9 @@ what was parked on the way, and what waits for them. Keep it true as you work. T
 
 - Early in the session call `session_set_title` with a short title of its main task.
 - When you start working on a task, call `session_set_running` with it (also after a Run prompt from the UI).
+- Only the task you are working on right now is `in_progress`. Tasks you will take up next (several asked for at
+  once, or one after another) stay `todo` until you start each. When the user asks for them in the conversation, list
+  them in order with `session_queue`, so the map shows them as queued; tasks started from the UI are queued already.
 - Something unrelated to the main task (another bug, an idea, a cleanup) is parked, not done now:
   `task_create` with `fromId` = the task you were on and `deferReason`, then go back to the current work.
 

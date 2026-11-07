@@ -85,6 +85,15 @@ describe('session operations', () => {
     expect(engine.task('PRJ-2').commits).toHaveLength(1);
   });
 
+  it('queues tasks it takes up next, in order, as events of the session', () => {
+    const { engine, op } = setup();
+    op(S1, { op: 'queue', taskIds: ['PRJ-2', 'PRJ-1', 'PRJ-2'] });
+    expect(engine.state.events.slice(-2).map(e => [e.taskId, e.type, e.text, e.sessionId])).toEqual([
+      ['PRJ-2', 'run', 'queued 1/2', S1], ['PRJ-1', 'run', 'queued 2/2', S1],
+    ]);
+    expect(() => op(S1, { op: 'queue', taskIds: ['PRJ-99'] })).toThrow(/Unknown task/);
+  });
+
   it('waits on a task, stays waiting after the turn, and is released when the task closes', () => {
     const { engine, op } = setup();
     op(S1, { op: 'wait', taskId: 'PRJ-1' });

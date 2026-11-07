@@ -45,6 +45,8 @@ export const SessionOp = z.discriminatedUnion('op', [
   z.object({ op: z.literal('stop') }),
   z.object({ op: z.literal('setTitle'), title: Text(200) }),
   z.object({ op: z.literal('setRunning'), taskId: TaskId.nullable() }),
+  /** The tasks the session takes up next, in order (the user asked for several in the conversation) */
+  z.object({ op: z.literal('queue'), taskIds: z.array(TaskId).min(1).max(20) }),
   /** Claude ends its turn and waits for the user on this task (a decision, an action or approval to start) */
   z.object({ op: z.literal('wait'), taskId: TaskId }),
   /** Notification hook: Claude Code shows a permission prompt in the terminal */
@@ -170,6 +172,14 @@ export function applySessionOp(engine: MapEngine, sessionId: string, input: unkn
         if (op.taskId !== null) ctx.log({ taskId: op.taskId, type: 'run', text: 'running', delivery: null });
         return {};
       });
+    case 'queue': {
+      const tasks = [...new Set(op.taskIds)].map(task);
+      return run('claude', ctx => {
+        // One "queued" event per task, in order; the map shows them like a Run queue until the session starts each
+        tasks.forEach((t, i) => { join(ctx, t); ctx.log({ taskId: t.id, type: 'run', text: `queued ${i + 1}/${tasks.length}`, delivery: null }); });
+        return {};
+      });
+    }
     case 'wait':
       return run('claude', ctx => {
         const s = session();
