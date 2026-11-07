@@ -1,6 +1,6 @@
 ---
 name: ainstorm
-description: Keep the ainstorm task map of this session up to date while working — subtasks, side issues parked with "from", plans, commits, decisions and questions for the user. Use whenever work is split, a side issue appears, a plan is written or approved, a task is finished, or the user's input is needed.
+description: Keep the ainstorm task map of this session up to date while working — subtasks, side issues parked for later, plans, commits, decisions and questions for the user. Use whenever work is split, a side issue appears, a plan is written or approved, a task is finished, or the user's input is needed.
 ---
 
 # ainstorm: keeping the task map
@@ -16,7 +16,18 @@ what was parked on the way, and what waits for them. Keep it true as you work. T
   once, or one after another) stay `todo` until you start each. When the user asks for them in the conversation, list
   them in order with `session_queue`, so the map shows them as queued; tasks started from the UI are queued already.
 - Something unrelated to the main task (another bug, an idea, a cleanup) is parked, not done now:
-  `task_create` with `fromId` = the task you were on and `deferReason`, then go back to the current work.
+  `task_create` with `deferReason`, then go back to the current work.
+- `fromId` says what a task came out of, by meaning: the task in whose work or result it was found. It is not simply
+  the task you happen to be running. A new request from the user that has nothing to do with the running task gets
+  no `fromId` (or the task it really relates to).
+
+## Where a new task goes in the tree
+
+- A bug or follow-up in a part of the work that has its own task (e.g. "settings window" under "build the app"):
+  - that task is still open: make it a subtask of it (`parentId`); the task is not done until this is;
+  - that task is already done: put the new one next to it, under the same parent, with `fromId` = that task. Do not
+    hang it under the done task, which would then look unfinished.
+- Something that belongs to no part of the current work goes where it fits, or to the top level.
 
 ## Splitting and finishing work
 
