@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { resumeCommand, sessionStatusKey, type Session } from '@ainstorm/core';
+import { resumeCommand, sessionStatusKey, type Session, type Task } from '@ainstorm/core';
 import { Archive, ArchiveRestore, Copy, Pause, Play } from '@lucide/vue';
 import { computed } from 'vue';
 import { useClipboard } from '../composables/useClipboard.ts';
@@ -10,6 +10,7 @@ import { useMapStore } from '../stores/map.ts';
 import { useUiStore } from '../stores/ui.ts';
 import ProgressBar from './ProgressBar.vue';
 import RunIndicator from './RunIndicator.vue';
+import SessionQueue from './SessionQueue.vue';
 import TaskIdLabel from './TaskIdLabel.vue';
 import WaitingBox from './WaitingBox.vue';
 
@@ -26,6 +27,12 @@ const s = computed(() => props.session);
 const summary = computed(() => map.summaryById.get(s.value.id));
 const running = computed(() => (s.value.status === 'active' || s.value.status === 'paused' ? map.task(s.value.runningTaskId) : undefined));
 const statusKey = computed(() => sessionStatusKey(s.value));
+// Tasks this session takes up next, in their order
+const queue = computed(() => [...map.queued]
+  .filter(([, q]) => q.sessionIds.includes(s.value.id))
+  .sort(([, a], [, b]) => a.ahead - b.ahead)
+  .map(([id]) => map.task(id))
+  .filter((t): t is Task => t !== undefined));
 // Resumes in the project folder; with the plugin folder from the settings while the plugin is not installed
 const resume = computed(() => resumeCommand(s.value.id, map.project(s.value.projectKey)?.paths[0] ?? null, ui.pluginDir));
 </script>
@@ -50,10 +57,17 @@ const resume = computed(() => resumeCommand(s.value.id, map.project(s.value.proj
     </div>
     <WaitingBox v-if="s.status === 'waiting'" :session="s" />
     <div v-else-if="running" class="running-box">
-      <RunIndicator v-if="map.marks.get(running.id)" :mark="map.marks.get(running.id)!" />
-      <button type="button" class="link" @click="selectTask(running.id)"><TaskIdLabel :id="running.id" /> {{ running.title }}</button>
-      <button v-if="s.status === 'active'" type="button" class="btn sm" @click="actions.requestSession('pause', running, s)"><Pause :size="12" /> {{ $t('detail.pause') }}</button>
-      <button v-else type="button" class="btn sm" @click="actions.requestSession('run', running, s)"><Play :size="12" /> {{ $t('detail.resume') }}</button>
+      <div class="running-line">
+        <RunIndicator v-if="map.marks.get(running.id)" :mark="map.marks.get(running.id)!" />
+        <button type="button" class="link" @click="selectTask(running.id)"><TaskIdLabel :id="running.id" /> {{ running.title }}</button>
+        <button v-if="s.status === 'active'" type="button" class="btn sm" @click="actions.requestSession('pause', running, s)"><Pause :size="12" /> {{ $t('detail.pause') }}</button>
+        <button v-else type="button" class="btn sm" @click="actions.requestSession('run', running, s)"><Play :size="12" /> {{ $t('detail.resume') }}</button>
+      </div>
+      <SessionQueue v-if="queue.length" :tasks="queue" after-work />
+    </div>
+    <!-- Nothing in progress (or waiting on the user): the queue on its own -->
+    <div v-if="queue.length && (s.status === 'waiting' || !running)" class="running-box">
+      <SessionQueue :tasks="queue" :after-work="false" />
     </div>
     <p v-if="s.note" class="note">{{ s.note }}</p>
   </section>
@@ -67,6 +81,7 @@ h1 { margin: 0; font-size: var(--fs-xl); line-height: 1.25; }
 .dates { font-size: var(--fs-s); color: var(--muted); }
 .bar { width: 200px; }
 .spacer { flex: 1; }
-.running-box { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: color-mix(in srgb, var(--s-in_progress) 8%, transparent); border-radius: 6px; padding: 6px 10px; }
+.running-box { display: grid; gap: 4px; background: color-mix(in srgb, var(--s-in_progress) 8%, transparent); border-radius: 6px; padding: 6px 10px; }
+.running-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .note { margin: 0; color: var(--muted); border-left: 2px solid var(--line-strong); padding-left: 8px; }
 </style>

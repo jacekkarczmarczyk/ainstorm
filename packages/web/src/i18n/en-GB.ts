@@ -89,6 +89,7 @@ export const enGB = {
     areaAdded: 'Area {area} added to {n} task(s)', areaRemoved: 'Area {area} removed from {n} task(s)',
   },
   queue: {
+    then: 'then {n} queued | then {n} queued', waiting: '{n} queued | {n} queued', next: 'next:',
     queuedNext: 'Queued in session · next', queuedAhead: 'Queued in session · {n} ahead | Queued in session · {n} ahead',
     queuedHelp: 'Sent to a session together with other tasks; it starts when the open tasks before it are finished.',
   },

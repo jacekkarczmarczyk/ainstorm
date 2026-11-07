@@ -218,6 +218,11 @@ test('Run prompts sent one after another queue up in the session, in the order s
   }
   await expect(row(page, 'PRJ-44').getByText('Queued in session · next')).toBeVisible();
   await expect(row(page, 'PRJ-45').getByText('Queued in session · 1 ahead')).toBeVisible();
+  // The session header says how many are queued and which is next; a click lists them in order
+  const queue = page.getByRole('button', { name: /2 queued · next:/ });
+  await expect(queue).toContainText('PRJ-44');
+  await queue.click();
+  await expect(page.locator('.queue .list li')).toHaveText([/PRJ-44/, /PRJ-45/]);
 });
 
 test('a subtask is added from the panel, and Undo takes it away', async ({ page }) => {
