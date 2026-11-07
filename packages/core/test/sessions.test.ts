@@ -128,6 +128,15 @@ describe('queuedRuns', () => {
     expect([...queuedRuns(tasks, [...events, started], new Map())].map(([id, x]) => [id, x.ahead])).toEqual([['A', 0], ['C', 1]]);
   });
 
+  it('tasks queued later go after the ones already waiting, not before them', () => {
+    const queued = (id: number, taskId: string, text: string) => makeEvent(id, { taskId, type: 'run', text, sessionId: s1.id, actor: 'claude' });
+    const tasks = ['T1', 'T2', 'T3', 'T4', 'T5'].map(id => todo(id));
+    // Asked for 1, 2 and 3; working on 1; then also asked for 4 and 5
+    const events = [queued(1, 'T1', 'queued 1/3'), queued(2, 'T2', 'queued 2/3'), queued(3, 'T3', 'queued 3/3'), queued(5, 'T4', 'queued 1/2'), queued(6, 'T5', 'queued 2/2')];
+    const working = new Map([['T1', { sessionId: s1.id, self: true, paused: false, idle: false, runningTaskId: 'T1' }]]);
+    expect([...queuedRuns(tasks, events, working)].map(([id, x]) => [id, x.ahead])).toEqual([['T2', 0], ['T3', 1], ['T4', 2], ['T5', 3]]);
+  });
+
   it('a request is used up once the session starts the task, even if it is open again later', () => {
     const started = makeEvent(2, { taskId: 'A', type: 'run', text: 'running', sessionId: s1.id, actor: 'claude' });
     expect(queuedRuns([todo('A')], [run(1, 'A', 'run', 2001), started], new Map()).size).toBe(0);
