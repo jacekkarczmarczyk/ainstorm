@@ -1,7 +1,7 @@
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { extname, join, normalize, sep } from 'node:path';
-import { EMPTY_FILTER, filterToQuery, toggleQuickFilter } from '@ainstorm/core';
+import { EMPTY_FILTER, filterToQuery, suggestProject, toggleQuickFilter } from '@ainstorm/core';
 import { z, ZodError } from 'zod';
 import { EngineError, type Daemon } from './daemon.ts';
 import { callTool, toolDefinitions } from './mcpTools.ts';
@@ -50,7 +50,9 @@ const PromptBody = z.object({ prompt: z.string().max(200_000) });
 const OPEN_TASKS = new URLSearchParams(
   Object.entries(filterToQuery(toggleQuickFilter(EMPTY_FILTER, 'open'))).flatMap(([key, v]) => (Array.isArray(v) ? v : [v]).map(x => [key, x])),
 ).toString();
-const OpenLinkBody =z.object({ sessionId: z.uuid().optional() }).nullable().transform(body => body ?? {});
+// The folder comes from the plugin (a token holder), as in the SessionStart hook
+const OpenLinkBody = z.object({ sessionId: z.uuid().optional(), cwd: z.string().min(1).max(1000).optional() })
+  .nullable().transform(body => body ?? {});
 
 /**
  * HTTP API, SSE and the static UI. Every request passes the Host check; API calls need either the bearer
@@ -59,6 +61,13 @@ const OpenLinkBody =z.object({ sessionId: z.uuid().optional() }).nullable().tran
 export function createHttpServer(options: HttpOptions): Server {
   const sessions = options.sessions ?? new UiSessions();
   let port = 0;
+
+  /** One-time link that opens the session's open tasks, or the start page; the path is built here, never taken from a request */
+  const openUrl = (sessionId: string | undefined) => {
+    const known = options.daemon.snapshot().sessions.find(s => s.id === sessionId);
+    const target = known ? `/s/${known.id.slice(0, 8)}/tree?${OPEN_TASKS}` : '/';
+    return `http://127.0.0.1:${port}/open?code=${sessions.issueCode(target)}`;
+  };
 
   const send = (res: ServerResponse, status: number, body: unknown) => {
     res.writeHead(status, { ...SECURITY_HEADERS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -184,7 +193,11 @@ export function createHttpServer(options: HttpOptions): Server {
         const [, sessionId, action] = session as unknown as [string, string, string];
         if (action.startsWith('tools/')) {
           if (method !== 'POST') throw new HttpError(405, 'Method not allowed');
-          return send(res, 200, callTool(options.daemon, sessionId, action.slice('tools/'.length), await readJson(req)));
+          const tool = action.slice('tools/'.length);
+          const result = callTool(options.daemon, sessionId, tool, await readJson(req));
+          // A project registered from /ainstorm:open comes with the link that opens its session, so no second command
+          if (tool === 'project_create' && !result.isError) result.text = JSON.stringify({ ...JSON.parse(result.text) as object, openUrl: openUrl(sessionId) });
+          return send(res, 200, result);
         }
         if (action === 'context') {
           if (method !== 'GET') throw new HttpError(405, 'Method not allowed');
@@ -199,12 +212,16 @@ export function createHttpServer(options: HttpOptions): Server {
       if (method !== 'POST') throw new HttpError(405, 'Method not allowed');
       if (pathname === '/api/open-link') {
         if (caller !== 'token') throw new HttpError(403, 'Only the plugin can issue links');
-        // The link opens the view of the session that asked for it; the path is built here, never taken from the request
         const hasBody = (req.headers['content-type'] ?? '').startsWith('application/json');
-        const { sessionId } = OpenLinkBody.parse(hasBody ? await readJson(req) : null);
-        const known = options.daemon.snapshot().sessions.find(s => s.id === sessionId);
-        const target = known ? `/s/${known.id.slice(0, 8)}/tree?${OPEN_TASKS}` : '/';
-        return send(res, 200, { url: `http://127.0.0.1:${port}/open?code=${sessions.issueCode(target)}` });
+        const { sessionId, cwd } = OpenLinkBody.parse(hasBody ? await readJson(req) : null);
+        const known = () => options.daemon.snapshot().sessions.some(s => s.id === sessionId);
+        // A session the map does not know yet: registered when its folder belongs to a project, otherwise the plugin
+        // gets a suggested project for the user to confirm (Claude creates it only after they agree)
+        if (sessionId && cwd && !known()) {
+          const started = options.daemon.sessionOp(sessionId, { op: 'start', cwd, source: 'resume' });
+          if (started.project === null) return send(res, 200, { project: null, suggestion: suggestProject(cwd, options.daemon.snapshot().projects) });
+        }
+        return send(res, 200, { url: openUrl(sessionId) });
       }
       if (pathname === '/api/reserve') return send(res, 200, { changeId: options.daemon.reserveChangeId() });
       if (pathname === '/api/commands') {

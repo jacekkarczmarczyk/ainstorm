@@ -26,6 +26,26 @@ export function isInside(path: string, root: string): boolean {
   return path === root || path.startsWith(root.endsWith('/') ? root : root + '/');
 }
 
+export interface ProjectSuggestion {
+  key: string;
+  name: string;
+  path: string;
+}
+
+/**
+ * A project for a folder that is not one yet, for the user to confirm or change: the folder name as the name, and a
+ * key made of its letters and digits (upper case, starting with a letter, at most 10), numbered when already taken.
+ */
+export function suggestProject(path: string, projects: readonly Project[]): ProjectSuggestion {
+  const trimmed = path.trim().replace(/[\\/]+$/, '');
+  const name = (trimmed.split(/[\\/]/).pop() ?? '').slice(0, 100) || 'project';
+  const base = name.toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^[0-9]+/, '').slice(0, 10) || 'PRJ';
+  const taken = new Set(projects.map(p => p.key));
+  let key = base;
+  for (let n = 2; taken.has(key); n++) key = `${base.slice(0, 10 - String(n).length)}${n}`;
+  return { key, name, path: trimmed };
+}
+
 /** Project whose registered path is the longest prefix of cwd; null when none matches. */
 export function matchProject(cwd: string, projects: readonly Project[], options: PathOptions = {}): Project | null {
   const target = normalizePath(cwd, options);

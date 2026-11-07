@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { isInside, matchProject, normalizePath } from '../src/paths.ts';
+import { isInside, matchProject, normalizePath, suggestProject } from '../src/paths.ts';
 import { makeProject } from './factory.ts';
+
+describe('suggestProject', () => {
+  it('names the project after its folder and makes a free key of its letters and digits', () => {
+    expect(suggestProject('C:\\Users\\dev\\Dev\\my-shop\\', [])).toEqual({ key: 'MYSHOP', name: 'my-shop', path: 'C:\\Users\\dev\\Dev\\my-shop' });
+    expect(suggestProject('/home/dev/2024-invoices-and-receipts', []).key).toBe('INVOICESAN');
+    expect(suggestProject('/home/dev/123', []).key).toBe('PRJ');
+    const taken = [makeProject({ key: 'MYSHOP' }), makeProject({ key: 'MYSHOP2' })];
+    expect(suggestProject('/home/dev/my-shop', taken).key).toBe('MYSHOP3');
+    expect(suggestProject('/home/dev/inventories', [makeProject({ key: 'INVENTORIE' })]).key).toBe('INVENTORI2');
+  });
+});
 
 describe('normalizePath', () => {
   it('normalises Windows paths', () => {

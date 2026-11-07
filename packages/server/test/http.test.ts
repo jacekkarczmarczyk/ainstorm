@@ -1,5 +1,7 @@
 import type { MapSnapshot } from '@ainstorm/core';
 import type { Server } from 'node:http';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Daemon } from '../src/daemon.ts';
 import { openDatabase } from '../src/db.ts';
@@ -144,6 +146,27 @@ describe('daemon over HTTP', () => {
     expect((await call('/api/open-link', { method: 'POST', headers: auth, body: { sessionId: 'https://evil.example' } })).status).toBe(400);
     const code = await newCode();
     expect((await call('/open', { method: 'POST', form: `code=${code}&target=https://evil.example`, headers: { Origin: `http://127.0.0.1:${port}` } })).headers.location).toBe('/');
+  });
+
+  it('a session the map does not know: registered in its project\'s folder, otherwise a project is suggested', async () => {
+    const ask = async (sessionId: string, cwd: string) =>
+      JSON.parse((await call('/api/open-link', { method: 'POST', headers: auth, body: { sessionId, cwd } })).body) as { url?: string; suggestion?: unknown };
+    // Inside the shop project's folder (~/dev/shop): the session joins it and the link opens it
+    const inShop = '77777777-7777-4777-8777-777777777777';
+    const reply = await ask(inShop, join(homedir(), 'dev', 'shop', 'api'));
+    expect(daemon.snapshot().sessions.find(s => s.id === inShop)).toMatchObject({ projectKey: 'PRJ' });
+    expect((await redeem(new URL(reply.url!).searchParams.get('code')!)).headers.location).toMatch(/^\/s\/77777777\/tree\?/);
+    // Elsewhere: no link and nothing created, only a suggestion
+    const elsewhere = '88888888-8888-4888-8888-888888888888';
+    expect(await ask(elsewhere, '/work/my-shop')).toEqual({ project: null, suggestion: { key: 'MYSHOP', name: 'my-shop', path: '/work/my-shop' } });
+    expect(daemon.snapshot().sessions.some(s => s.id === elsewhere)).toBe(false);
+    // Created after the user agreed: the tool's result carries the link to the session
+    const created = JSON.parse((await call(`/api/sessions/${elsewhere}/tools/project_create`, {
+      method: 'POST', headers: auth, body: { key: 'MYSHOP', name: 'my-shop', path: '/work/my-shop' },
+    })).body) as { text: string; isError: boolean };
+    expect(created.isError).toBe(false);
+    const { openUrl } = JSON.parse(created.text) as { openUrl: string };
+    expect((await redeem(new URL(openUrl).searchParams.get('code')!)).headers.location).toMatch(/^\/s\/88888888\/tree\?/);
   });
 
   it('does not let the UI issue links', async () => {

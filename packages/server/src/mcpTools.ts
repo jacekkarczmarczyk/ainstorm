@@ -51,7 +51,7 @@ const WRITE_TOOLS: ReadonlyArray<{ name: string; op: OpName; description: string
   { name: 'area_create', op: 'createArea', description: 'Add a new area (a part of the project, e.g. "billing") that tasks can be tagged with. Tasks may only use known areas; propose a new one to the user first and add it only after they agree.' },
   { name: 'project_set_repo', op: 'setRepo', description: 'Set (or with null remove) the GitHub repository of this project, https://github.com/<owner>/<repo>. Then #1234 and the issue field of tasks link to its issues. Only when the user gives or confirms the address.' },
   { name: 'project_set_focus', op: 'setFocus', description: 'Set (or with null clear) the user\'s focus in this project: the task they consider current. Only when the user asks for it, e.g. /ainstorm:focus.' },
-  { name: 'project_create', op: 'createProject', description: 'Register a project for this session\'s directory: a short upper-case key (e.g. PRJ), a name and the project path. Only after the user agreed on the key and name.' },
+  { name: 'project_create', op: 'createProject', description: 'Register a project for this session\'s directory: a short upper-case key (e.g. PRJ), a name and the project path. Only after the user agreed on the key and name. The result includes openUrl: show it to the user as a link that opens this session in the map (works once, within a minute).' },
 ];
 
 /** The session's project and its tasks; reading is limited to the project of the session. */
