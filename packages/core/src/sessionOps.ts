@@ -52,6 +52,8 @@ export const SessionOp = z.discriminatedUnion('op', [
   z.object({ op: z.literal('stop') }),
   /** The user asked to archive this session; its tasks stay as they are */
   z.object({ op: z.literal('archive') }),
+  /** The user asked to restore this archived session, so it can change the map again */
+  z.object({ op: z.literal('restore') }),
   z.object({ op: z.literal('setTitle'), title: Text(200) }),
   z.object({ op: z.literal('setRunning'), taskId: TaskId.nullable() }),
   /** The tasks the session takes up next, in order (the user asked for several in the conversation) */
@@ -94,11 +96,16 @@ export interface SessionOpResult {
 // Sessions join the map only on request
 const SESSION_UNKNOWN = 'This session is not tracked in ainstorm. Use the ainstorm tools only if the user wants it: they run /ainstorm:open, which adds this session to the map (and offers to register the folder as a project when it is none).';
 
+// An archived session reads the map but changes nothing in it until the user restores it; hooks still track its state
+const SESSION_ARCHIVED = 'This session is archived in ainstorm, so it cannot change the map. Tell the user what you wanted to change, and ask whether to restore the session (session_restore) and go on.';
+const WHILE_ARCHIVED = new Set<SessionOp['op']>(['start', 'end', 'active', 'stop', 'waitPermission', 'archive', 'restore']);
+
 /** Apply one operation of a session. Throws EngineError for unknown ids, broken rules and stale versions. */
 export function applySessionOp(engine: MapEngine, sessionId: string, input: unknown, paths: PathOptions = {}): SessionOpResult {
   const op = SessionOp.parse(input);
   const state = engine.state;
   const findSession = () => state.sessions.find(s => s.id === sessionId);
+  if (!WHILE_ARCHIVED.has(op.op) && findSession()?.archivedAt) throw new EngineError(SESSION_ARCHIVED, 'invalid');
   const session = (): Session => {
     const s = findSession();
     if (!s) throw new EngineError(SESSION_UNKNOWN, 'not_found');
@@ -179,6 +186,13 @@ export function applySessionOp(engine: MapEngine, sessionId: string, input: unkn
         // Tasks of the session still open, for Claude to name to the user
         const open = state.tasks.filter(t => t.sessionIds.includes(s.id) && t.archivedAt === null && !isClosed(t.status)).map(t => t.id);
         return { archived: true, openTasks: open };
+      });
+    case 'restore':
+      return run('claude', ctx => {
+        const s = session();
+        s.archivedAt = null;
+        ctx.session(s);
+        return { archived: false };
       });
     case 'setTitle':
       return run('claude', ctx => {

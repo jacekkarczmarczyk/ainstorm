@@ -28,6 +28,8 @@ what was parked on the way, and what waits for them. Keep it true as you work. T
   no `fromId` (or the task it really relates to).
 - When the user asks to archive the session ("archive", "zarchiwizuj"), call `session_archive`, only then. Name the
   tasks of the session still open from its result; they stay as they are.
+- An archived session cannot change the map: the tools refuse. Tell the user what you wanted to change and offer to
+  restore the session; call `session_restore` only when they agree.
 
 ## Where a new task goes in the tree
 

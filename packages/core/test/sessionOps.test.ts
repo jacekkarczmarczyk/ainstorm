@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { sessionContext } from '../src/context.ts';
 import { EngineError, MapEngine } from '../src/engine.ts';
 import type { MapSnapshot } from '../src/model.ts';
 import { buildPrompt } from '../src/prompts.ts';
@@ -39,6 +40,19 @@ describe('session operations', () => {
     expect(op(S1, { op: 'archive' }).value).toEqual({ archived: true, openTasks: ['PRJ-3'] });
     expect(engine.session(S1).archivedAt).toBe(NOW);
     expect(engine.task('PRJ-3').status).toBe('todo');
+
+    // Archived, it changes nothing in the map and says how to go on; hooks still track it
+    expect(() => op(S1, { op: 'createTask', title: 'More' })).toThrow(/archived.*session_restore/);
+    expect(() => op(S1, { op: 'updateTask', taskId: 'PRJ-3', status: 'done' })).toThrow(/archived/);
+    expect(() => op(S1, { op: 'setRunning', taskId: 'PRJ-3' })).toThrow(/archived/);
+    op(S1, { op: 'stop' });
+    expect(sessionContext(engine.state, S1)).toContain('This session is archived');
+
+    // Restored on request, it works again
+    expect(op(S1, { op: 'restore' }).value).toEqual({ archived: false });
+    op(S1, { op: 'updateTask', taskId: 'PRJ-3', status: 'done' });
+    expect(engine.task('PRJ-3').status).toBe('done');
+    expect(sessionContext(engine.state, S1)).not.toContain('archived');
   });
 
   it('a session that was not asked for only learns its project; one already in the map goes on being tracked', () => {

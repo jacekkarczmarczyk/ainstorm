@@ -19,6 +19,9 @@ export function sessionContext(state: MapSnapshot, sessionId: string): string | 
   const index = buildTaskIndex(state.tasks.filter(t => t.projectKey === session.projectKey));
   const mine = [...index.byId.values()].filter(t => t.sessionIds.includes(sessionId));
   const body = [`Session ${sessionId} („${quoteSafe(session.title, 120)}”) in project ${session.projectKey} („${quoteSafe(project?.name ?? '', 100)}”).`];
+  if (session.archivedAt) {
+    body.push('This session is archived: it cannot change the map. If the user asks for a change, tell them and offer to restore the session (session_restore).');
+  }
 
   const focus = project?.focusTaskId ? index.byId.get(project.focusTaskId) : undefined;
   if (focus) body.push(`User's focus in this project: ${pathTo(index, focus.id).map(t => t.id).join(' › ')} ${quoteSafe(focus.title, 120)}`);
