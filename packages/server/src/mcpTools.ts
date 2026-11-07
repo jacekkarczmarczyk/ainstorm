@@ -33,7 +33,8 @@ const jsonSchema = (schema: z.ZodType): Record<string, unknown> => {
   return rest;
 };
 
-const NOT_REGISTERED = 'This session is not registered in ainstorm: its directory belongs to no project. Ask the user for a project key and name, then call project_create.';
+// Sessions join the map only on request
+const NOT_REGISTERED = 'This session is not tracked in ainstorm. Use the ainstorm tools only if the user wants it: they run /ainstorm:open, which adds this session to the map (and offers to register the folder as a project when it is none).';
 
 /** Tools that change the map; Claude Code permissions decide which run without asking. */
 const WRITE_TOOLS: ReadonlyArray<{ name: string; op: OpName; description: string }> = [

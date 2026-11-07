@@ -54,8 +54,9 @@ claude --plugin-dir /c/path/to/ainstorm/plugin
 
 In the session:
 
-- `/ainstorm:open` prints a one-time link (valid once, for a minute) that signs the browser in to the map and opens
-  the session's open tasks. In a folder that is no project yet, it first suggests a project key and name; Claude
+- `/ainstorm:open` adds the session to the map and prints a one-time link (valid once, for a minute) that signs the
+  browser in and opens the session's open tasks. Sessions join the map only this way (or with a prompt copied from the
+  map); others are left alone. In a folder that is no project yet, it first suggests a project key and name; Claude
   registers the project once you agree (or give your own);
 - `/ainstorm:status` tells where the session stands;
 - `/ainstorm:defer "…"` parks a side issue for later;

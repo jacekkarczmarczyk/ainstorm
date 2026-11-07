@@ -115,8 +115,8 @@ describe('daemon over HTTP', () => {
     const sessionId = '33333333-3333-4333-8333-333333333333';
     const ops = (body: unknown) => call(`/api/sessions/${sessionId}/ops`, { method: 'POST', headers: auth, body });
     const project = daemon.snapshot().projects.find(p => p.key === 'PRJ')!;
-    const start = await ops({ op: 'start', cwd: project.paths[0]!.replace('~', (await import('node:os')).homedir()), source: 'startup' });
-    expect(JSON.parse(start.body)).toEqual({ project: 'PRJ', created: true });
+    const start = await ops({ op: 'start', cwd: project.paths[0]!.replace('~', (await import('node:os')).homedir()), source: 'startup', register: true });
+    expect(JSON.parse(start.body)).toEqual({ project: 'PRJ', tracked: true, created: true });
     const created = JSON.parse((await ops({ op: 'createTask', title: 'Z sesji' })).body) as { taskId: string };
     expect(daemon.snapshot().tasks.find(t => t.id === created.taskId)!.sessionIds).toEqual([sessionId]);
     expect(JSON.parse((await call(`/api/sessions/${sessionId}/context`, { headers: auth })).body).context).toContain(created.taskId);

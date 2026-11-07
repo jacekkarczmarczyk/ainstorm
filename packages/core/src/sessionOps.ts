@@ -35,8 +35,15 @@ const TaskFields = {
 };
 
 export const SessionOp = z.discriminatedUnion('op', [
-  /** SessionStart hook: register the session in the project its working directory belongs to */
-  z.object({ op: z.literal('start'), cwd: z.string().min(1).max(1000), source: z.enum(['startup', 'resume', 'clear', 'compact']) }),
+  /**
+   * A session starts (SessionStart hook) or asks to be tracked. Sessions join the map only on request: a session the map
+   * already has goes on being tracked; a new one is registered only with `register` (/ainstorm:open, a prompt copied
+   * from the map), otherwise the result only says which project its folder belongs to.
+   */
+  z.object({
+    op: z.literal('start'), cwd: z.string().min(1).max(1000), source: z.enum(['startup', 'resume', 'clear', 'compact']),
+    register: z.boolean().default(false),
+  }),
   /** SessionEnd hook */
   z.object({ op: z.literal('end') }),
   /** UserPromptSubmit and PostToolUse hooks: the session works (and is no longer waiting) */
@@ -78,7 +85,8 @@ export interface SessionOpResult {
   value: Record<string, unknown>;
 }
 
-const SESSION_UNKNOWN = 'This session is not registered: its directory belongs to no ainstorm project. Ask the user for a project key and name, then register it.';
+// Sessions join the map only on request
+const SESSION_UNKNOWN = 'This session is not tracked in ainstorm. Use the ainstorm tools only if the user wants it: they run /ainstorm:open, which adds this session to the map (and offers to register the folder as a project when it is none).';
 
 /** Apply one operation of a session. Throws EngineError for unknown ids, broken rules and stale versions. */
 export function applySessionOp(engine: MapEngine, sessionId: string, input: unknown, paths: PathOptions = {}): SessionOpResult {
@@ -120,14 +128,15 @@ export function applySessionOp(engine: MapEngine, sessionId: string, input: unkn
     case 'start': {
       const existing = findSession();
       const project = existing ? state.projects.find(p => p.key === existing.projectKey) : matchProject(op.cwd, state.projects, paths);
-      if (!project) return { record: emptyRecord(), value: { project: null } };
+      if (!project) return { record: emptyRecord(), value: { project: null, tracked: false } };
+      if (!existing && !op.register) return { record: emptyRecord(), value: { project: project.key, tracked: false } };
       return run('hook', ctx => {
         const s = existing ?? newSession(state, sessionId, project.key, ctx.now);
         s.status = 'active';
         s.waiting = null;
         if (op.source === 'compact') s.compactions += 1;
         ctx.session(s);
-        return { project: project.key, created: !existing };
+        return { project: project.key, tracked: true, created: !existing };
       });
     }
     case 'end':

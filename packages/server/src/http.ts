@@ -218,7 +218,7 @@ export function createHttpServer(options: HttpOptions): Server {
         // A session the map does not know yet: registered when its folder belongs to a project, otherwise the plugin
         // gets a suggested project for the user to confirm (Claude creates it only after they agree)
         if (sessionId && cwd && !known()) {
-          const started = options.daemon.sessionOp(sessionId, { op: 'start', cwd, source: 'resume' });
+          const started = options.daemon.sessionOp(sessionId, { op: 'start', cwd, source: 'resume', register: true });
           if (started.project === null) return send(res, 200, { project: null, suggestion: suggestProject(cwd, options.daemon.snapshot().projects) });
         }
         return send(res, 200, { url: openUrl(sessionId) });

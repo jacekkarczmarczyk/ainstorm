@@ -28,20 +28,47 @@ beforeEach(async () => {
 afterEach(() => new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); }));
 
 const hook = (input: Partial<HookInput> & { hook_event_name: string }) => runHook({ session_id: SESSION, ...input }, deps);
-const start = () => hook({ hook_event_name: 'SessionStart', cwd: '/work/shop/api', source: 'startup' });
+// Sessions join the map on request: added as /ainstorm:open does, then started again (resume) like a tracked session
+const start = async (sessionId = SESSION) => {
+  await deps.api('POST', `/api/sessions/${sessionId}/ops`, { op: 'start', cwd: '/work/shop/api', source: 'startup', register: true });
+  return runHook({ session_id: sessionId, hook_event_name: 'SessionStart', cwd: '/work/shop/api', source: 'resume' }, deps);
+};
 const tool = async (name: string, args: unknown) =>
   (await handle(mcp, { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } })) as { content: { text: string }[]; isError: boolean };
 
 describe('hooks', () => {
-  it('SessionStart registers the session and adds the map as fenced data', async () => {
+  it('a new session joins the map only on request; until then Claude is told to leave the map alone', async () => {
+    const fresh = await hook({ hook_event_name: 'SessionStart', cwd: '/work/shop/api', source: 'startup' });
+    expect(fresh?.hookSpecificOutput?.additionalContext).toMatch(/project PRJ in the task map, but this session is not tracked/);
+    expect(daemon.snapshot().sessions).toHaveLength(0);
+    // Later hooks of an untracked session change nothing (the daemon refuses them; hook.ts swallows the error)
+    await hook({ hook_event_name: 'UserPromptSubmit', prompt: 'dalej', cwd: '/work/shop/api' }).catch(() => null);
+    await hook({ hook_event_name: 'Stop' }).catch(() => null);
+    expect(daemon.snapshot().sessions).toHaveLength(0);
+  });
+
+  it('a tracked session goes on being tracked and gets the map as fenced data', async () => {
     const output = await start();
     expect(output?.hookSpecificOutput?.additionalContext).toMatch(/^<ainstorm-map-data>/);
     expect(daemon.snapshot().sessions[0]).toMatchObject({ id: SESSION, projectKey: 'PRJ', status: 'active' });
   });
 
-  it('SessionStart outside any project suggests registering one, and says so when the daemon is down', async () => {
+  it('a prompt copied from the map for no particular session adds the session; one for another session does not', async () => {
+    await start(OTHER);
+    await runHook({ session_id: OTHER, hook_event_name: 'UserPromptSubmit', prompt: 'x' }, deps);
+    await handle({ ...mcp, sessionId: OTHER }, { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'task_create', arguments: { title: 'Zadanie' } } });
+    const forOther = daemon.execute({ type: 'requestSession', request: 'run', taskId: 'PRJ-1', sessionId: OTHER }).changeId;
+    const blocked = await hook({ hook_event_name: 'UserPromptSubmit', cwd: '/work/shop/api', prompt: `[ainstorm #${forOther} · session ${OTHER.slice(0, 8)} · shop]\nStart` });
+    expect(blocked).toMatchObject({ decision: 'block' });
+    expect(daemon.snapshot().sessions.some(s => s.id === SESSION)).toBe(false);
+    const forProject = daemon.execute({ type: 'requestSession', request: 'run', taskId: 'PRJ-1', sessionId: null }).changeId;
+    await hook({ hook_event_name: 'UserPromptSubmit', cwd: '/work/shop/api', prompt: `[ainstorm #${forProject} · project · shop]\nStart` });
+    expect(daemon.snapshot().sessions.find(s => s.id === SESSION)).toMatchObject({ projectKey: 'PRJ', status: 'active' });
+  });
+
+  it('SessionStart outside any project says so, and so does a daemon that is down', async () => {
     const output = await hook({ hook_event_name: 'SessionStart', cwd: '/elsewhere', source: 'startup' });
-    expect(output?.hookSpecificOutput?.additionalContext).toMatch(/belongs to no project/);
+    expect(output?.hookSpecificOutput?.additionalContext).toMatch(/belongs to no project.*not tracked/);
     const down = await runHook({ hook_event_name: 'SessionStart', session_id: SESSION }, { ...deps, ensureDaemon: async () => false });
     expect(down?.systemMessage).toMatch(/not running/);
   });

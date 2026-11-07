@@ -31,10 +31,18 @@ export interface HookDeps {
 const context = (event: string, text: string | null | undefined): HookOutput | null =>
   text ? { hookSpecificOutput: { hookEventName: event, additionalContext: text } } : null;
 
+// Sessions join the map only on request: until then Claude leaves the map alone
 const NOT_REGISTERED = [
-  'ainstorm: this directory belongs to no project in the task map yet.',
-  'If the user wants this work tracked, ask them for a short project key (e.g. PRJ) and a name, then call project_create.',
+  'ainstorm: this directory belongs to no project in the task map, and this session is not tracked.',
+  'Do not use the ainstorm tools here unless the user asks; /ainstorm:open offers to register the folder as a project.',
 ].join(' ');
+const NOT_TRACKED = (project: string) => [
+  `ainstorm: this directory is project ${project} in the task map, but this session is not tracked.`,
+  'Do not use the ainstorm tools here unless the user asks; /ainstorm:open adds this session to the map.',
+].join(' ');
+
+/** A prompt copied from the map for no particular session (`[ainstorm #N · project · …]`): the user wants this session tracked */
+const PROJECT_PROMPT = /^\[ainstorm #\d+ · project · /m;
 
 /** `[branch 1a2b3c4] message` printed by git commit */
 export function parseCommit(output: string): { sha: string; message: string } | null {
@@ -71,6 +79,7 @@ export async function runHook(input: HookInput, deps: HookDeps): Promise<HookOut
     if (!up) return { systemMessage: 'ainstorm: the map service is not running; working without the task map.' };
     const started = await op({ op: 'start', cwd: input.cwd ?? '', source: input.source ?? 'startup' });
     if (started.project === null) return context(event, NOT_REGISTERED);
+    if (!started.tracked) return context(event, NOT_TRACKED(String(started.project)));
     const [map, pending] = [(await api<{ context: string | null }>('GET', `${session}/context`)).context, await deliveries()];
     return context(event, [map, pending].filter(Boolean).join('\n\n'));
   }
@@ -80,6 +89,9 @@ export async function runHook(input: HookInput, deps: HookDeps): Promise<HookOut
     case 'UserPromptSubmit': {
       const { block } = await api<{ block: string | null }>('POST', `${session}/prompt`, { prompt: input.prompt ?? '' });
       if (block) return { decision: 'block', reason: block };
+      // A prompt from the map for no particular session (Run for a task without one, pasted into a new session) adds
+      // this session to the map
+      if (PROJECT_PROMPT.test(input.prompt ?? '')) await op({ op: 'start', cwd: input.cwd ?? '', source: 'startup', register: true });
       await op({ op: 'active' });
       return context(event, await deliveries());
     }

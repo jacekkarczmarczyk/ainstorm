@@ -20,16 +20,23 @@ function setup() {
   };
   const engine = new MapEngine(snapshot, () => NOW);
   const op = (sessionId: string, input: unknown) => applySessionOp(engine, sessionId, input, HOME);
-  op(S1, { op: 'start', cwd: 'C:\\Users\\me\\dev\\shop\\shop\\api', source: 'startup' });
+  op(S1, { op: 'start', cwd: 'C:\\Users\\me\\dev\\shop\\shop\\api', source: 'startup', register: true });
   return { engine, op };
 }
 
 describe('session operations', () => {
-  it('registers a session in the project of its directory, and nothing for unknown directories', () => {
+  it('registers a session in the project of its directory on request, and nothing for unknown directories', () => {
     const { engine, op } = setup();
     expect(engine.session(S1)).toMatchObject({ projectKey: 'PRJ', status: 'active', title: 'Session 11111111' });
-    expect(op(S2, { op: 'start', cwd: '/tmp/elsewhere', source: 'startup' }).value).toEqual({ project: null });
-    expect(() => op(S2, { op: 'setTitle', title: 'x' })).toThrow(/not registered/);
+    expect(op(S2, { op: 'start', cwd: '/tmp/elsewhere', source: 'startup', register: true }).value).toEqual({ project: null, tracked: false });
+    expect(() => op(S2, { op: 'setTitle', title: 'x' })).toThrow(/not tracked/);
+  });
+
+  it('a session that was not asked for only learns its project; one already in the map goes on being tracked', () => {
+    const { engine, op } = setup();
+    expect(op(S2, { op: 'start', cwd: 'C:/Users/me/dev/shop/shop', source: 'startup' }).value).toEqual({ project: 'PRJ', tracked: false });
+    expect(engine.state.sessions.some(s => s.id === S2)).toBe(false);
+    expect(op(S1, { op: 'start', cwd: 'C:/Users/me/dev/shop/shop', source: 'resume' }).value).toMatchObject({ project: 'PRJ', tracked: true, created: false });
   });
 
   it('counts compactions and keeps the project on resume', () => {
@@ -205,7 +212,7 @@ describe('session operations', () => {
 describe('delivery of UI changes', () => {
   it('hands each pending change to each target session once', () => {
     const { engine, op } = setup();
-    op(S2, { op: 'start', cwd: 'C:/Users/me/dev/shop/shop', source: 'startup' });
+    op(S2, { op: 'start', cwd: 'C:/Users/me/dev/shop/shop', source: 'startup', register: true });
     op(S1, { op: 'updateTask', taskId: 'PRJ-1', status: 'in_progress' });
     op(S2, { op: 'updateTask', taskId: 'PRJ-1', status: 'in_progress' });
     engine.execute({ type: 'setStatus', taskId: 'PRJ-1', to: 'done', notify: true });
@@ -222,7 +229,7 @@ describe('delivery of UI changes', () => {
 describe('prompt check', () => {
   function prompted() {
     const { engine, op } = setup();
-    op(S2, { op: 'start', cwd: 'C:/Users/me/dev/shop/shop', source: 'startup' });
+    op(S2, { op: 'start', cwd: 'C:/Users/me/dev/shop/shop', source: 'startup', register: true });
     op(S1, { op: 'updateTask', taskId: 'PRJ-1', title: 'Zadanie' });
     const { changeId } = engine.execute({ type: 'setStatus', taskId: 'PRJ-1', to: 'done', notify: false });
     const prompt = buildPrompt({ kind: 'status', task: engine.task('PRJ-1'), from: 'todo', to: 'done' }, changeId, { sessionId: S1, projectName: 'shop' });

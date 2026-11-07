@@ -1,12 +1,18 @@
 ---
 name: ainstorm
-description: Keep the ainstorm task map of this session up to date while working — subtasks, side issues parked for later, plans, commits, decisions and questions for the user. Use whenever work is split, a side issue appears, a plan is written or approved, a task is finished, or the user's input is needed.
+description: Keep the ainstorm task map of this session up to date while working (only in sessions the user added to the map) — subtasks, side issues parked for later, plans, commits, decisions and questions for the user. Use whenever work is split, a side issue appears, a plan is written or approved, a task is finished, or the user's input is needed.
 ---
 
 # ainstorm: keeping the task map
 
 The ainstorm map shows the user the branching graph of the work: what this session does, what it split into,
 what was parked on the way, and what waits for them. Keep it true as you work. The tools are the `ainstorm` MCP tools.
+
+## Only sessions the user asked for
+
+- A session is in the map only when the user wants it: they ran /ainstorm:open, or pasted a prompt copied from the map.
+  If the context says this session is not tracked, do not use the ainstorm tools and do not mention the map; if the
+  user asks for it, tell them to run /ainstorm:open. Everything below applies to tracked sessions.
 
 ## One session, one main task
 
