@@ -510,6 +510,13 @@ test('the history shows events, or only the closed tasks latest closed first; a 
   await expect(page.getByRole('complementary', { name: 'Task details' })).toBeVisible();
 });
 
+test('the tab title names the project of the page', async ({ page }) => {
+  await page.goto(`${SHOP}/tree`);
+  await expect(page).toHaveTitle(/PRJ shop · .*ainstorm$/);
+  await page.goto('/');
+  await expect(page).not.toHaveTitle(/PRJ/);
+});
+
 test('the continue command names the session, for a new Claude session to take it over', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await page.getByRole('button', { name: 'Copy continue command' }).click();

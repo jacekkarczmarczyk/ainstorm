@@ -37,9 +37,18 @@ watchEffect(() => {
   else root.setAttribute('data-theme', ui.theme);
 });
 useWaitNotifications();
+// The tab title names the project of the page (tabs of several projects stay apart) and how many sessions wait on
+// the user; the dev server marks its tabs
+const pageProject = computed(() => {
+  const key = map.resolveSession(typeof route.params.sessionId === 'string' ? route.params.sessionId : null)?.projectKey
+    ?? (typeof route.params.projectKey === 'string' ? route.params.projectKey : null);
+  return map.project(key);
+});
 watchEffect(() => {
   const n = map.waitingSessions.length;
-  document.title = n ? `(${n}) ${t('app.name')}` : t('app.name');
+  const p = pageProject.value;
+  document.title = [import.meta.env.DEV ? '[DEV]' : null, p ? `${p.key} ${p.name} ·` : null, n ? `(${n})` : null, t('app.name')]
+    .filter(Boolean).join(' ');
 });
 
 function onKey(e: KeyboardEvent) {
