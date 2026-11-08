@@ -4,7 +4,7 @@ import { Play, Plus } from '@lucide/vue';
 import { computed, ref, useId } from 'vue';
 import { useTaskActions } from '../composables/useTaskActions.ts';
 import AppModal from './AppModal.vue';
-import TaskIdLabel from './TaskIdLabel.vue';
+import TaskName from './TaskName.vue';
 
 // A new task in the session being viewed, under a parent or at the top level. "Add and run" is only for Claude's tasks.
 const props = defineProps<{ session: Session; parent: Task | null }>();
@@ -32,7 +32,7 @@ function add(start: boolean) {
 <template>
   <AppModal :title="parent ? $t('create.dialogUnder', { id: parent.id }) : $t('create.dialog')" :width="560" @close="emit('close')">
     <p class="where">
-      <template v-if="parent"><TaskIdLabel :id="parent.id" /> {{ parent.title }}</template>
+      <TaskName v-if="parent" :task="parent" />
       <template v-else>{{ $t('create.topLevel', { session: session.title }) }}</template>
     </p>
     <label class="field" :for="`${id}-title`">{{ $t('create.titleLabel') }}

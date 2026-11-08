@@ -10,6 +10,7 @@ import SessionLabel from '../components/SessionLabel.vue';
 import StatusPill from '../components/StatusPill.vue';
 import TaskIdLabel from '../components/TaskIdLabel.vue';
 import TaskLink from '../components/TaskLink.vue';
+import TaskName from '../components/TaskName.vue';
 import { useScopedIndex } from '../composables/useScopedIndex.ts';
 import { useSelection } from '../composables/useSelection.ts';
 import { useTaskActions } from '../composables/useTaskActions.ts';
@@ -57,9 +58,9 @@ const busy = (id: string) => { const mark = map.marks.get(id); return mark !== u
       <nav class="crumbs">
         <template v-for="(t, i) in view.path" :key="t.id">
           <span v-if="i" class="sep" aria-hidden="true">›</span>
-          <button type="button" class="link crumb" @click="selectTask(t.id)">
+          <button type="button" class="task-item" @click="selectTask(t.id)">
             <RunIndicator v-if="map.marks.get(t.id)" :mark="map.marks.get(t.id)!" />
-            <TaskIdLabel :id="t.id" /> {{ t.title }}
+            <TaskName :task="t" />
           </button>
         </template>
       </nav>
@@ -88,8 +89,7 @@ const busy = (id: string) => { const mark = map.marks.get(id); return mark !== u
             <li v-for="t in view.subtasks" :key="t.id" :class="{ running: busy(t.id) }">
               <DoneCheckbox :task="t" />
               <RunIndicator v-if="map.marks.get(t.id)" :mark="map.marks.get(t.id)!" />
-              <TaskIdLabel :id="t.id" />
-              <button type="button" class="link title" :class="`t-${t.status}`" @click="selectTask(t.id)">{{ t.title }}</button>
+              <button type="button" class="title plain" @click="selectTask(t.id)"><TaskName :task="t" /></button>
               <span v-if="scoped.children(t.id).length" class="frac">{{ progress(scoped, t.id).closed }}/{{ progress(scoped, t.id).total }}</span>
               <span v-if="openQuestions(t).length" class="badge-question">? {{ openQuestions(t).length }}</span>
               <OwnerBadge :task="t" />
@@ -114,7 +114,7 @@ const busy = (id: string) => { const mark = map.marks.get(id); return mark !== u
           <h3>{{ $t('focus.forYou') }} <span class="frac">{{ view.forUser.length }}</span></h3>
           <ul class="mini">
             <li v-for="t in view.forUser" :key="t.id" @click="selectTask(t.id)">
-              <TaskIdLabel :id="t.id" /><span class="title">{{ t.title }}</span>
+              <TaskName :task="t" class="title" />
               <span v-if="openQuestions(t).length" class="badge-question">? {{ openQuestions(t).length }}</span>
               <OwnerBadge :task="t" />
             </li>
@@ -136,7 +136,7 @@ const busy = (id: string) => { const mark = map.marks.get(id); return mark !== u
           <ul v-if="level.open.length" class="mini">
             <li v-for="t in level.open" :key="t.id" @click="selectTask(t.id)">
               <RunIndicator v-if="map.marks.get(t.id)" :mark="map.marks.get(t.id)!" />
-              <TaskIdLabel :id="t.id" /><span class="title">{{ t.title }}</span>
+              <TaskName :task="t" class="title" />
               <OwnerBadge :task="t" />
               <StatusPill :status="t.status" />
             </li>
@@ -148,7 +148,7 @@ const busy = (id: string) => { const mark = map.marks.get(id); return mark !== u
           <p class="muted small">{{ $t('focus.parkedHelp', { id: view.path[0]!.id }) }}</p>
           <ul class="mini">
             <li v-for="t in view.parked" :key="t.id" @click="selectTask(t.id)">
-              <TaskIdLabel :id="t.id" /><span class="title">{{ t.title }} <span class="muted small from"><GitBranch :size="12" aria-hidden="true" /> {{ $t('detail.from') }} <TaskLink :id="t.fromId!" /></span></span>
+              <span class="title"><TaskName :task="t" /> <span class="muted small from"><GitBranch :size="12" aria-hidden="true" /> {{ $t('detail.from') }} <TaskLink :id="t.fromId!" /></span></span>
             </li>
           </ul>
         </div>
@@ -161,7 +161,6 @@ const busy = (id: string) => { const mark = map.marks.get(id); return mark !== u
 .focus { display: grid; gap: 14px; }
 .elsewhere { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .crumbs { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; font-size: var(--fs-m); }
-.crumb { display: inline-flex; gap: 6px; align-items: center; }
 .sep { color: var(--line-strong); }
 .now { display: grid; gap: 8px; border-color: var(--accent); }
 .eyebrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
@@ -172,20 +171,26 @@ h2 { margin: 0; font-size: var(--fs-xxl); line-height: 1.25; text-wrap: balance;
 .grow { flex: 1; max-width: 240px; }
 .subtasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .subtasks li { display: flex; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 4px; }
-.subtasks li:hover { background: var(--sunk); }
+.subtasks li:hover { background: var(--row-hover); }
 .subtasks li.running { background: color-mix(in srgb, var(--s-in_progress) 10%, transparent); }
-.subtasks .title { flex: 1; min-width: 0; text-decoration: none; }
+.subtasks .title { flex: 1; min-width: 0; }
+/* The row lights up on hover; the name in it is no link */
+.plain { border: 0; background: none; padding: 0; cursor: pointer; text-align: left; color: inherit; }
 .alert {
   border: 1px solid color-mix(in srgb, var(--s-blocked) 45%, transparent); background: color-mix(in srgb, var(--s-blocked) 8%, var(--panel));
   border-radius: var(--r); padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
 }
 .alert p { margin: 0; flex: 1 1 280px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; align-items: start; }
+/* Two cards side by side at most, so their lists keep a readable width; one column on phones */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+@media (max-width: 760px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
 .grid h3 { margin: 0 0 6px; font-size: var(--fs-base); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .level-progress { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
 .mini { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .mini li { display: flex; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
-.mini li:hover { background: var(--sunk); }
+.mini li:hover { background: var(--row-hover); }
 .mini .title { flex: 1; min-width: 0; }
 .for-you { border-color: var(--you); box-shadow: inset 0 3px 0 var(--you); }
 .parked { border-style: dashed; border-color: color-mix(in srgb, var(--s-deferred) 55%, transparent); }

@@ -7,6 +7,8 @@
   /* Things sent to a Claude session (confirmation dialogs) */
   --claude: #6a46d4; --claude-soft: #eee8fd;
   --chip-s: 55%; --chip-l: 36%;
+  /* Background of a row or task name under the pointer, the same everywhere; follows --accent-soft of the theme */
+  --row-hover: color-mix(in srgb, var(--accent-soft) 50%, transparent);
   --f-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
   --r: 6px;

@@ -8,7 +8,7 @@ import { useTaskActions } from '../composables/useTaskActions.ts';
 import { waitKey } from '../composables/useWaitNotifications.ts';
 import { useMapStore } from '../stores/map.ts';
 import { describeWaiting } from '../ui/waiting.ts';
-import TaskIdLabel from './TaskIdLabel.vue';
+import TaskName from './TaskName.vue';
 
 // What a stopped session needs from the user, with the one action that unblocks it
 const props = defineProps<{ session: Session; compact?: boolean }>();
@@ -30,7 +30,7 @@ function openTask(id: string) {
   <div v-if="info" :key="waitKey(session) ?? ''" class="waiting-box" :class="{ compact }" @click.stop>
     <strong>{{ $t(`sessions.waitingFor.${info.kind}`) }}</strong>
     <span class="muted">{{ $t('sessions.since', { when: when(info.since) }) }}</span>
-    <button v-if="info.task" type="button" class="link" @click="openTask(info.task.id)"><TaskIdLabel :id="info.task.id" /> {{ info.task.title }}</button>
+    <button v-if="info.task" type="button" class="task-item" @click="openTask(info.task.id)"><TaskName :task="info.task" /></button>
     <span v-else class="tool"><SquareTerminal :size="14" aria-hidden="true" /> {{ $t('sessions.askedFor') }} <code>{{ info.tool }}</code> {{ info.detail }}</span>
     <template v-if="!compact && info.task">
       <button v-if="info.kind === 'decision'" type="button" class="btn sm primary" @click="openTask(info.task.id)">{{ $t('sessions.answer') }}</button>

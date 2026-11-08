@@ -6,7 +6,7 @@ import { useRoute, useRouter } from 'vue-router';
 import OwnerBadge from '../components/OwnerBadge.vue';
 import ProgressBar from '../components/ProgressBar.vue';
 import RunIndicator from '../components/RunIndicator.vue';
-import TaskIdLabel from '../components/TaskIdLabel.vue';
+import TaskName from '../components/TaskName.vue';
 import { useFormat } from '../composables/useFormat.ts';
 import { useSelection } from '../composables/useSelection.ts';
 import { useMapStore } from '../stores/map.ts';
@@ -105,9 +105,9 @@ const toggleArchived = () => router.replace({ query: { ...route.query, archived:
           <span class="label">{{ $t('home.working') }}</span>
           <ul>
             <li v-for="t in highlights(x.session.id).working.slice(0, HIGHLIGHTS)" :key="t.id">
-              <button type="button" class="link item" @click.stop="openSession(x.session.id, 'tree', t.id)">
+              <button type="button" class="task-item item" @click.stop="openSession(x.session.id, 'tree', t.id)">
                 <RunIndicator v-if="map.marks.get(t.id)" :mark="map.marks.get(t.id)!" />
-                <TaskIdLabel :id="t.id" /> {{ t.title }}
+                <TaskName :task="t" />
               </button>
             </li>
           </ul>
@@ -117,8 +117,8 @@ const toggleArchived = () => router.replace({ query: { ...route.query, archived:
           <span class="label">{{ $t('home.forYou') }}</span>
           <ul>
             <li v-for="t in highlights(x.session.id).forUser.slice(0, HIGHLIGHTS)" :key="t.id">
-              <button type="button" class="link item" @click.stop="openSession(x.session.id, 'tree', t.id)">
-                <TaskIdLabel :id="t.id" /> {{ t.title }}
+              <button type="button" class="task-item item" @click.stop="openSession(x.session.id, 'tree', t.id)">
+                <TaskName :task="t" />
                 <OwnerBadge v-if="t.owner === 'me'" :task="t" />
                 <span v-else class="badge-question">?</span>
               </button>
@@ -161,8 +161,7 @@ h2 { margin: 0; font-size: var(--fs-l); flex: 1 1 300px; }
 .highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px 24px; }
 .group { display: grid; gap: 4px; align-content: start; }
 .group ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-.item { display: inline-flex; gap: 6px; align-items: center; text-decoration: none; text-align: left; }
-.item:hover { text-decoration: underline; }
+.item { width: 100%; }
 .for-you .label { color: var(--you); }
 .pager { display: flex; gap: 4px; flex-wrap: wrap; }
 </style>

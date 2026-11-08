@@ -4,7 +4,7 @@ import { Crosshair } from '@lucide/vue';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import ProgressBar from '../components/ProgressBar.vue';
-import TaskIdLabel from '../components/TaskIdLabel.vue';
+import TaskName from '../components/TaskName.vue';
 import WaitingBox from '../components/WaitingBox.vue';
 import { useFormat } from '../composables/useFormat.ts';
 import { useSelection } from '../composables/useSelection.ts';
@@ -79,8 +79,8 @@ const projectName = (key: string) => map.project(key)?.name ?? key;
           </header>
           <p v-if="p.focus" class="focus">
             <Crosshair :size="13" aria-hidden="true" />
-            <button type="button" class="link" @click.stop="p.focusSession ? openSession(p.focusSession.id, 'focus', p.focus.id) : openProject(p.project.key)">
-              <TaskIdLabel :id="p.focus.id" /> {{ p.focus.title }}
+            <button type="button" class="task-item" @click.stop="p.focusSession ? openSession(p.focusSession.id, 'focus', p.focus.id) : openProject(p.project.key)">
+              <TaskName :task="p.focus" />
             </button>
           </p>
           <p v-else class="focus muted">{{ $t('home.noFocus') }}</p>

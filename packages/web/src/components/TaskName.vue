@@ -9,6 +9,7 @@ defineProps<{ task: Pick<Task, 'id' | 'type' | 'title' | 'status'> }>();
 </script>
 
 <template>
+  <!-- Inline, so a long title wraps after the id and type instead of moving below them -->
   <span class="task-name">
     <TaskIdLabel :id="task.id" /><TypeChip v-if="task.type" :type="task.type" />
     <span class="title" :class="`t-${task.status}`">{{ task.title }}</span>
@@ -16,5 +17,7 @@ defineProps<{ task: Pick<Task, 'id' | 'type' | 'title' | 'status'> }>();
 </template>
 
 <style scoped>
-.task-name { display: inline-flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.task-name { min-width: 0; }
+.task-name > * + * { margin-left: 6px; }
+.title { overflow-wrap: anywhere; }
 </style>

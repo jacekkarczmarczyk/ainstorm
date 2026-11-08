@@ -82,8 +82,8 @@ test('ticked tasks get bulk actions: one dialog and one Undo for all, Run in the
   // Type for all ticked tasks: one dialog, one change
   await bar.getByLabel('Type…').selectOption('docs');
   await dialog(page).getByRole('button', { name: 'Set type' }).click();
-  await expect(row(page, 'PRJ-44').locator('.lead')).toContainText('docs');
-  await expect(row(page, 'PRJ-45').locator('.lead')).toContainText('docs');
+  await expect(row(page, 'PRJ-44').locator('.name')).toContainText('docs');
+  await expect(row(page, 'PRJ-45').locator('.name')).toContainText('docs');
 
   // Run: one prompt for the ticked tasks in the order they were ticked; unticking takes a task out
   await row(page, 'PRJ-23').getByRole('checkbox', { name: 'Select PRJ-23' }).check();
@@ -497,9 +497,11 @@ test('the history shows events, or only the closed tasks latest closed first; a 
   await expect(page.locator('tbody .ev').first()).toBeVisible();
   await page.getByRole('button', { name: 'Closed only' }).click();
   await expect(page).toHaveURL(/closed=1/);
+  // The closed table (with a status per row) has replaced the events before its rows are read
+  await expect(page.locator('tbody .pill').first()).toBeVisible();
   const tasks = await page.locator('tbody .task').allInnerTexts();
-  // The whole id: PRJ-3 is not PRJ-37
-  const at = (id: string) => tasks.findIndex(t => new RegExp(`\\b${id}\\b`).test(t));
+  // The whole id: PRJ-3 is not PRJ-37 (the type follows the id without a space)
+  const at = (id: string) => tasks.findIndex(t => new RegExp(`\\b${id}(?!\\d)`).test(t));
   expect(at('PRJ-40')).toBeGreaterThan(-1);
   expect(at('PRJ-40')).toBeLessThan(at('PRJ-37'));
   expect(at('PRJ-37')).toBeLessThan(at('PRJ-3'));

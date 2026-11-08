@@ -13,9 +13,8 @@ import OwnerBadge from './OwnerBadge.vue';
 import QueuedTag from './QueuedTag.vue';
 import RunIndicator from './RunIndicator.vue';
 import StatusSelect from './StatusSelect.vue';
-import TaskIdLabel from './TaskIdLabel.vue';
 import TaskLink from './TaskLink.vue';
-import TypeChip from './TypeChip.vue';
+import TaskName from './TaskName.vue';
 
 const props = defineProps<{ row: TreeRow; selected: boolean }>();
 const emit = defineEmits<{ select: [id: string] }>();
@@ -60,12 +59,10 @@ const { session } = useSelection();
       type="checkbox" class="box" :checked="picked.has(task.id)" :aria-label="$t('task.select', { id: task.id })"
       @click.stop @change="picked.toggle(task.id)"
     >
-    <span class="lead">
-      <RunIndicator v-if="mark" :mark="mark" />
-      <TaskIdLabel :id="task.id" />
-      <TypeChip v-if="task.type" :type="task.type" />
+    <span class="name">
+      <RunIndicator v-if="mark" :mark="mark" class="run" />
+      <TaskName :task="task" />
     </span>
-    <span class="title" :class="`t-${task.status}`">{{ task.title }}</span>
     <span class="meta">
       <AreaTag v-for="area in task.areas" :key="area" :name="area" />
       <OwnerBadge :task="task" />
@@ -95,22 +92,22 @@ const { session } = useSelection();
 
 <style scoped>
 .row {
-  display: grid; grid-template-columns: 20px 16px auto minmax(0, 1fr) auto 26px; align-items: center; gap: 8px;
+  display: grid; grid-template-columns: 20px 16px minmax(0, 1fr) auto 26px; align-items: center; gap: 8px;
   padding: 6px 10px 6px calc(8px + var(--depth) * 22px); border-bottom: 1px solid var(--line); cursor: pointer; scroll-margin: 80px;
 }
 .row:last-child { border-bottom: 0; }
-.row:hover { background: color-mix(in srgb, var(--accent-soft) 50%, transparent); }
+.row:hover { background: var(--row-hover); }
 .row.selected { background: var(--accent-soft); }
 .row.picked:not(.selected) { background: color-mix(in srgb, var(--accent-soft) 60%, transparent); }
 .row.root { padding-block: 9px; }
-.row.root:not(.filtering) .title { font-weight: 600; }
+.row.root:not(.filtering) :deep(.title) { font-weight: 600; }
 .row.context { opacity: .5; }
 .row.mine { box-shadow: inset 3px 0 0 var(--you); }
 .row.running { box-shadow: inset 3px 0 0 var(--s-in_progress); }
 .caret { width: 20px; height: 20px; border: 0; background: none; padding: 0; color: var(--muted); cursor: pointer; display: grid; place-items: center; }
 .box { margin: 0; accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
-.lead { display: inline-flex; align-items: center; gap: 6px; }
-.title { min-width: 0; overflow-wrap: anywhere; }
+.name { min-width: 0; }
+.run { margin-right: 6px; vertical-align: middle; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
 .run-slot { width: 26px; display: grid; place-items: center; }
 .btn-run { color: var(--muted); opacity: .45; }
@@ -119,8 +116,7 @@ const { session } = useSelection();
 .row:hover .btn-run, .row:focus-within .btn-run, .row.selected .btn-run { opacity: 1; color: var(--s-in_progress); }
 @media (max-width: 760px) {
   .row { grid-template-columns: 20px 16px minmax(0, 1fr) 26px; padding-left: calc(6px + var(--depth) * 14px); }
-  .lead { grid-column: 3; }
-  .title { grid-column: 3; }
+  .name { grid-column: 3; }
   .meta { grid-column: 3; justify-content: flex-start; }
   .run-slot { grid-column: 4; grid-row: 1; }
   .btn-run { opacity: 1; color: var(--s-in_progress); }

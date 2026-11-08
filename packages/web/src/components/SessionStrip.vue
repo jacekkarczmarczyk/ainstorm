@@ -11,7 +11,7 @@ import { useUiStore } from '../stores/ui.ts';
 import ProgressBar from './ProgressBar.vue';
 import RunIndicator from './RunIndicator.vue';
 import SessionQueue from './SessionQueue.vue';
-import TaskIdLabel from './TaskIdLabel.vue';
+import TaskName from './TaskName.vue';
 import WaitingBox from './WaitingBox.vue';
 
 // Header of a session workspace: what the session is, what it waits for, and how to resume it
@@ -68,7 +68,7 @@ const continueCommand = computed(() => `/ainstorm:continue ${s.value.id}`);
     <div v-else-if="running" class="running-box">
       <div class="running-line">
         <RunIndicator v-if="map.marks.get(running.id)" :mark="map.marks.get(running.id)!" />
-        <button type="button" class="link" @click="selectTask(running.id)"><TaskIdLabel :id="running.id" /> {{ running.title }}</button>
+        <button type="button" class="task-item" @click="selectTask(running.id)"><TaskName :task="running" /></button>
         <button v-if="s.status === 'active'" type="button" class="btn sm" @click="actions.requestSession('pause', running, s)"><Pause :size="12" /> {{ $t('detail.pause') }}</button>
         <button v-else type="button" class="btn sm" @click="actions.requestSession('run', running, s)"><Play :size="12" /> {{ $t('detail.resume') }}</button>
       </div>
