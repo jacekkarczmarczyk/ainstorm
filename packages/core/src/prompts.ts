@@ -1,4 +1,5 @@
 import { PROMPT_PHRASES, type PromptLanguage, type PromptPhrases } from './promptLanguages.ts';
+import type { IssueDraft } from './github.ts';
 import type { Task, TaskStatus } from './model.ts';
 import { shortId } from './text.ts';
 
@@ -57,7 +58,8 @@ export type PromptKind =
   | { kind: 'decide'; task: Task; approve: boolean | null; note: string }
   | { kind: 'runMany'; tasks: readonly Task[] }
   | { kind: 'commitMessage'; task: Task; message: string }
-  | { kind: 'issue'; task: Task; request: 'create' | 'close'; repoUrl: string; number: number | null }
+  /** With a draft, the issue is created with the title and body the user checked in the preview */
+  | { kind: 'issue'; task: Task; request: 'create' | 'close'; repoUrl: string; number: number | null; draft?: IssueDraft | undefined }
   | { kind: 'statusMany'; tasks: readonly Task[]; to: TaskStatus }
   | { kind: 'moveMany'; tasks: readonly Task[]; to: Task | null }
   | { kind: 'typeMany'; tasks: readonly Task[]; type: string | null }
@@ -67,6 +69,12 @@ export type PromptKind =
   | { kind: 'edit'; task: Task };
 
 export { PROMPT_LANGUAGES, PROMPT_PHRASES, isPromptLanguage, type PromptLanguage } from './promptLanguages.ts';
+
+/** Text of several lines as a quote ("> " before each line), no header look-alikes, bounded length: data, never structure */
+function quoteBlock(text: string, max = 10000): string {
+  const cut = text.length > max ? `${text.slice(0, max - 1)}…` : text;
+  return cut.replace(/\r/g, '').replace(/\[ainstorm/gi, '(ainstorm').split('\n').map(line => `> ${line}`).join('\n');
+}
 
 /** Fills {name} placeholders in one pass, so a value is never read as a placeholder itself. */
 function fill(template: string, values: Record<string, string | number>): string {
@@ -97,9 +105,12 @@ function render(p: PromptKind, l: PromptPhrases, ref: (t: Task) => string, q: (s
     case 'commitMessage':
       return p.message.trim() ? fill(l.commitSet, { task: ref(p.task), message: q(p.message) }) : fill(l.commitRemoved, { task: ref(p.task) });
     case 'issue':
-      return p.request === 'create'
-        ? fill(l.issueCreate, { repo: q(p.repoUrl), task: ref(p.task) })
-        : fill(l.issueClose, { repo: q(p.repoUrl), task: ref(p.task), number: p.number ?? '?' });
+      if (p.request === 'close') return fill(l.issueClose, { repo: q(p.repoUrl), task: ref(p.task), number: p.number ?? '?' });
+      if (!p.draft) return fill(l.issueCreate, { repo: q(p.repoUrl), task: ref(p.task) });
+      return [
+        fill(l.issueCreateDraft, { repo: q(p.repoUrl), task: ref(p.task), title: `${l.quotes[0]}${q(p.draft.title)}${l.quotes[1]}` }),
+        quoteBlock(p.draft.body),
+      ].join('\n');
     case 'statusMany': return [
       fill(l.statusMany, { to: s[p.to] }),
       ...p.tasks.map(t => `- ${fill(l.statusManyItem, { task: ref(t), from: s[t.status] })}`),

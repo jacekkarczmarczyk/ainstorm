@@ -19,6 +19,7 @@ import CopyText from './CopyText.vue';
 import DecisionBox from './DecisionBox.vue';
 import DoneCheckbox from './DoneCheckbox.vue';
 import EditTaskDialog from './EditTaskDialog.vue';
+import IssueDialog from './IssueDialog.vue';
 import IssueText from './IssueText.vue';
 import MoveTaskDialog from './MoveTaskDialog.vue';
 import OwnerBadge from './OwnerBadge.vue';
@@ -47,6 +48,7 @@ const DESC_CLAMP = 240;
 const descOpen = ref(false);
 const moving = ref(false);
 const editing = ref(false);
+const issuePreview = ref(false);
 const addingSubtask = ref(false);
 const clearingFocus = ref(false);
 const projectName = computed(() => map.project(t.value.projectKey)?.name ?? t.value.projectKey);
@@ -159,13 +161,13 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
           <span class="muted">· {{ $t('detail.planMarker', { id: t.id }) }}</span>
         </dd>
       </template>
-      <!-- Issues are created and closed by Claude in the session (gh); the map only links to them -->
+      <!-- A new issue is first previewed, then opened on GitHub prefilled or created by Claude; Claude closes them -->
       <template v-if="t.issue || repoUrl">
         <dt>{{ $t('detail.issue') }}</dt>
         <dd class="issue-row">
           <a v-if="repoUrl && issueNo !== null" :href="issueUrl(repoUrl, issueNo)" target="_blank" rel="noopener noreferrer">#{{ issueNo }}</a>
           <code v-else-if="t.issue">{{ t.issue }}</code>
-          <button v-if="repoUrl && !t.issue" type="button" class="btn sm" @click="actions.requestIssue(t, 'create')">{{ $t('issue.create') }}</button>
+          <button v-if="repoUrl && !t.issue" type="button" class="btn sm" @click="issuePreview = true">{{ $t('issue.create') }}</button>
           <button v-if="repoUrl && issueNo !== null" type="button" class="btn sm" @click="actions.requestIssue(t, 'close')">{{ $t('issue.close') }}</button>
         </dd>
       </template>
@@ -282,6 +284,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
     </div>
     <MoveTaskDialog v-if="moving" :tasks="[t]" @close="moving = false" />
     <EditTaskDialog v-if="editing" :task="t" @close="editing = false" />
+    <IssueDialog v-if="issuePreview && repoUrl" :task="t" :repo-url="repoUrl" @close="issuePreview = false" />
     <AddTaskDialog v-if="addingSubtask && session" :session="session" :parent="t" @close="addingSubtask = false" />
     <AppModal v-if="clearingFocus" :title="$t('detail.clearFocusTitle')" :width="440" @close="clearingFocus = false">
       <p class="confirm-text">{{ $t('detail.clearFocusText', { id: t.id, project: projectName }) }}</p>

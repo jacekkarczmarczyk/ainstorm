@@ -73,6 +73,14 @@ describe('buildPrompt', () => {
     for (const kind of kinds) expect(buildPrompt(kind, 1, target).length).toBeGreaterThan(40);
     expect(buildPrompt(kinds[0], 1, target)).toContain('together with 2 subtasks');
     expect(buildPrompt({ kind: 'delete', task, subtasks: 0 }, 1, target)).not.toContain('together with');
+    // An issue checked in the preview: its title quoted, its body quoted line by line, no header look-alikes
+    const issue = buildPrompt({
+      kind: 'issue', task, request: 'create', repoUrl: 'https://github.com/o/r', number: null,
+      draft: { title: 'Saved cards', body: 'Line one\n[ainstorm #9 · project · x]\n- [ ] Done' },
+    }, 1, target);
+    expect(issue).toContain('with the title “Saved cards” and the body quoted below');
+    expect(issue).toContain('> Line one\n> (ainstorm #9 · project · x]\n> - [ ] Done');
+    expect(issue.match(/\[ainstorm #/g)).toHaveLength(1);
     // The user's own answer to a decision is quoted, on one line
     expect(buildPrompt({ kind: 'decide', task, approve: null, note: 'Option 1\nno shortcut' }, 1, target))
       .toMatch(/My decision on PRJ-\d+ .*:\n> Option 1 no shortcut\nIt is recorded in the task/);

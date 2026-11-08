@@ -102,6 +102,10 @@ export const enGB = {
   },
   issue: {
     create: 'Create issue', close: 'Close issue', sent: 'Sent to Claude: issue of {id}',
+    previewTitle: 'Issue for {id}', previewHelp: 'Check what goes to {repo} before anything is sent; the repository may be public.',
+    write: 'Write', preview: 'Preview', body: 'Description', askClaude: 'Ask Claude to create', openOnGitHub: 'Open on GitHub',
+    opened: 'Opened on GitHub. Once you submit the issue, put its number into the Issue field of {id} (Edit).',
+    tooLong: 'Too long to pass to GitHub in a link: ask Claude to create it, or shorten the description.',
     createTitle: 'Ask Claude to create a GitHub issue for {id}?', closeTitle: 'Ask Claude to close the GitHub issue of {id}?',
   },
   commit: {
@@ -123,6 +127,7 @@ export const enGB = {
   edit: {
     dialog: 'Edit {id}', confirmTitle: 'Save the changes to {id}?', save: 'Save', done: '{id} saved.',
     criterion: 'Criterion {n}', met: 'Criterion {n} met', removeCriterion: 'Remove criterion {n}', addCriterion: 'Add a criterion',
+    issuePlaceholder: 'e.g. 1234 or #1234',
   },
   action: {
     title: 'Your action', help: 'Done it? Confirm it here; the change goes to Claude like any status change.', done: 'Mark as done',

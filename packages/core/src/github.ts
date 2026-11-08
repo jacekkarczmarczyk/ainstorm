@@ -1,6 +1,10 @@
+import { splitCommit } from './commitMessage.ts';
+import type { Task } from './model.ts';
+
 /**
  * GitHub issues of a project. The map only stores the repository and issue numbers and shows links; issues are
- * created and closed by Claude in the session (gh), so the daemon itself never talks to the network.
+ * created by the user on GitHub (a prefilled form) or by Claude in the session (gh), and closed by Claude, so the
+ * daemon itself never talks to the network.
  */
 
 /** Only a plain repository address: https://github.com/<owner>/<repo>, no path, query or fragment */
@@ -17,6 +21,23 @@ export function issueNumber(issue: string | null, repoUrl: string | null): numbe
 }
 
 export const issueUrl = (repoUrl: string, n: number) => `${repoUrl}/issues/${n}`;
+
+export interface IssueDraft { title: string; body: string }
+
+/** An issue as the task would make it: its title, its description (without the commit line) and "done when" as a checklist */
+export function issueDraft(task: Pick<Task, 'title' | 'description' | 'criteria'>): IssueDraft {
+  const text = splitCommit(task.description).text.trim();
+  const checklist = task.criteria.map(c => `- [${c.done ? 'x' : ' '}] ${c.text}`);
+  const body = [text, checklist.length ? ['**Done when**', ...checklist].join('\n') : ''].filter(Boolean).join('\n\n');
+  return { title: task.title, body };
+}
+
+/** GitHub's form for a new issue, filled in; the user checks it and submits it there */
+export const newIssueUrl = (repoUrl: string, draft: IssueDraft) =>
+  `${repoUrl}/issues/new?title=${encodeURIComponent(draft.title)}&body=${encodeURIComponent(draft.body)}`;
+
+/** Longer addresses are refused by GitHub or browsers; such a draft is copied instead */
+export const NEW_ISSUE_URL_MAX = 8000;
 
 export type TextPart = { text: string; href?: string };
 

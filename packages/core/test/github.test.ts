@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { GITHUB_REPO, issueNumber, linkIssues } from '../src/github.ts';
+import { GITHUB_REPO, issueDraft, issueNumber, linkIssues, newIssueUrl } from '../src/github.ts';
+import { makeTask } from './factory.ts';
 
 const REPO = 'https://github.com/owner/repo';
 
@@ -27,5 +28,17 @@ describe('GitHub issues', () => {
     expect(linkIssues('#5 first', REPO)[0]).toEqual({ text: '#5', href: `${REPO}/issues/5` });
     expect(linkIssues('abc#12 &#123; #x', REPO)).toEqual([{ text: 'abc#12 &#123; #x' }]);
     expect(linkIssues('fix #12', null)).toEqual([{ text: 'fix #12' }]);
+  });
+
+  it('drafts an issue from the task: its description without the commit line, "done when" as a checklist', () => {
+    const task = makeTask('PRJ-1', {
+      title: 'Saved cards', description: 'Pay with a saved card.\n\nCommit: feat: saved cards',
+      criteria: [{ text: 'Card list', done: true }, { text: 'Remove a card', done: false }],
+    });
+    expect(issueDraft(task)).toEqual({
+      title: 'Saved cards', body: 'Pay with a saved card.\n\n**Done when**\n- [x] Card list\n- [ ] Remove a card',
+    });
+    expect(issueDraft(makeTask('PRJ-2', { title: 'Bare' }))).toEqual({ title: 'Bare', body: '' });
+    expect(newIssueUrl(REPO, { title: 'A & B', body: 'x\ny' })).toBe(`${REPO}/issues/new?title=A%20%26%20B&body=x%0Ay`);
   });
 });

@@ -55,7 +55,9 @@ export const UserCommand = z.discriminatedUnion('type', [
   /** Title, description (its commit line is kept) and "done when" criteria; only the fields given change */
   z.object({
     type: z.literal('editTask'), taskId: TaskId, title: z.string().trim().min(1).max(200).optional(),
-    description: z.string().max(20000).optional(), criteria: z.array(Criterion).max(30).optional(), notify: z.boolean(),
+    description: z.string().max(20000).optional(), criteria: z.array(Criterion).max(30).optional(),
+    /** The task's GitHub issue: a number, #number or its address; null clears it */
+    issue: z.string().trim().max(200).nullable().optional(), notify: z.boolean(),
   }),
 ]);
 export type UserCommand = z.infer<typeof UserCommand>;
@@ -362,6 +364,7 @@ export class MapEngine {
           command.title !== undefined && command.title !== t.title ? 'title' : null,
           command.description !== undefined && command.description !== splitCommit(t.description).text ? 'description' : null,
           command.criteria !== undefined && JSON.stringify(command.criteria) !== JSON.stringify(t.criteria) ? 'criteria' : null,
+          command.issue !== undefined && (command.issue?.trim() || null) !== t.issue ? 'issue' : null,
         ].filter((x): x is string => x !== null);
         if (changed.length === 0) throw new EngineError(`Nothing changed in ${t.id}`, 'invalid');
         return this.change(id, actor, [t.id], [], null, log => {
@@ -369,6 +372,7 @@ export class MapEngine {
           // The description is edited without its commit line, which stays as it was
           if (command.description !== undefined) t.description = withCommit(command.description, splitCommit(t.description).message ?? '');
           if (command.criteria !== undefined) t.criteria = command.criteria;
+          if (command.issue !== undefined) t.issue = command.issue?.trim() || null;
           this.touch(t);
           log({ taskId: t.id, type: 'edit', text: `edited: ${changed.join(', ')}`, delivery: this.delivery(t, command.notify) });
         });

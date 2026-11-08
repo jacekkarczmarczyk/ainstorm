@@ -320,11 +320,35 @@ test('#1234 links to the project\'s GitHub issue; Create issue sends Claude a re
   await expect(link).toHaveAttribute('href', 'https://github.com/example/bookkeeping/issues/3812');
   await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
 
+  // Create issue first shows the issue as it would be, editable
   await page.goto(`${SHOP}/tree/PRJ-45`);
   await panel.getByRole('button', { name: 'Create issue' }).click();
-  await expect(dialog(page).locator('pre')).toContainText('Create a GitHub issue in https://github.com/example/shop for PRJ-45');
+  const preview = page.getByRole('dialog', { name: 'Issue for PRJ-45' });
+  await preview.getByLabel('Title').fill('Docs: install guide');
+  await preview.getByRole('tab', { name: 'Preview' }).click();
+  await expect(preview.getByRole('heading', { name: 'Docs: install guide' })).toBeVisible();
+
+  // Open on GitHub: the prefilled form in a new tab (window.open is caught here: the tests make no outside requests)
+  await page.evaluate(() => { window.open = (url?: string | URL) => { (window as unknown as { opened: string }).opened = String(url); return null; }; });
+  await preview.getByRole('button', { name: 'Open on GitHub' }).click();
+  expect(await page.evaluate(() => (window as unknown as { opened: string }).opened))
+    .toMatch(/^https:\/\/github\.com\/example\/shop\/issues\/new\?title=Docs%3A%20install%20guide&body=/);
+  await expect(toast(page)).toContainText('put its number into the Issue field of PRJ-45');
+
+  // Ask Claude to create: the usual confirmation, with the checked title and body in the prompt
+  await panel.getByRole('button', { name: 'Create issue' }).click();
+  await preview.getByLabel('Title').fill('Docs: install guide');
+  await preview.getByRole('button', { name: 'Ask Claude to create' }).click();
+  await expect(dialog(page).locator('pre')).toContainText('for PRJ-45 “Inventory: refactoring” (gh issue create) with the title “Docs: install guide” and the body quoted below');
+  await expect(dialog(page).locator('pre')).toContainText('> Example task for the demo: inventory: refactoring.');
   await dialog(page).getByRole('button', { name: 'Create issue' }).click();
   await expect(toast(page)).toContainText('Sent to Claude: issue of PRJ-45');
+
+  // The number is put in by hand in Edit; then the row links to the issue
+  await panel.getByRole('button', { name: 'Edit…' }).click();
+  await page.getByRole('dialog', { name: 'Edit PRJ-45' }).getByLabel('Issue').fill('#77');
+  await page.getByRole('dialog', { name: 'Edit PRJ-45' }).getByRole('button', { name: 'Save' }).click();
+  await expect(panel.getByRole('link', { name: '#77' })).toHaveAttribute('href', 'https://github.com/example/shop/issues/77');
 });
 
 test('a decision of the user\'s closes the task and is recorded in it', async ({ page }) => {

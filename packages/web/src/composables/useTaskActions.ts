@@ -1,6 +1,6 @@
 import {
   buildPrompt, canRun, descendants, inherited, isSessionOpen, issueNumber, newSessionCommand, nextTaskId, splitCommit, targetSessions, unusualTransition,
-  type Blocker, type PromptKind, type Question, type Session, type Task, type TaskStatus, type TaskType,
+  type Blocker, type IssueDraft, type PromptKind, type Question, type Session, type Task, type TaskStatus, type TaskType,
 } from '@ainstorm/core';
 
 /** What the add-task dialog asks for */
@@ -256,12 +256,15 @@ export function useTaskActions() {
     });
   }
 
-  /** Claude creates or closes the task's GitHub issue in the session (gh); the map only records the request. */
-  function requestIssue(task: Task, request: 'create' | 'close') {
+  /**
+   * Claude creates (with the title and body checked in the preview) or closes the task's GitHub issue in the session
+   * (gh); the map only records the request.
+   */
+  function requestIssue(task: Task, request: 'create' | 'close', draft?: IssueDraft) {
     const repoUrl = map.project(task.projectKey)?.repoUrl;
     if (!repoUrl) return Promise.resolve();
     return perform({
-      action: 'issue', task, prompt: { kind: 'issue', task, request, repoUrl, number: issueNumber(task.issue, repoUrl) },
+      action: 'issue', task, prompt: { kind: 'issue', task, request, repoUrl, number: issueNumber(task.issue, repoUrl), draft },
       command: notify => ({ type: 'requestIssue', taskId: task.id, request, notify }),
       title: t(request === 'create' ? 'issue.createTitle' : 'issue.closeTitle', { id: task.id }),
       confirmLabel: t(request === 'create' ? 'issue.create' : 'issue.close'),
@@ -365,12 +368,14 @@ export function useTaskActions() {
   }
 
   /** Title, description and "done when" criteria; only what differs is sent. */
-  function editTask(task: Task, fields: { title: string; description: string; criteria: Task['criteria'] }) {
+  function editTask(task: Task, fields: { title: string; description: string; criteria: Task['criteria']; issue: string }) {
     const title = fields.title.trim();
+    const issue = fields.issue.trim() || null;
     const changes = {
       ...(title !== task.title ? { title } : {}),
       ...(fields.description !== splitCommit(task.description).text ? { description: fields.description } : {}),
       ...(JSON.stringify(fields.criteria) !== JSON.stringify(task.criteria) ? { criteria: fields.criteria } : {}),
+      ...(issue !== task.issue ? { issue } : {}),
     };
     if (Object.keys(changes).length === 0) return Promise.resolve();
     return perform({

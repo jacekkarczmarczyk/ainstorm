@@ -5,7 +5,8 @@ import { computed, ref, useId } from 'vue';
 import { useTaskActions } from '../composables/useTaskActions.ts';
 import AppModal from './AppModal.vue';
 
-// Title, description and "done when" criteria of a task. The commit message has its own field and stays as it is.
+// Title, description, "done when" criteria and GitHub issue of a task. The commit message has its own field and stays
+// as it is.
 const props = defineProps<{ task: Task }>();
 const emit = defineEmits<{ close: [] }>();
 const actions = useTaskActions();
@@ -14,6 +15,7 @@ const id = useId();
 const title = ref(props.task.title);
 const description = ref(splitCommit(props.task.description).text);
 const criteria = ref(props.task.criteria.map(c => ({ ...c })));
+const issue = ref(props.task.issue ?? '');
 const valid = computed(() => title.value.trim().length > 0);
 
 function save() {
@@ -22,6 +24,7 @@ function save() {
   void actions.editTask(props.task, {
     title: title.value, description: description.value.trim(),
     criteria: criteria.value.map(c => ({ ...c, text: c.text.trim() })).filter(c => c.text),
+    issue: issue.value,
   });
 }
 </script>
@@ -43,6 +46,9 @@ function save() {
       </div>
       <button type="button" class="link accent add" @click="criteria.push({ text: '', done: false })"><Plus :size="13" aria-hidden="true" /> {{ $t('edit.addCriterion') }}</button>
     </fieldset>
+    <label class="field" :for="`${id}-issue`">{{ $t('detail.issue') }}
+      <input :id="`${id}-issue`" v-model="issue" class="input issue" type="text" maxlength="200" autocomplete="off" :placeholder="$t('edit.issuePlaceholder')">
+    </label>
     <template #footer>
       <div class="actions">
         <button type="button" class="btn" @click="emit('close')">{{ $t('dialog.cancel') }}</button>
@@ -56,6 +62,7 @@ function save() {
 .field { display: grid; gap: 4px; font-size: var(--fs-m); }
 .field .input { width: 100%; }
 textarea.input { resize: vertical; }
+.field .input.issue { width: 16em; }
 .criteria { border: 0; margin: 0; padding: 0; display: grid; gap: 6px; }
 .criteria legend { padding: 0; margin-bottom: 4px; }
 .criterion { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
