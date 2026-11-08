@@ -73,8 +73,9 @@ what was parked on the way, and what waits for them. Keep it true as you work. T
 
 ## Plans
 
-- When a plan is written or approved, attach it: `task_update` with `planPath`, and mark the plan's sections with the
-  task ids in square brackets, e.g. `[PRJ-24]`. Keep plan and map in sync both ways: a task added on request goes to the
+- A plan approved with ExitPlanMode is attached by a hook to the task you are running (start that task first); attach
+  any other plan yourself: `task_update` with `planPath`. Mark the plan's sections with the task ids in square brackets,
+  e.g. `[PRJ-24]`. Keep plan and map in sync both ways: a task added on request goes to the
   plan too, a step added to the plan gets a task.
 
 ## When you need the user

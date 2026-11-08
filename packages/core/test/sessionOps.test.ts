@@ -130,6 +130,16 @@ describe('session operations', () => {
     expect(engine.task('PRJ-2').commits).toHaveLength(1);
   });
 
+  it('attaches an approved plan to the running task, replacing an older one', () => {
+    const { engine, op } = setup();
+    expect(op(S1, { op: 'attachPlan', path: 'C:/plans/a.md' }).value).toEqual({ attached: false });
+    op(S1, { op: 'setRunning', taskId: 'PRJ-2' });
+    expect(op(S1, { op: 'attachPlan', path: 'C:/plans/a.md' }).value).toEqual({ attached: true, taskId: 'PRJ-2' });
+    expect(op(S1, { op: 'attachPlan', path: 'C:/plans/a.md' }).value).toEqual({ attached: false, taskId: 'PRJ-2' });
+    op(S1, { op: 'attachPlan', path: 'C:/plans/b.md' });
+    expect(engine.task('PRJ-2')).toMatchObject({ planPath: 'C:/plans/b.md', sessionIds: [S1] });
+  });
+
   it('queues tasks it takes up next, in order, as events of the session', () => {
     const { engine, op } = setup();
     op(S1, { op: 'queue', taskIds: ['PRJ-2', 'PRJ-1', 'PRJ-2'] });

@@ -96,6 +96,20 @@ describe('hooks', () => {
     expect(daemon.snapshot().tasks[0]!.commits).toMatchObject([{ sha: '1a2b3c4d', message: 'fix: x', state: 'live' }]);
   });
 
+  it('PostToolUse on ExitPlanMode attaches the approved plan to the running task, or asks Claude to attach it', async () => {
+    await start();
+    await tool('task_create', { title: 'Plan' });
+    const approved = (path: string) => hook({
+      hook_event_name: 'PostToolUse', tool_name: 'ExitPlanMode', tool_input: { plan: '# Plan', planFilePath: path },
+      tool_response: { plan: '# Plan', isAgent: false, filePath: path },
+    });
+    const unattached = await approved('C:\\Users\\me\\.claude\\plans\\a.md');
+    expect(unattached?.hookSpecificOutput?.additionalContext).toMatch(/plan C:\\Users\\me\\.claude\\plans\\a\.md is attached to no task.*task_update/);
+    await tool('session_set_running', { taskId: 'PRJ-1' });
+    expect(await approved('C:\\Users\\me\\.claude\\plans\\a.md')).toBeNull();
+    expect(daemon.snapshot().tasks[0]!.planPath).toBe('C:\\Users\\me\\.claude\\plans\\a.md');
+  });
+
   it('a permission prompt marks the session waiting until it works again, and Stop/SessionEnd update it', async () => {
     await start();
     await hook({ hook_event_name: 'PermissionRequest', tool_name: 'Bash', tool_input: { command: 'git push origin dev' } });

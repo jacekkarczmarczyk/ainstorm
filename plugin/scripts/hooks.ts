@@ -60,6 +60,18 @@ const responseText = (response: unknown): string => {
   return '';
 };
 
+/** The plan file of an approved ExitPlanMode: `filePath` in its result, `planFilePath` in its input */
+export function planFile(input: HookInput): string | null {
+  const response = input.tool_response && typeof input.tool_response === 'object' ? input.tool_response as Record<string, unknown> : {};
+  const path = response.filePath ?? input.tool_input?.planFilePath;
+  return typeof path === 'string' && path.trim() ? path : null;
+}
+
+const PLAN_UNATTACHED = (path: string) => [
+  `ainstorm: the approved plan ${path} is attached to no task, as this session runs none.`,
+  'Attach it with task_update (planPath) to the task it is for.',
+].join(' ');
+
 /** Short, single-line description of what a permission prompt is about (no file contents). */
 export function permissionDetail(tool: string, input: Record<string, unknown> | undefined): string {
   const value = input?.command ?? input?.file_path ?? input?.url ?? input?.pattern ?? '';
@@ -102,7 +114,10 @@ export async function runHook(input: HookInput, deps: HookDeps): Promise<HookOut
         const commit = parseCommit(responseText(input.tool_response));
         if (commit) await op({ op: 'addCommit', ...commit });
       }
-      return context(event, await deliveries());
+      // PostToolUse runs only for a plan the user approved; a rejected one ends in PostToolUseFailure
+      const plan = input.tool_name === 'ExitPlanMode' ? planFile(input) : null;
+      const unattached = plan && (await op({ op: 'attachPlan', path: plan })).taskId === undefined ? PLAN_UNATTACHED(plan) : null;
+      return context(event, [unattached, await deliveries()].filter(Boolean).join('\n\n'));
     }
     case 'PermissionRequest': {
       const tool = input.tool_name ?? 'a tool';

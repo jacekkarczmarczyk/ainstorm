@@ -81,6 +81,8 @@ export const SessionOp = z.discriminatedUnion('op', [
   z.object({ op: z.literal('link'), taskId: TaskId, dependsOn: TaskId, remove: z.boolean().default(false) }),
   /** PostToolUse hook on `git commit`, or Claude; without a task, the task the session is running */
   z.object({ op: z.literal('addCommit'), taskId: TaskId.optional(), sha: Sha, message: z.string().max(500) }),
+  /** PostToolUse hook on ExitPlanMode (the user approved the plan): the plan file goes to the task the session is running */
+  z.object({ op: z.literal('attachPlan'), path: z.string().trim().min(1).max(1000) }),
   z.object({ op: z.literal('addDecision'), taskId: TaskId, summary: Text(200), detail: z.string().max(5000).default('') }),
   z.object({ op: z.literal('setCriterion'), taskId: TaskId, index: z.number().int().nonnegative(), done: z.boolean() }),
   z.object({ op: z.literal('askQuestion'), taskId: TaskId, text: Text(5000), options: z.array(Text(300)).min(2).max(20).nullable().default(null), multi: z.boolean().default(false) }),
@@ -376,6 +378,17 @@ export function applySessionOp(engine: MapEngine, sessionId: string, input: unkn
         t.commits.push({ sha: op.sha, message: op.message, state: 'live', intoSha: null, note: null });
         join(ctx, t);
         ctx.log({ taskId: t.id, type: 'commit', text: `${op.sha.slice(0, 9)} ${op.message}`.trim(), delivery: null });
+        return { attached: true, taskId: t.id };
+      });
+    }
+    case 'attachPlan': {
+      const s = session();
+      if (!s.runningTaskId) return { record: emptyRecord(), value: { attached: false } };
+      const t = task(s.runningTaskId);
+      if (t.planPath === op.path) return { record: emptyRecord(), value: { attached: false, taskId: t.id } };
+      return run('hook', ctx => {
+        t.planPath = op.path;
+        join(ctx, t);
         return { attached: true, taskId: t.id };
       });
     }
