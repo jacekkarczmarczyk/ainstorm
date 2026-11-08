@@ -55,6 +55,8 @@ what was parked on the way, and what waits for them. Keep it true as you work. T
 
 - When you create a task that will change code (types feat, fix, refactor, perf, test, build, ci), end its description
   with the commit you intend to make, on a line of its own: `Commit: <Conventional Commits subject>`.
+- The map shows that line as the task's commit field, apart from the description. To add or change it later, update
+  the description with `task_update` so it ends with that line, and keep a single `Commit:` line.
 - The user reads it in the map. Starting such a task from the UI (a Run prompt for one task or several, with the
   `[ainstorm #…]` header) means they accept that message and allow the commit: once the task is verified, commit
   with it without asking again.
