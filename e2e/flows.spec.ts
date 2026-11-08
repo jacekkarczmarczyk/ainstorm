@@ -512,6 +512,20 @@ test('the history shows events, or only the closed tasks latest closed first; a 
   await expect(page.getByRole('complementary', { name: 'Task details' })).toBeVisible();
 });
 
+test('Esc closes a dialog first, then the task panel', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'on phones the panel is a sheet closed by dragging or its Close button');
+  await page.goto(`${SHOP}/tree/PRJ-1`);
+  const panel = taskPanel(page);
+  await expect(panel).toBeVisible();
+  await panel.getByRole('button', { name: 'Add subtask' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(panel).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+});
+
 test('the tab title names the project of the page', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await expect(page).toHaveTitle(/PRJ shop · .*ainstorm$/);

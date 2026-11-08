@@ -51,10 +51,15 @@ watchEffect(() => {
     .filter(Boolean).join(' ');
 });
 
+// Esc closes the innermost thing: a dialog, then the phone sheet, then the task panel. A field, a menu or a list that
+// is open handles Esc itself (clears, closes), and still being in the page while it does, the panel stays.
+const handledInPlace = (e: KeyboardEvent) => (e.target instanceof Element && e.target.closest('input, textarea, select') !== null)
+  || document.querySelector('[role="dialog"], [role="menu"], .dd-pop') !== null;
 function onKey(e: KeyboardEvent) {
   if (e.key !== 'Escape') return;
   if (dialog.current) dialog.close();
   else if (ui.sheetOpen) ui.sheetOpen = false;
+  else if (showPanel.value && !isMobile.value && !handledInPlace(e)) ui.panelHidden = true;
 }
 onMounted(async () => {
   window.addEventListener('keydown', onKey);
