@@ -536,6 +536,27 @@ test('the history shows events, or only the closed tasks latest closed first; a 
   await expect(page.getByRole('complementary', { name: 'Task details' })).toBeVisible();
 });
 
+test('"done when" criteria are marked in their own dialog and sent to Claude, or Claude is asked to check them', async ({ page }) => {
+  await page.goto(`${SHOP}/tree/PRJ-26`);
+  const panel = taskPanel(page);
+  const marking = page.getByRole('dialog', { name: '“Done when” of PRJ-26' });
+  await panel.getByRole('button', { name: 'Mark…' }).click();
+  await expect(marking.getByRole('button', { name: 'Send to Claude' })).toBeDisabled();
+  await marking.getByLabel(/Criterion 1:/).check();
+  await marking.getByRole('button', { name: 'Send to Claude' }).click();
+  // The usual confirmation of what goes to Claude, with the changes in the prompt
+  await expect(dialog(page).locator('pre')).toContainText('- met: “Criterion 1: shipping: performance fix works and has tests”');
+  await dialog(page).getByRole('button', { name: 'Send to Claude' }).click();
+  await expect(toast(page)).toContainText('Criteria of PRJ-26 marked and sent to Claude.');
+  await expect(panel.getByText('1/4')).toBeVisible();
+
+  await panel.getByRole('button', { name: 'Mark…' }).click();
+  await marking.getByRole('button', { name: 'Ask Claude to check' }).click();
+  await expect(dialog(page).locator('pre')).toContainText('Check the "done when" criteria of PRJ-26');
+  await dialog(page).getByRole('button', { name: 'Ask Claude to check' }).click();
+  await expect(toast(page)).toContainText('Sent to Claude: check the criteria of PRJ-26');
+});
+
 test('Esc closes a dialog first, then the task panel', async ({ page, isMobile }) => {
   test.skip(isMobile, 'on phones the panel is a sheet closed by dragging or its Close button');
   await page.goto(`${SHOP}/tree/PRJ-1`);

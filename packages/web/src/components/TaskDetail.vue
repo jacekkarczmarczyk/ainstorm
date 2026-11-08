@@ -2,7 +2,7 @@
 import {
   canRun, effectiveAreas, inherited, isClosed, issueNumber, issueUrl, isWorking, openQuestions, pathTo, progress, splitCommit, type Task,
 } from '@ainstorm/core';
-import { Ban, Crosshair, FolderTree, GitBranch, Hourglass, Pause, Pencil, Play, Plus, Trash2, X } from '@lucide/vue';
+import { Ban, Crosshair, FolderTree, GitBranch, Hourglass, ListChecks, Pause, Pencil, Play, Plus, Trash2, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useFormat } from '../composables/useFormat.ts';
 import { useScopedIndex } from '../composables/useScopedIndex.ts';
@@ -18,6 +18,7 @@ import CommitMessageField from './CommitMessageField.vue';
 import CopyText from './CopyText.vue';
 import DecisionBox from './DecisionBox.vue';
 import DoneCheckbox from './DoneCheckbox.vue';
+import CriteriaDialog from './CriteriaDialog.vue';
 import EditTaskDialog from './EditTaskDialog.vue';
 import IssueDialog from './IssueDialog.vue';
 import IssueText from './IssueText.vue';
@@ -49,6 +50,7 @@ const descOpen = ref(false);
 const moving = ref(false);
 const editing = ref(false);
 const issuePreview = ref(false);
+const markingCriteria = ref(false);
 const addingSubtask = ref(false);
 const clearingFocus = ref(false);
 const projectName = computed(() => map.project(t.value.projectKey)?.name ?? t.value.projectKey);
@@ -181,7 +183,11 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
       </details>
       <details v-if="t.criteria.length" class="fold">
         <summary>
-          <span class="label">{{ $t('detail.doneWhen') }} <span class="frac">{{ criteriaMet }}/{{ t.criteria.length }}</span></span>
+          <span class="label-row">
+            <span class="label">{{ $t('detail.doneWhen') }} <span class="frac">{{ criteriaMet }}/{{ t.criteria.length }}</span></span>
+            <!-- Marking opens its own dialog; the click must not fold or unfold the list -->
+            <button type="button" class="mark-criteria" @click.stop.prevent="markingCriteria = true"><ListChecks :size="12" aria-hidden="true" /> {{ $t('criteria.mark') }}</button>
+          </span>
           <span class="sum">{{ nextCriterion ? $t('detail.next', { text: nextCriterion.text }) : $t('detail.allMet') }}</span>
         </summary>
         <ul class="fold-body criteria">
@@ -285,6 +291,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
     <MoveTaskDialog v-if="moving" :tasks="[t]" @close="moving = false" />
     <EditTaskDialog v-if="editing" :task="t" @close="editing = false" />
     <IssueDialog v-if="issuePreview && repoUrl" :task="t" :repo-url="repoUrl" @close="issuePreview = false" />
+    <CriteriaDialog v-if="markingCriteria" :task="t" @close="markingCriteria = false" />
     <AddTaskDialog v-if="addingSubtask && session" :session="session" :parent="t" @close="addingSubtask = false" />
     <AppModal v-if="clearingFocus" :title="$t('detail.clearFocusTitle')" :width="440" @close="clearingFocus = false">
       <p class="confirm-text">{{ $t('detail.clearFocusText', { id: t.id, project: projectName }) }}</p>
@@ -341,6 +348,12 @@ code { font-family: var(--f-mono); font-size: var(--fs-s); }
 .criteria { list-style: none; padding: 0; display: grid; gap: 4px; }
 .criteria li { display: grid; grid-template-columns: 18px 1fr; }
 .criteria li.met { color: var(--muted); }
+.label-row { display: flex; gap: 8px; align-items: center; }
+.mark-criteria {
+  display: inline-flex; gap: 4px; align-items: center; font-size: var(--fs-xs); padding: 0 6px; line-height: 1.6;
+  border: 1px solid var(--line-strong); border-radius: 4px; background: none; color: var(--accent); cursor: pointer;
+}
+.mark-criteria:hover { border-color: var(--accent); background: var(--row-hover); }
 .decisions { list-style: none; padding: 0; display: grid; gap: 10px; }
 .decisions time { display: block; font-family: var(--f-mono); font-size: var(--fs-xs); color: var(--muted); }
 .decisions p { margin: 2px 0 0; color: var(--muted); }

@@ -9,7 +9,7 @@ export type Theme = 'auto' | 'light' | 'dark';
 export const DETAIL_WIDTH = { default: 420, min: 300, minView: 380 } as const;
 
 /** Changes the UI sends to Claude sessions; each can be confirmed in a dialog or applied straight away. */
-export const SESSION_ACTIONS = ['create', 'edit', 'status', 'type', 'area', 'answer', 'recheck', 'decide', 'promote', 'move', 'commit', 'issue', 'run', 'pause', 'goAhead', 'delete', 'drop'] as const;
+export const SESSION_ACTIONS = ['create', 'edit', 'status', 'type', 'area', 'answer', 'recheck', 'decide', 'promote', 'move', 'commit', 'issue', 'criteria', 'run', 'pause', 'goAhead', 'delete', 'drop'] as const;
 export type SessionAction = (typeof SESSION_ACTIONS)[number];
 export type ConfirmSettings = Record<SessionAction, boolean>;
 

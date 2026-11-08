@@ -186,6 +186,23 @@ describe('MapEngine', () => {
     expect(engine.state.events.at(-1)!.text).toBe('close issue #7');
   });
 
+  it('records a request to check the "done when" criteria, only for a task that has some', () => {
+    const { engine, open } = setup();
+    expect(() => engine.execute({ type: 'requestCriteriaCheck', taskId: 'PRJ-1', notify: true })).toThrow(/no "done when" criteria/);
+    engine.task('PRJ-1').criteria = [{ text: 'tests pass', done: false }];
+    engine.execute({ type: 'requestCriteriaCheck', taskId: 'PRJ-1', notify: true });
+    expect(engine.state.events.at(-1)).toMatchObject({ type: 'recheck', text: 'check the "done when" criteria', delivery: { state: 'pending', sessionIds: [open.id] } });
+  });
+
+  it('sets and clears the issue of a task when it is edited', () => {
+    const { engine } = setup();
+    engine.execute({ type: 'editTask', taskId: 'PRJ-1', issue: ' #12 ', notify: false });
+    expect(engine.task('PRJ-1').issue).toBe('#12');
+    expect(engine.state.events.at(-1)!.text).toBe('edited: issue');
+    engine.execute({ type: 'editTask', taskId: 'PRJ-1', issue: '', notify: false });
+    expect(engine.task('PRJ-1').issue).toBeNull();
+  });
+
   it('changes the status of many tasks in one change, undone as a whole', () => {
     const { engine } = setup();
     const before = ['PRJ-1', 'PRJ-2'].map(id => engine.task(id).status);

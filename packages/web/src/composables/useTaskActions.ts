@@ -256,6 +256,28 @@ export function useTaskActions() {
     });
   }
 
+  /** Claude checks the "done when" criteria against the work and ticks those met; the map only records the request. */
+  function checkCriteria(task: Task) {
+    return perform({
+      action: 'criteria', task, prompt: { kind: 'checkCriteria', task },
+      command: notify => ({ type: 'requestCriteriaCheck', taskId: task.id, notify }),
+      title: t('criteria.checkTitle', { id: task.id }), confirmLabel: t('criteria.check'), doneText: t('criteria.checkSent', { id: task.id }),
+    });
+  }
+
+  /** The user marks "done when" criteria as met or not; the session is told which ones changed. */
+  function markCriteria(task: Task, marked: Task['criteria']) {
+    // Plain copies: the dialog's criteria are reactive, and commands are cloned on their way to the map
+    const criteria = marked.map(c => ({ text: c.text, done: c.done }));
+    const changes = criteria.filter((c, i) => task.criteria[i]?.done !== c.done);
+    if (changes.length === 0) return Promise.resolve();
+    return perform({
+      action: 'criteria', task, prompt: { kind: 'criteria', task, changes },
+      command: notify => ({ type: 'editTask', taskId: task.id, criteria, notify }),
+      title: t('criteria.confirmTitle', { id: task.id }), confirmLabel: t('criteria.send'), doneText: t('criteria.sent', { id: task.id }),
+    });
+  }
+
   /**
    * Claude creates (with the title and body checked in the preview) or closes the task's GitHub issue in the session
    * (gh); the map only records the request.
@@ -405,5 +427,5 @@ export function useTaskActions() {
     toasts.show(t(archived ? 'toast.archived' : 'toast.restored', { session: session.title }), undoAction(changeId));
   }
 
-  return { targetsFor, createTask, editTask, setStatus, toggleDone, onStatusInput, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, runMany, requestIssue, requestSession, setFocus, clearFocus, setSessionArchived };
+  return { targetsFor, createTask, editTask, setStatus, toggleDone, onStatusInput, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, runMany, requestIssue, markCriteria, checkCriteria, requestSession, setFocus, clearFocus, setSessionArchived };
 }

@@ -108,6 +108,13 @@ export const enGB = {
     tooLong: 'Too long to pass to GitHub in a link: ask Claude to create it, or shorten the description.',
     createTitle: 'Ask Claude to create a GitHub issue for {id}?', closeTitle: 'Ask Claude to close the GitHub issue of {id}?',
   },
+  criteria: {
+    mark: 'Mark…', dialog: '“Done when” of {id}', help: 'Tick what is done, untick what is not; Claude gets the changes.',
+    send: 'Send to Claude', confirmTitle: 'Send the marked criteria of {id} to Claude?', sent: 'Criteria of {id} marked and sent to Claude.',
+    check: 'Ask Claude to check', checkTitle: 'Ask Claude to check the “done when” criteria of {id}?',
+    checkHint: 'Claude compares the criteria with the work done, ticks those met and says which are still open.',
+    checkSent: 'Sent to Claude: check the criteria of {id}', unchanged: 'Nothing changed yet.',
+  },
   commit: {
     label: 'Commit message', placeholder: 'e.g. fix(web): …', save: 'Save', revert: 'Back to the saved version',
     edit: 'Edit commit message', none: 'None yet',
@@ -226,7 +233,7 @@ export const enGB = {
     confirmHelp: 'Changes sent to Claude. Unticked actions are applied straight away, with Undo in the toast.',
     actions: {
       create: 'Adding a task', edit: 'Editing a task (title, description, criteria)', status: 'Status changes', type: 'Type changes', area: 'Adding or removing an area', answer: 'Answers to questions', recheck: 'Asking whether a question still applies', decide: 'Your decisions (yes or no on a task of yours)', promote: 'Moving a deferred task into the plan', move: 'Moving a task under another parent',
-      commit: 'Changing the commit message of a task', issue: 'Creating or closing a GitHub issue', run: 'Run', pause: 'Pause', goAhead: 'Approve a prepared plan and start', delete: 'Delete', drop: 'Drop',
+      commit: 'Changing the commit message of a task', issue: 'Creating or closing a GitHub issue', criteria: 'Marking “done when” criteria, or asking Claude to check them', run: 'Run', pause: 'Pause', goAhead: 'Approve a prepared plan and start', delete: 'Delete', drop: 'Drop',
     },
   },
 } as const;

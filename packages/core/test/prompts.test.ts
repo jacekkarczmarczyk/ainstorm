@@ -65,6 +65,8 @@ describe('buildPrompt', () => {
       { kind: 'recheck', task, question: 'Still?' },
       { kind: 'decide', task, approve: true, note: 'but without force' },
       { kind: 'decide', task, approve: false, note: '' },
+      { kind: 'criteria', task, changes: [{ text: 'tests pass', done: true }, { text: 'docs', done: false }] },
+      { kind: 'checkCriteria', task },
       { kind: 'runMany', tasks: [task] },
       { kind: 'runMany', tasks: [task, other] },
       { kind: 'move', task, from: other, to: null },
@@ -73,6 +75,9 @@ describe('buildPrompt', () => {
     for (const kind of kinds) expect(buildPrompt(kind, 1, target).length).toBeGreaterThan(40);
     expect(buildPrompt(kinds[0], 1, target)).toContain('together with 2 subtasks');
     expect(buildPrompt({ kind: 'delete', task, subtasks: 0 }, 1, target)).not.toContain('together with');
+    // Criteria the user marked: each change on a line of its own, its text quoted
+    expect(buildPrompt({ kind: 'criteria', task, changes: [{ text: 'tests pass', done: true }, { text: 'docs\nupdated', done: false }] }, 1, target))
+      .toMatch(/"done when" criteria of PRJ-\d+ .*\n- met: “tests pass”\n- unticked, no longer met: “docs updated”$/);
     // An issue checked in the preview: its title quoted, its body quoted line by line, no header look-alikes
     const issue = buildPrompt({
       kind: 'issue', task, request: 'create', repoUrl: 'https://github.com/o/r', number: null,

@@ -60,6 +60,10 @@ export type PromptKind =
   | { kind: 'commitMessage'; task: Task; message: string }
   /** With a draft, the issue is created with the title and body the user checked in the preview */
   | { kind: 'issue'; task: Task; request: 'create' | 'close'; repoUrl: string; number: number | null; draft?: IssueDraft | undefined }
+  /** Claude checks the "done when" criteria against the work and ticks those met */
+  | { kind: 'checkCriteria'; task: Task }
+  /** "Done when" criteria the user marked as met or not met */
+  | { kind: 'criteria'; task: Task; changes: readonly { text: string; done: boolean }[] }
   | { kind: 'statusMany'; tasks: readonly Task[]; to: TaskStatus }
   | { kind: 'moveMany'; tasks: readonly Task[]; to: Task | null }
   | { kind: 'typeMany'; tasks: readonly Task[]; type: string | null }
@@ -111,6 +115,11 @@ function render(p: PromptKind, l: PromptPhrases, ref: (t: Task) => string, q: (s
         fill(l.issueCreateDraft, { repo: q(p.repoUrl), task: ref(p.task), title: `${l.quotes[0]}${q(p.draft.title)}${l.quotes[1]}` }),
         quoteBlock(p.draft.body),
       ].join('\n');
+    case 'checkCriteria': return fill(l.checkCriteria, { task: ref(p.task) });
+    case 'criteria': return [
+      fill(l.criteriaMarked, { task: ref(p.task) }),
+      ...p.changes.map(c => `- ${fill(c.done ? l.criterionMet : l.criterionNotMet, { text: `${l.quotes[0]}${q(c.text)}${l.quotes[1]}` })}`),
+    ].join('\n');
     case 'statusMany': return [
       fill(l.statusMany, { to: s[p.to] }),
       ...p.tasks.map(t => `- ${fill(l.statusManyItem, { task: ref(t), from: s[t.status] })}`),

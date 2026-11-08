@@ -1176,11 +1176,11 @@
    "criteria": [
     {
      "text": "Criterion 1: payments: documentation works and has tests",
-     "done": false
+     "done": true
     },
     {
      "text": "Criterion 2: payments: documentation works and has tests",
-     "done": false
+     "done": true
     },
     {
      "text": "Criterion 3: payments: documentation works and has tests",

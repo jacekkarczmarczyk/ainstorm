@@ -35,6 +35,8 @@ export const UserCommand = z.discriminatedUnion('type', [
   z.object({ type: z.literal('setCommitMessage'), taskId: TaskId, message: z.string().max(5000), notify: z.boolean() }),
   /** Ask the session to create or close the task's GitHub issue (with gh); only recorded and delivered */
   z.object({ type: z.literal('requestIssue'), taskId: TaskId, request: z.enum(['create', 'close']), notify: z.boolean() }),
+  /** Ask the session to check the task's "done when" criteria and tick those met; only recorded and delivered */
+  z.object({ type: z.literal('requestCriteriaCheck'), taskId: TaskId, notify: z.boolean() }),
   /** Bulk actions on tasks selected in the tree: one change, undone as a whole */
   z.object({ type: z.literal('setStatusMany'), taskIds: z.array(TaskId).min(1).max(100), to: TaskStatus, notify: z.boolean() }),
   z.object({ type: z.literal('setTypeMany'), taskIds: z.array(TaskId).min(1).max(100), taskType: TaskType.nullable(), notify: z.boolean() }),
@@ -267,6 +269,13 @@ export class MapEngine {
         if (command.request === 'close' && n === null) throw new EngineError(`${t.id} has no issue`, 'invalid');
         return this.change(id, actor, [], [], null, log => {
           log({ taskId: t.id, type: 'issue', text: command.request === 'create' ? 'create issue' : `close issue #${n}`, delivery: this.delivery(t, command.notify) });
+        });
+      }
+      case 'requestCriteriaCheck': {
+        const t = this.task(command.taskId);
+        if (t.criteria.length === 0) throw new EngineError(`${t.id} has no "done when" criteria`, 'invalid');
+        return this.change(id, actor, [], [], null, log => {
+          log({ taskId: t.id, type: 'recheck', text: 'check the "done when" criteria', delivery: this.delivery(t, command.notify) });
         });
       }
       case 'setStatusMany': {
