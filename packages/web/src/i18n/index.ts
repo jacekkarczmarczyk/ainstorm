@@ -13,6 +13,7 @@ export const i18n = createI18n<[MessageSchema], Locale>({
     'en-GB': {
       time: { hour: '2-digit', minute: '2-digit', hour12: false },
       date: { day: 'numeric', month: 'short' },
+      day: { weekday: 'short', day: 'numeric', month: 'short' },
       dateTime: { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false },
     },
   },

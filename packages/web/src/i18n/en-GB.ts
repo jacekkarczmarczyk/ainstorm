@@ -23,7 +23,7 @@ export const enGB = {
     reconnecting: 'The connection to ainstorm is lost; reconnecting. Until then the map may be out of date and changes may fail.',
   },
   delivery: { pending: 'Waiting for {sessions}', delivered: 'Delivered', copied: 'Prompt copied', none: 'No open session' },
-  time: { today: 'Today {time}', yesterday: 'Yesterday {time}' },
+  time: { today: 'Today {time}', yesterday: 'Yesterday {time}', todayDay: 'Today', yesterdayDay: 'Yesterday' },
   header: {
     findProject: 'Find a project…', findSession: 'Find a session by title or id…',
     project: 'Project', views: 'Views', session: 'Session', overview: 'Project overview', waitingOnYou: '{n} session waiting on you | {n} sessions waiting on you', forYou: '{n} task for you | {n} tasks for you',
@@ -146,7 +146,7 @@ export const enGB = {
     unknownProject: 'There is no project {key}.',
   },
   closed: {
-    only: 'Closed only', when: 'When', event: 'Event', details: 'Details', at: 'Closed', status: 'Status', task: 'Task', areas: 'Areas', commit: 'Commit', copyCommit: 'Copy {sha} ({message})', moreCommits: 'and {n} more',
+    only: 'Closed only', day: 'Day', time: 'Time', event: 'Event', details: 'Details', status: 'Status', task: 'Task', areas: 'Areas', commit: 'Commit', copyCommit: 'Copy {sha} ({message})', moreCommits: 'and {n} more',
     help: 'Done and dropped tasks of this session, latest closed first: what left the open tasks, and when. A thicker line separates days.',
     empty: 'No closed tasks in this session yet.',
   },

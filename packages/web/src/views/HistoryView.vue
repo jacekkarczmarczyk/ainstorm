@@ -13,11 +13,12 @@ import { useSelection } from '../composables/useSelection.ts';
 import { useMapStore } from '../stores/map.ts';
 
 // The session's history, newest first: every event, or with "Closed only" what left its open tasks (done and dropped,
-// by when each was closed). A thicker line marks a new day; a task opens in the panel on the right.
+// by when each was closed). Each day is named once, in a cell over its rows, with a thicker line above it; the rows
+// give the time. A task opens in the panel on the right.
 const map = useMapStore();
 const route = useRoute();
 const router = useRouter();
-const { when } = useFormat();
+const { day, clock } = useFormat();
 const { session, taskId, selectTask } = useSelection();
 
 const closedOnly = computed({
@@ -25,8 +26,16 @@ const closedOnly = computed({
   set: on => { void router.replace({ query: { ...route.query, closed: on ? '1' : undefined } }); },
 });
 
-const day = (iso: string) => new Date(iso).toDateString();
-const withDays = <T>(items: T[], at: (x: T) => string) => items.map((x, i) => ({ ...x, newDay: i > 0 && day(at(items[i - 1]!)) !== day(at(x)) }));
+/** Rows grouped by day: the first row of a day spans the day cell over all of them (daySpan), the others have none */
+function withDays<T>(items: T[], at: (x: T) => string) {
+  const key = (x: T) => new Date(at(x)).toDateString();
+  return items.map((x, i) => {
+    const first = i === 0 || key(items[i - 1]!) !== key(x);
+    let daySpan = 0;
+    if (first) while (i + daySpan < items.length && key(items[i + daySpan]!) === key(x)) daySpan++;
+    return { ...x, newDay: first && i > 0, daySpan };
+  });
+}
 
 // Events of the session plus changes made in the app that were sent to it
 const events = computed(() => {
@@ -64,15 +73,15 @@ function shownCommits(task: Task) {
     <template v-if="closedOnly">
       <table v-if="closed.length" class="card">
         <thead>
-          <tr><th scope="col">{{ $t('closed.at') }}</th><th scope="col">{{ $t('closed.status') }}</th><th scope="col">{{ $t('closed.task') }}</th><th scope="col">{{ $t('closed.areas') }}</th><th scope="col">{{ $t('closed.commit') }}</th></tr>
+          <tr><th scope="col">{{ $t('closed.day') }}</th><th scope="col">{{ $t('closed.time') }}</th><th scope="col">{{ $t('closed.status') }}</th><th scope="col">{{ $t('closed.task') }}</th><th scope="col">{{ $t('closed.areas') }}</th><th scope="col">{{ $t('closed.commit') }}</th></tr>
         </thead>
         <tbody>
           <tr v-for="r in closed" :key="r.task.id" :class="{ 'new-day': r.newDay, selected: r.task.id === taskId }">
-            <td class="when"><time :datetime="r.closedAt">{{ when(r.closedAt) }}</time></td>
+            <th v-if="r.daySpan" scope="rowgroup" class="day" :rowspan="r.daySpan">{{ day(r.closedAt) }}</th>
+            <td class="when"><time :datetime="r.closedAt">{{ clock(r.closedAt) }}</time></td>
             <td><StatusPill :status="r.task.status" /></td>
             <td class="task">
-              <button type="button" class="open" :aria-current="r.task.id === taskId ? 'true' : undefined" @click="selectTask(r.task.id)">
-<TaskName :task="r.task" /></button>
+              <button type="button" class="open" :aria-current="r.task.id === taskId ? 'true' : undefined" @click="selectTask(r.task.id)"><TaskName :task="r.task" /></button>
               <OwnerBadge v-if="r.task.owner === 'me'" :task="r.task" />
             </td>
             <td class="meta">
@@ -94,15 +103,17 @@ function shownCommits(task: Task) {
     <template v-else>
       <table v-if="events.length" class="card">
         <thead>
-          <tr><th scope="col">{{ $t('closed.when') }}</th><th scope="col">{{ $t('closed.event') }}</th><th scope="col">{{ $t('closed.task') }}</th><th scope="col">{{ $t('closed.details') }}</th></tr>
+          <tr><th scope="col">{{ $t('closed.day') }}</th><th scope="col">{{ $t('closed.time') }}</th><th scope="col">{{ $t('closed.event') }}</th><th scope="col">{{ $t('closed.task') }}</th><th scope="col">{{ $t('closed.details') }}</th></tr>
         </thead>
         <tbody>
           <tr v-for="r in events" :key="r.event.id" :class="{ 'new-day': r.newDay, selected: r.event.taskId === taskId }">
-            <td class="when"><time :datetime="r.event.at">{{ when(r.event.at) }}</time></td>
+            <th v-if="r.daySpan" scope="rowgroup" class="day" :rowspan="r.daySpan">{{ day(r.event.at) }}</th>
+            <td class="when"><time :datetime="r.event.at">{{ clock(r.event.at) }}</time></td>
             <td><span class="ev">{{ $t(`event.${r.event.type}`) }}</span></td>
             <td class="task">
               <button type="button" class="open" :aria-current="r.event.taskId === taskId ? 'true' : undefined" @click="selectTask(r.event.taskId)">
-<TaskName v-if="r.task" :task="r.task" /><TaskIdLabel v-else :id="r.event.taskId" /></button>
+                <TaskName v-if="r.task" :task="r.task" /><TaskIdLabel v-else :id="r.event.taskId" />
+              </button>
             </td>
             <td class="text">
               {{ r.event.text }}
@@ -127,13 +138,18 @@ table { width: 100%; border-collapse: collapse; padding: 0; }
 th { text-align: left; font-size: var(--fs-xs); color: var(--muted); font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--line); }
 td { padding: 7px 12px; vertical-align: top; border-top: 1px dashed var(--line); }
 tbody tr:first-child td { border-top: 0; }
-tr.new-day td { border-top: 2px solid var(--line-strong); }
+tr.new-day > * { border-top: 2px solid var(--line-strong); }
 tr.selected td { background: var(--accent-soft); }
+/* The day over its rows; it does not light up with the row under the pointer */
+th.day {
+  vertical-align: top; white-space: nowrap; padding: 7px 12px; border-bottom: 0; border-right: 1px solid var(--line);
+  font-size: var(--fs-s); font-weight: 600; color: var(--ink);
+}
 .when { white-space: nowrap; font-family: var(--f-mono); font-size: var(--fs-xs); color: var(--muted); padding-top: 9px; }
 .task { width: 50%; }
 /* Like a row of the tree: id, type, title; the whole of it opens the task, without link styling */
 .open { margin-right: 6px; padding: 0; border: 0; background: none; font: inherit; color: var(--ink); text-align: left; cursor: pointer; }
-.open:hover :deep(.title), .open:focus-visible :deep(.title) { color: var(--accent); }
+tbody tr:hover td { background: var(--row-hover); }
 /* Areas side by side, wrapping only on phones */
 .meta { white-space: nowrap; }
 .meta > * + * { margin-left: 4px; }
@@ -149,8 +165,10 @@ tr.selected td { background: var(--accent-soft); }
   thead { display: none; }
   tr { display: grid; }
   td { border-top: 0; padding: 2px 12px; }
-  tr td:first-child { border-top: 1px dashed var(--line); padding-top: 8px; }
-  tr.new-day td:first-child { border-top: 2px solid var(--line-strong); }
+  tr > :first-child { border-top: 1px dashed var(--line); padding-top: 8px; }
+  tr.new-day > :first-child { border-top: 2px solid var(--line-strong); }
+  /* On phones the day is a heading line above its first row */
+  th.day { border-right: 0; }
   .task { width: auto; }
   .meta { white-space: normal; }
 }

@@ -7,14 +7,30 @@ const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 export function useFormat(now: () => Date = () => new Date()) {
   const { t, d } = useI18n();
 
-  function when(iso: string): string {
-    const date = new Date(iso);
+  /** Today, yesterday or another day, for a date shown on its own */
+  function relativeDay(date: Date): 'today' | 'yesterday' | null {
     const today = now();
-    const time = d(date, 'time');
-    if (dayKey(date) === dayKey(today)) return t('time.today', { time });
-    if (dayKey(date) === dayKey(new Date(today.getTime() - DAY_MS))) return t('time.yesterday', { time });
-    return d(date, 'dateTime');
+    if (dayKey(date) === dayKey(today)) return 'today';
+    if (dayKey(date) === dayKey(new Date(today.getTime() - DAY_MS))) return 'yesterday';
+    return null;
   }
 
-  return { when };
+  function when(iso: string): string {
+    const date = new Date(iso);
+    const time = d(date, 'time');
+    const rel = relativeDay(date);
+    return rel ? t(`time.${rel}`, { time }) : d(date, 'dateTime');
+  }
+
+  /** The day alone: "Today", "Yesterday", "Thu 22 Oct" */
+  function day(iso: string): string {
+    const date = new Date(iso);
+    const rel = relativeDay(date);
+    return rel ? t(`time.${rel}Day`) : d(date, 'day');
+  }
+
+  /** The time alone: "10:41" */
+  const clock = (iso: string): string => d(new Date(iso), 'time');
+
+  return { when, day, clock };
 }
