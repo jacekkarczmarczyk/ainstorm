@@ -3690,6 +3690,18 @@
    "compactions": 6
   },
   {
+   "id": "3c9e1f20-4b7a-4d2e-9f11-8a6b5c0d7e42",
+   "projectKey": "PRJ",
+   "title": "Session 3c9e1f20",
+   "status": "idle",
+   "startedAt": "2026-11-08T09:00:00.000Z",
+   "archivedAt": null,
+   "runningTaskId": null,
+   "waiting": null,
+   "note": null,
+   "compactions": 0
+  },
+  {
    "id": "7b4c4db1-5a1a-4426-874b-c2018939e352",
    "projectKey": "PP",
    "title": "Invoice module cleanup",

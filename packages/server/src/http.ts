@@ -1,7 +1,7 @@
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { extname, join, normalize, sep } from 'node:path';
-import { EMPTY_FILTER, filterToQuery, suggestProject, toggleQuickFilter } from '@ainstorm/core';
+import { defaultSessionTitle, EMPTY_FILTER, filterToQuery, suggestProject, toggleQuickFilter } from '@ainstorm/core';
 import { z, ZodError } from 'zod';
 import { EngineError, type Daemon } from './daemon.ts';
 import { callTool, toolDefinitions } from './mcpTools.ts';
@@ -221,7 +221,9 @@ export function createHttpServer(options: HttpOptions): Server {
           const started = options.daemon.sessionOp(sessionId, { op: 'start', cwd, source: 'resume', register: true });
           if (started.project === null) return send(res, 200, { project: null, suggestion: suggestProject(cwd, options.daemon.snapshot().projects) });
         }
-        return send(res, 200, { url: openUrl(sessionId) });
+        // A session with no name in the map nor in Claude Code: the plugin asks Claude to propose one
+        const s = options.daemon.snapshot().sessions.find(x => x.id === sessionId);
+        return send(res, 200, { url: openUrl(sessionId), unnamed: s !== undefined && s.claudeTitle === null && s.title === defaultSessionTitle(s.id) });
       }
       if (pathname === '/api/reserve') return send(res, 200, { changeId: options.daemon.reserveChangeId() });
       if (pathname === '/api/commands') {

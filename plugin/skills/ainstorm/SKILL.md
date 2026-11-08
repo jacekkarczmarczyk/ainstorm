@@ -19,7 +19,9 @@ what was parked on the way, and what waits for them. Keep it true as you work. T
 
 ## One session, one main task
 
-- Early in the session call `session_set_title` with a short title of its main task.
+- Early in the session call `session_set_title` with a short title of its main task; Claude Code gets the same name.
+  Once the session has a name in Claude Code, that name is its title in the map and wins; the user changes it with
+  /rename.
 - When you start working on a task, call `session_set_running` with it (also after a Run prompt from the UI).
 - Only the task you are working on right now is `in_progress`. Tasks you will take up next (several asked for at
   once, or one after another) stay `todo` until you start each. When the user asks for them in the conversation, list

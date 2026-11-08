@@ -571,9 +571,14 @@ test('Esc closes a dialog first, then the task panel', async ({ page, isMobile }
   await expect(panel).toHaveCount(0);
 });
 
-test('the tab title names the project of the page', async ({ page }) => {
+test('the tab title names the session or the project of the page', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
-  await expect(page).toHaveTitle(/PRJ shop · .*ainstorm$/);
+  await expect(page).toHaveTitle(/^PRJ: Cart and payments rework( \(\d+\))?$/);
+  // A session with no name yet: its id
+  await page.goto('/s/3c9e1f20');
+  await expect(page).toHaveTitle(/^PRJ: 3c9e1f20-4b7a-4d2e-9f11-8a6b5c0d7e42( \(\d+\))?$/);
+  await page.goto('/p/PRJ');
+  await expect(page).toHaveTitle(/^PRJ shop · .*ainstorm$/);
   await page.goto('/');
   await expect(page).not.toHaveTitle(/PRJ/);
 });

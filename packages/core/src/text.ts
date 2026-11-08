@@ -17,3 +17,6 @@ export function matchesQuery(query: string, ...fields: readonly string[]): boole
 }
 
 export const shortId = (uuid: string) => uuid.slice(0, 8);
+
+/** The title of a session until it gets a name (from Claude or Claude Code) */
+export const defaultSessionTitle = (uuid: string) => `Session ${shortId(uuid)}`;

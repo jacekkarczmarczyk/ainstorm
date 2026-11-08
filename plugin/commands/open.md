@@ -5,7 +5,10 @@ allowed-tools: Bash(node:*)
 
 !`node "${CLAUDE_PLUGIN_ROOT}/scripts/open.ts" "${CLAUDE_SESSION_ID}"`
 
-If the output above is a link: show it to the user as a clickable link and say it works once, within a minute. Do nothing else.
+If the output above is a link: show it to the user as a clickable link and say it works once, within a minute. Do nothing else,
+unless it is followed by NO NAME: then also propose, in the conversation language, a short title of this session's main
+task. Once the user agrees, call `session_set_title` with it; their next message gives Claude Code the same name. If they
+say the session already has a name in Claude Code, do nothing: the map takes that name with their next message.
 
 If it says NOT A PROJECT YET: this folder is not in the ainstorm map. Ask the user, in the conversation language, whether to
 register it as a project with the suggested key and name; they may change either, in their own words (a key is 1–10

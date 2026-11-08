@@ -27,7 +27,7 @@ test('start page shows all projects and what waits on the user anywhere', async 
 
 test('the project overview lists its session cards', async ({ page }) => {
   await page.goto('/p/PRJ');
-  await expect(page.locator('article.session')).toHaveCount(1);
+  await expect(page.locator('article.session')).toHaveCount(2);
   await page.locator('article.session', { hasText: 'Cart and payments rework' }).locator('h2').click();
   // Only open tasks: the "Open" quick filter is on
   await expect(page).toHaveURL(new RegExp(`${SHOP}/tree\\?status=todo&status=in_progress&status=blocked&status=deferred$`));

@@ -85,6 +85,27 @@ describe('hooks', () => {
     expect(blocked?.reason).toMatch(/another session/);
   });
 
+  it('keeps the session\'s name the same in the map and in Claude Code, the name in Claude Code winning', async () => {
+    await start();
+    // A title from Claude goes to Claude Code with the next prompt, until Claude Code shows it
+    await tool('session_set_title', { title: 'Koszyk' });
+    expect((await hook({ hook_event_name: 'UserPromptSubmit', prompt: 'dalej' }))?.hookSpecificOutput?.sessionTitle).toBe('Koszyk');
+    expect(await hook({ hook_event_name: 'UserPromptSubmit', prompt: 'dalej', session_title: 'Koszyk' })).toBeNull();
+
+    // /rename in Claude Code: the map takes the new name, also when the session starts again
+    await hook({ hook_event_name: 'UserPromptSubmit', prompt: 'dalej', session_title: 'Płatności' });
+    expect(daemon.snapshot().sessions[0]).toMatchObject({ title: 'Płatności', claudeTitle: 'Płatności' });
+    expect((await tool('session_set_title', { title: 'Koszyk' })).isError).toBe(true);
+    const resumed = await hook({ hook_event_name: 'SessionStart', cwd: '/work/shop/api', source: 'resume', session_title: 'Zwroty' });
+    expect(resumed?.hookSpecificOutput?.sessionTitle).toBeUndefined();
+    expect(daemon.snapshot().sessions[0]!.title).toBe('Zwroty');
+
+    // /ainstorm:open asks for a name only when the session has none anywhere
+    const link = (sessionId: string) => deps.api<{ unnamed: boolean }>('POST', '/api/open-link', { sessionId, cwd: '/work/shop/api' });
+    expect((await link(SESSION)).unnamed).toBe(false);
+    expect((await link(OTHER)).unnamed).toBe(true);
+  });
+
   it('PostToolUse attaches a git commit to the running task', async () => {
     await start();
     await tool('task_create', { title: 'Poprawka' });

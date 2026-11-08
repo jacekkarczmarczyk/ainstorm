@@ -138,6 +138,11 @@ export const Session = z.object({
   compactions: z.number().int().nonnegative(),
   /** The session this one continues (/ainstorm:continue): it took over its open tasks, and the old one was archived */
   continuedFrom: SessionId.nullable().default(null),
+  /**
+   * The name Claude Code shows for the session (/rename, --name, or the title the map gave it), as the hooks last saw
+   * it; null while it has none. When it changes, the title follows: the name in Claude Code wins.
+   */
+  claudeTitle: z.string().max(200).nullable().default(null),
 });
 export type Session = z.infer<typeof Session>;
 

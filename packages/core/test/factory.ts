@@ -50,6 +50,7 @@ export function makeSession(overrides: Partial<Session> = {}): Session {
     note: null,
     compactions: 0,
     continuedFrom: null,
+    claudeTitle: null,
     ...overrides,
   };
 }

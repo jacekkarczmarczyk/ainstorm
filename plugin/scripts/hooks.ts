@@ -10,6 +10,8 @@ export interface HookInput {
   session_id: string;
   cwd?: string;
   source?: string;
+  /** The name Claude Code shows for the session (/rename, --name); absent while it has none */
+  session_title?: string;
   prompt?: string;
   tool_name?: string;
   tool_input?: Record<string, unknown>;
@@ -20,7 +22,7 @@ export interface HookOutput {
   decision?: 'block';
   reason?: string;
   systemMessage?: string;
-  hookSpecificOutput?: { hookEventName: string; additionalContext: string };
+  hookSpecificOutput?: { hookEventName: string; additionalContext?: string; sessionTitle?: string };
 }
 
 export interface HookDeps {
@@ -28,8 +30,12 @@ export interface HookDeps {
   ensureDaemon(): Promise<boolean>;
 }
 
-const context = (event: string, text: string | null | undefined): HookOutput | null =>
-  text ? { hookSpecificOutput: { hookEventName: event, additionalContext: text } } : null;
+/** Context for Claude and, from SessionStart and UserPromptSubmit, a name for the session in Claude Code (like /rename) */
+const context = (event: string, text: string | null | undefined, sessionTitle: unknown = null): HookOutput | null => {
+  const title = typeof sessionTitle === 'string' && sessionTitle ? sessionTitle : null;
+  if (!text && !title) return null;
+  return { hookSpecificOutput: { hookEventName: event, ...(text ? { additionalContext: text } : {}), ...(title ? { sessionTitle: title } : {}) } };
+};
 
 // Sessions join the map only on request: until then Claude leaves the map alone
 const NOT_REGISTERED = [
@@ -84,6 +90,8 @@ export async function runHook(input: HookInput, deps: HookDeps): Promise<HookOut
   const op = (body: Record<string, unknown>) => api<Record<string, unknown>>('POST', `${session}/ops`, body);
   const deliveries = async () => (await api<{ context: string | null }>('POST', `${session}/deliveries`, {})).context;
   const event = input.hook_event_name;
+  // The session's name in Claude Code wins in the map; a title only the map has goes to Claude Code (`push`)
+  const syncTitle = async () => (await op({ op: 'claudeTitle', title: input.session_title?.trim().slice(0, 200) || null })).push;
   // A daemon that went down or was restarted during the session is started again by the next hook (one /health
   // call while it runs); when it cannot be started, the hook does nothing
   const up = await deps.ensureDaemon();
@@ -93,8 +101,9 @@ export async function runHook(input: HookInput, deps: HookDeps): Promise<HookOut
     const started = await op({ op: 'start', cwd: input.cwd ?? '', source: input.source ?? 'startup' });
     if (started.project === null) return context(event, NOT_REGISTERED);
     if (!started.tracked) return context(event, NOT_TRACKED(String(started.project)));
+    const push = await syncTitle();
     const [map, pending] = [(await api<{ context: string | null }>('GET', `${session}/context`)).context, await deliveries()];
-    return context(event, [map, pending].filter(Boolean).join('\n\n'));
+    return context(event, [map, pending].filter(Boolean).join('\n\n'), push);
   }
   if (!up) return null;
 
@@ -106,7 +115,8 @@ export async function runHook(input: HookInput, deps: HookDeps): Promise<HookOut
       // this session to the map
       if (PROJECT_PROMPT.test(input.prompt ?? '')) await op({ op: 'start', cwd: input.cwd ?? '', source: 'startup', register: true });
       await op({ op: 'active' });
-      return context(event, await deliveries());
+      const push = await syncTitle();
+      return context(event, await deliveries(), push);
     }
     case 'PostToolUse': {
       await op({ op: 'active' });

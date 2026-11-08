@@ -62,6 +62,29 @@ describe('session operations', () => {
     expect(op(S1, { op: 'start', cwd: 'C:/Users/me/dev/shop/shop', source: 'resume' }).value).toMatchObject({ project: 'PRJ', tracked: true, created: false });
   });
 
+  it('keeps the title in line with the name in Claude Code, which wins', () => {
+    const { engine, op } = setup();
+    // Neither has a name: nothing to do
+    expect(op(S1, { op: 'claudeTitle', title: null })).toMatchObject({ value: { push: null }, record: { changeId: null } });
+
+    // A title of the map goes to Claude Code until it shows it
+    op(S1, { op: 'setTitle', title: 'Koszyk' });
+    expect(op(S1, { op: 'claudeTitle', title: null }).value).toEqual({ push: 'Koszyk' });
+    expect(op(S1, { op: 'claudeTitle', title: 'Koszyk' }).value).toEqual({ push: null });
+    expect(engine.session(S1)).toMatchObject({ title: 'Koszyk', claudeTitle: 'Koszyk' });
+    expect(op(S1, { op: 'claudeTitle', title: ' Koszyk ' }).record.changeId).toBeNull();
+
+    // /rename in Claude Code renames the session in the map; the map cannot rename it back
+    op(S1, { op: 'claudeTitle', title: 'Płatności' });
+    expect(engine.session(S1)).toMatchObject({ title: 'Płatności', claudeTitle: 'Płatności' });
+    expect(() => op(S1, { op: 'setTitle', title: 'Koszyk' })).toThrow(/Claude Code names this session „Płatności”.*\/rename/);
+    op(S1, { op: 'setTitle', title: 'Płatności' });
+
+    // Sessions the map does not track are left alone
+    expect(op(S2, { op: 'claudeTitle', title: 'x' }).value).toEqual({ push: null });
+    expect(engine.state.sessions.some(s => s.id === S2)).toBe(false);
+  });
+
   it('counts compactions and keeps the project on resume', () => {
     const { engine, op } = setup();
     op(S1, { op: 'start', cwd: '/anything', source: 'compact' });

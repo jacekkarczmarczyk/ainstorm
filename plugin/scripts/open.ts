@@ -9,6 +9,8 @@ const cwd = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
 interface Reply {
   url?: string;
+  /** The session has a name neither in the map nor in Claude Code */
+  unnamed?: boolean;
   suggestion?: { key: string; name: string; path: string };
 }
 
@@ -25,6 +27,7 @@ if (!await ensureDaemon()) {
       ].join('\n'));
     } else {
       console.log(reply.url);
+      if (reply.unnamed) console.log('NO NAME: this session has a name neither in the map nor in Claude Code.');
     }
   } catch (error) {
     console.log(`ainstorm: could not create a link (${error instanceof Error ? error.message : String(error)}).`);

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { defaultSessionTitle } from '@ainstorm/core';
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -37,18 +38,19 @@ watchEffect(() => {
   else root.setAttribute('data-theme', ui.theme);
 });
 useWaitNotifications();
-// The tab title names the project of the page (tabs of several projects stay apart) and how many sessions wait on
-// the user; the dev server marks its tabs
-const pageProject = computed(() => {
-  const key = map.resolveSession(typeof route.params.sessionId === 'string' ? route.params.sessionId : null)?.projectKey
-    ?? (typeof route.params.projectKey === 'string' ? route.params.projectKey : null);
-  return map.project(key);
-});
+// The tab title names the session of the page ("AIN: its title", its id while it has no name) or the project (tabs of
+// several projects stay apart), and how many sessions wait on the user
+const pageSession = computed(() => map.resolveSession(typeof route.params.sessionId === 'string' ? route.params.sessionId : null));
+const pageProject = computed(() => map.project(pageSession.value?.projectKey
+  ?? (typeof route.params.projectKey === 'string' ? route.params.projectKey : null)));
 watchEffect(() => {
   const n = map.waitingSessions.length;
+  const s = pageSession.value;
   const p = pageProject.value;
-  document.title = [import.meta.env.DEV ? '[DEV]' : null, p ? `${p.key} ${p.name} ·` : null, n ? `(${n})` : null, t('app.name')]
-    .filter(Boolean).join(' ');
+  const count = n ? `(${n})` : null;
+  document.title = (s
+    ? [`${s.projectKey}: ${s.title === defaultSessionTitle(s.id) ? s.id : s.title}`, count]
+    : [p ? `${p.key} ${p.name} ·` : null, count, t('app.name')]).filter(Boolean).join(' ');
 });
 
 // Esc closes the innermost thing: a dialog, then the phone sheet, then the task panel. A field, a menu or a list that

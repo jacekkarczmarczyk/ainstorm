@@ -7,7 +7,7 @@ import {
 import { GITHUB_REPO } from './github.ts';
 import { matchProject, type PathOptions } from './paths.ts';
 import { parseHeader } from './prompts.ts';
-import { shortId } from './text.ts';
+import { defaultSessionTitle, shortId } from './text.ts';
 import { buildTaskIndex, wouldCreateDepCycle, wouldCreateParentCycle } from './tree.ts';
 
 /**
@@ -65,6 +65,11 @@ export const SessionOp = z.discriminatedUnion('op', [
     confirm: z.boolean().default(false),
   }),
   z.object({ op: z.literal('setTitle'), title: Text(200) }),
+  /**
+   * SessionStart and UserPromptSubmit hooks: the name Claude Code shows for the session (null while it has none). A new
+   * name there becomes the title; a title Claude Code lacks comes back as `push`, for the hook to give it to Claude Code.
+   */
+  z.object({ op: z.literal('claudeTitle'), title: z.string().trim().max(200).nullable() }),
   z.object({ op: z.literal('setRunning'), taskId: TaskId.nullable() }),
   /** The tasks the session takes up next, in order (the user asked for several in the conversation) */
   z.object({ op: z.literal('queue'), taskIds: z.array(TaskId).min(1).max(20) }),
@@ -110,7 +115,7 @@ const SESSION_UNKNOWN = 'This session is not tracked in ainstorm. Use the ainsto
 
 // An archived session reads the map but changes nothing in it until the user restores it; hooks still track its state
 const SESSION_ARCHIVED = 'This session is archived in ainstorm, so it cannot change the map. Tell the user what you wanted to change, and ask whether to restore the session (session_restore) and go on.';
-const WHILE_ARCHIVED = new Set<SessionOp['op']>(['start', 'end', 'active', 'stop', 'waitPermission', 'archive', 'restore']);
+const WHILE_ARCHIVED = new Set<SessionOp['op']>(['start', 'end', 'active', 'stop', 'waitPermission', 'claudeTitle', 'archive', 'restore']);
 
 /** Apply one operation of a session. Throws EngineError for unknown ids, broken rules and stale versions. */
 export function applySessionOp(engine: MapEngine, sessionId: string, input: unknown, paths: PathOptions = {}): SessionOpResult {
@@ -234,7 +239,7 @@ export function applySessionOp(engine: MapEngine, sessionId: string, input: unkn
       if (!op.confirm) return { record: emptyRecord(), value: { ...about, confirmed: false } };
       return run('claude', ctx => {
         const s = existing ?? newSession(state, sessionId, old.projectKey, ctx.now);
-        if (s.title === `Session ${shortId(s.id)}`) s.title = old.title;
+        if (s.title === defaultSessionTitle(s.id)) s.title = old.title;
         s.status = 'active';
         s.continuedFrom = old.id;
         if (running) s.runningTaskId = running.id;
@@ -249,13 +254,33 @@ export function applySessionOp(engine: MapEngine, sessionId: string, input: unkn
         return { ...about, confirmed: true };
       });
     }
-    case 'setTitle':
+    case 'setTitle': {
+      const s = session();
+      // The name in Claude Code wins: the user changes it there
+      if (s.claudeTitle !== null && op.title !== s.claudeTitle) {
+        throw new EngineError(`Claude Code names this session „${s.claudeTitle}”, and that name is its title in the map. `
+          + 'Keep it, or suggest the user rename the session with /rename <title>.', 'invalid');
+      }
       return run('claude', ctx => {
-        const s = session();
         s.title = op.title;
         ctx.session(s);
         return {};
       });
+    }
+    case 'claudeTitle': {
+      const s = findSession();
+      if (!s) return { record: emptyRecord(), value: { push: null } };
+      const title = op.title || null;
+      // Claude Code has no name for the session: it gets the title of the map, once it has one
+      const push = title === null && s.title !== defaultSessionTitle(s.id) ? s.title : null;
+      if (s.claudeTitle === title && (title === null || s.title === title)) return { record: emptyRecord(), value: { push } };
+      return run('hook', ctx => {
+        s.claudeTitle = title;
+        if (title !== null) s.title = title;
+        ctx.session(s);
+        return { push };
+      });
+    }
     case 'setRunning':
       return run('claude', ctx => {
         const s = session();
@@ -547,8 +572,8 @@ export function checkPrompt(engine: MapEngine, sessionId: string, prompt: string
 
 function newSession(state: MapEngine['state'], id: string, projectKey: string, now: string): Session {
   const session: Session = {
-    id, projectKey, title: `Session ${shortId(id)}`, status: 'active', startedAt: now, archivedAt: null,
-    runningTaskId: null, waiting: null, note: null, compactions: 0, continuedFrom: null,
+    id, projectKey, title: defaultSessionTitle(id), status: 'active', startedAt: now, archivedAt: null,
+    runningTaskId: null, waiting: null, note: null, compactions: 0, continuedFrom: null, claudeTitle: null,
   };
   state.sessions.push(session);
   return session;
