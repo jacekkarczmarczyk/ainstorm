@@ -2,6 +2,7 @@
 import { matchesQuery } from '@ainstorm/core';
 import { Check, ChevronDown } from '@lucide/vue';
 import { computed, ref, useId } from 'vue';
+import type { RouteLocationRaw } from 'vue-router';
 import { usePopover } from '../composables/usePopover.ts';
 
 /**
@@ -11,6 +12,8 @@ import { usePopover } from '../composables/usePopover.ts';
 export interface PickerItem {
   value: string;
   label: string;
+  /** A short code shown before the label, e.g. a project key */
+  code?: string;
   /** Muted second line, e.g. "waiting · 2 h ago" */
   hint?: string;
   /** Extra text matched by the search but not shown (e.g. a session id) */
@@ -18,7 +21,11 @@ export interface PickerItem {
   attention?: boolean;
 }
 
-const props = defineProps<{ label: string; items: readonly PickerItem[]; modelValue: string; placeholder: string; width?: number }>();
+const props = defineProps<{
+  label: string; items: readonly PickerItem[]; modelValue: string; placeholder: string; width?: number;
+  /** With a link, the current item's name is that link and only the arrow next to it opens the list */
+  to?: RouteLocationRaw | undefined;
+}>();
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
 
 const id = useId();
@@ -31,7 +38,7 @@ const { open, query, root, search, toggle } = usePopover(() => {
 });
 
 const current = computed(() => props.items.find(i => i.value === props.modelValue));
-const shown = computed(() => props.items.filter(i => matchesQuery(query.value, i.label, i.keywords ?? '', i.hint ?? '')));
+const shown = computed(() => props.items.filter(i => matchesQuery(query.value, i.code ?? '', i.label, i.keywords ?? '', i.hint ?? '')));
 
 function pick(item: PickerItem | undefined) {
   if (!item) return;
@@ -59,9 +66,20 @@ function onKey(e: KeyboardEvent) {
 
 <template>
   <div ref="root" class="picker" @keydown.esc="open = false">
-    <button type="button" class="dd-trigger trigger" :aria-label="`${label}: ${current?.label ?? ''}`" aria-haspopup="listbox" :aria-expanded="open" @click="toggle">
+    <div v-if="to && current" class="split">
+      <!-- On the page it leads to, the name is plain text: nothing to click there -->
+      <RouterLink v-slot="{ href, navigate, isExactActive }" :to="to" custom>
+        <component :is="isExactActive ? 'span' : 'a'" :href="isExactActive ? undefined : href" class="dd-trigger name-link" :class="{ here: isExactActive }" :aria-current="isExactActive ? 'page' : undefined" @click="isExactActive || navigate($event)">
+          <span v-if="current.code" class="code">{{ current.code }}</span><span class="current">{{ current.label }}</span>
+        </component>
+      </RouterLink>
+      <button type="button" class="dd-trigger arrow" :aria-label="$t('header.pickAnother', { what: label })" aria-haspopup="listbox" :aria-expanded="open" @click="toggle">
+        <ChevronDown :size="14" aria-hidden="true" />
+      </button>
+    </div>
+    <button v-else type="button" class="dd-trigger trigger" :aria-label="`${label}: ${current?.label ?? ''}`" aria-haspopup="listbox" :aria-expanded="open" @click="toggle">
       <span v-if="current?.attention" class="dot" aria-hidden="true"></span>
-      <span class="current">{{ current?.label ?? label }}</span><ChevronDown :size="14" aria-hidden="true" />
+      <span v-if="current?.code" class="code">{{ current.code }}</span><span class="current">{{ current?.label ?? label }}</span><ChevronDown :size="14" aria-hidden="true" />
     </button>
     <div v-if="open" class="dd-pop pop" :style="{ width: `${width ?? 320}px` }">
       <label class="sr-only" :for="`${id}-search`">{{ placeholder }}</label>
@@ -77,7 +95,7 @@ function onKey(e: KeyboardEvent) {
         >
           <span class="mark" aria-hidden="true"><Check v-if="item.value === modelValue" :size="13" /></span>
           <span class="text">
-            <span class="name"><span v-if="item.attention" class="dot" aria-hidden="true"></span>{{ item.label }}</span>
+            <span class="name"><span v-if="item.attention" class="dot" aria-hidden="true"></span><span v-if="item.code" class="code">{{ item.code }}</span>{{ item.label }}</span>
             <span v-if="item.hint" class="hint">{{ item.hint }}</span>
           </span>
         </li>
@@ -90,7 +108,16 @@ function onKey(e: KeyboardEvent) {
 <style scoped>
 .picker { position: relative; min-width: 0; }
 .trigger { max-width: 360px; }
+/* Link and arrow read as one control: joined frames, the arrow on the right */
+.split { display: inline-flex; max-width: 360px; min-width: 0; }
+.name-link { text-decoration: none; border-top-right-radius: 0; border-bottom-right-radius: 0; min-width: 0; }
+.name-link:not(.here):hover { border-color: var(--accent); }
+.name-link.here { cursor: default; }
+.arrow { border-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; padding-inline: 6px; }
+.arrow:hover { background: var(--row-hover); }
 .current { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.code { font-family: var(--f-mono); font-size: var(--fs-s); color: var(--muted); font-weight: 500; flex: none; }
+.name .code { margin-right: 6px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--you); flex: none; display: inline-block; margin-right: 6px; }
 .trigger .dot { margin-right: 0; }
 /* Above the header and the filter dropdowns */

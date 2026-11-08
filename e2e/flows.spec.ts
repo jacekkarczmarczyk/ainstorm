@@ -574,7 +574,11 @@ test('the header picks the project and the session, with search', async ({ page 
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/s\/7b4c4db1\/tree$/);
 
-  await page.getByRole('button', { name: /^Session:/ }).click();
-  await page.getByRole('option', { name: 'Project overview' }).click();
+  // The project's name leads to its overview; the arrow next to it picks another project
+  const header = page.getByRole('banner');
+  await header.getByRole('link', { name: 'bookkeeping' }).click();
   await expect(page).toHaveURL(/\/p\/PP$/);
+  await header.getByRole('button', { name: 'Project: pick another' }).click();
+  await page.getByRole('option', { name: /shop/ }).click();
+  await expect(page).toHaveURL(/\/p\/PRJ$/);
 });

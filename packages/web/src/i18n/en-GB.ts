@@ -26,7 +26,7 @@ export const enGB = {
   time: { today: 'Today {time}', yesterday: 'Yesterday {time}', todayDay: 'Today', yesterdayDay: 'Yesterday' },
   header: {
     findProject: 'Find a project…', findSession: 'Find a session by title or id…',
-    project: 'Project', views: 'Views', session: 'Session', overview: 'Project overview', waitingOnYou: '{n} session waiting on you | {n} sessions waiting on you', forYou: '{n} task for you | {n} tasks for you',
+    project: 'Project', views: 'Views', session: 'Session', pickAnother: '{what}: pick another', waitingOnYou: '{n} session waiting on you | {n} sessions waiting on you', forYou: '{n} task for you | {n} tasks for you',
     theme: { auto: 'Auto', light: 'Light', dark: 'Dark' }, themeLabel: 'Theme: {theme}. Click to change.',
   },
   filter: {
