@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  isSessionOpen, isWorking, lastActivityAt, listSessions, projectStats, queuedRuns, runMarks, sessionHighlights, sessionStatusKey, sessionTasks,
-  summarizeSession, targetSessions,
+  currentSessionId, isSessionOpen, isWorking, lastActivityAt, listSessions, projectStats, queuedRuns, runMarks, sessionHighlights, sessionStatusKey, sessionTasks,
+  summarizeSession, targetSessions, taskSession,
 } from '../src/sessions.ts';
 import { buildTaskIndex } from '../src/tree.ts';
 import { makeEvent, makeSession, makeTask } from './factory.ts';
@@ -167,6 +167,24 @@ describe('targetSessions', () => {
     const withChild = buildTaskIndex([...tasks, child]);
     expect(targetSessions(withChild, child, [s1, s2, s3]).map(s => s.id)).toEqual([s1.id]);
     expect(isSessionOpen(s2)).toBe(false);
+  });
+});
+
+describe('continued sessions', () => {
+  const next = makeSession({ continuedFrom: s3.id, archivedAt: '2026-10-03T00:00:00.000Z' });
+  const last = makeSession({ continuedFrom: next.id });
+  const all = [s1, s3, next, last];
+
+  it('follow the line of work to the session that goes on with it', () => {
+    expect(currentSessionId(all, s3.id)).toBe(last.id);
+    expect(currentSessionId(all, last.id)).toBe(last.id);
+    expect(currentSessionId(all, s1.id)).toBe(s1.id);
+  });
+
+  it('a task opens in its first session still in the lists, otherwise in its first one', () => {
+    expect(taskSession({ sessionIds: [s3.id, last.id] }, all)).toBe(last);
+    expect(taskSession({ sessionIds: [s3.id] }, all)).toBe(s3);
+    expect(taskSession({ sessionIds: [] }, all)).toBeUndefined();
   });
 });
 

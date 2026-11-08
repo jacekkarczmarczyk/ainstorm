@@ -6,7 +6,7 @@ import {
 import { splitCommit, withCommit } from './commitMessage.ts';
 import { issueNumber } from './github.ts';
 import { nextTaskId, projectAreas } from './sessionOps.ts';
-import { isSessionOpen, targetSessions } from './sessions.ts';
+import { currentSessionId, isSessionOpen, targetSessions } from './sessions.ts';
 import { openQuestions } from './status.ts';
 import { buildTaskIndex, descendants, wouldCreateParentCycle } from './tree.ts';
 
@@ -483,8 +483,9 @@ export class MapEngine {
     return { state: notify ? 'pending' : 'copied', sessionIds };
   }
 
-  /** Answers and rechecks go only to the session that asked, if it is still open. */
-  private questionDelivery(sessionId: string | null, notify: boolean): z.input<typeof Delivery> {
+  /** Answers and rechecks go only to the session that asked (or its continuation), if it is still open. */
+  private questionDelivery(asked: string | null, notify: boolean): z.input<typeof Delivery> {
+    const sessionId = asked === null ? null : currentSessionId(this.state.sessions, asked);
     const open = sessionId !== null && this.state.sessions.some(s => s.id === sessionId && isSessionOpen(s));
     if (!open) return { state: 'none', sessionIds: [] };
     return { state: notify ? 'pending' : 'copied', sessionIds: [sessionId] };

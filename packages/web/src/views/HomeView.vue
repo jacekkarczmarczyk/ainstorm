@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { projectStats } from '@ainstorm/core';
+import { projectStats, taskSession } from '@ainstorm/core';
 import { Crosshair } from '@lucide/vue';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -19,10 +19,12 @@ const { openSession } = useSelection();
 const projects = computed(() => map.snapshot.projects.map(project => {
   const summaries = map.summaries.filter(s => s.session.projectKey === project.key && s.session.archivedAt === null);
   const lastActivityAt = summaries.reduce((last, s) => (s.lastActivityAt > last ? s.lastActivityAt : last), '');
+  const focus = project.focusTaskId ? map.task(project.focusTaskId) : undefined;
   return {
     ...projectStats(map.index, map.snapshot.sessions, project.key),
     project,
-    focus: project.focusTaskId ? map.task(project.focusTaskId) : undefined,
+    focus,
+    focusSession: focus ? taskSession(focus, map.snapshot.sessions) : undefined,
     forYou: map.forUser.filter(t => t.projectKey === project.key).length,
     lastActivityAt,
   };
@@ -77,7 +79,7 @@ const projectName = (key: string) => map.project(key)?.name ?? key;
           </header>
           <p v-if="p.focus" class="focus">
             <Crosshair :size="13" aria-hidden="true" />
-            <button type="button" class="link" @click.stop="p.focus.sessionIds[0] ? openSession(p.focus.sessionIds[0], 'focus', p.focus.id) : openProject(p.project.key)">
+            <button type="button" class="link" @click.stop="p.focusSession ? openSession(p.focusSession.id, 'focus', p.focus.id) : openProject(p.project.key)">
               <TaskIdLabel :id="p.focus.id" /> {{ p.focus.title }}
             </button>
           </p>

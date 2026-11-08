@@ -76,7 +76,7 @@ export function loadSnapshot(db: DatabaseSync): MapSnapshot {
       : r.waiting_kind === 'permission'
         ? { kind: 'permission', tool: str(r.waiting_tool!), detail: str(r.waiting_detail ?? ''), since: str(r.waiting_since!) }
         : null,
-    note: opt(r.note!), compactions: Number(r.compactions),
+    note: opt(r.note!), compactions: Number(r.compactions), continuedFrom: opt(r.continued_from!),
   }));
 
   const deliveries = groupBy(all(db, 'SELECT * FROM event_deliveries ORDER BY rowid'), 'event_id');
@@ -142,15 +142,15 @@ function writeTask(db: DatabaseSync, t: Task) {
 function writeSession(db: DatabaseSync, s: Session) {
   const w = s.waiting;
   db.prepare(`INSERT INTO sessions (id, project_key, title, status, started_at, archived_at, running_task_id, waiting_kind, waiting_task_id,
-      waiting_tool, waiting_detail, waiting_since, note, compactions)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      waiting_tool, waiting_detail, waiting_since, note, compactions, continued_from)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET project_key = excluded.project_key, title = excluded.title, status = excluded.status,
       archived_at = excluded.archived_at, running_task_id = excluded.running_task_id, waiting_kind = excluded.waiting_kind,
       waiting_task_id = excluded.waiting_task_id, waiting_tool = excluded.waiting_tool, waiting_detail = excluded.waiting_detail,
-      waiting_since = excluded.waiting_since, note = excluded.note, compactions = excluded.compactions`).run(
+      waiting_since = excluded.waiting_since, note = excluded.note, compactions = excluded.compactions, continued_from = excluded.continued_from`).run(
     s.id, s.projectKey, s.title, s.status, s.startedAt, s.archivedAt, s.runningTaskId, w?.kind ?? null,
     w?.kind === 'task' ? w.taskId : null, w?.kind === 'permission' ? w.tool : null, w?.kind === 'permission' ? w.detail : null,
-    w?.since ?? null, s.note, s.compactions,
+    w?.since ?? null, s.note, s.compactions, s.continuedFrom,
   );
 }
 

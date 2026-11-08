@@ -21,7 +21,7 @@ const ui = useUiStore();
 const actions = useTaskActions();
 const { copy } = useClipboard();
 const { when } = useFormat();
-const { selectTask } = useSelection();
+const { selectTask, openSession } = useSelection();
 
 const s = computed(() => props.session);
 const summary = computed(() => map.summaryById.get(s.value.id));
@@ -35,6 +35,10 @@ const queue = computed(() => [...map.queued]
   .filter((t): t is Task => t !== undefined));
 // Resumes in the project folder; with the plugin folder from the settings while the plugin is not installed
 const resume = computed(() => resumeCommand(s.value.id, map.project(s.value.projectKey)?.paths[0] ?? null, ui.pluginDir));
+// The line of work: the session this one continues, and the one that continues it (pasted into a new Claude session)
+const previous = computed(() => map.session(s.value.continuedFrom));
+const continuation = computed(() => map.snapshot.sessions.find(x => x.continuedFrom === s.value.id));
+const continueCommand = computed(() => `/ainstorm:continue ${s.value.id}`);
 </script>
 
 <template>
@@ -52,8 +56,13 @@ const resume = computed(() => resumeCommand(s.value.id, map.project(s.value.proj
       <span v-if="summary?.forUser" class="badge-you">{{ $t('sessions.forYou', { n: summary.forUser }) }}</span>
       <span class="spacer"></span>
       <button type="button" class="btn sm" :title="resume" @click="copy(resume)"><Copy :size="13" aria-hidden="true" /> {{ $t('session.copyResume') }}</button>
+      <button v-if="!continuation" type="button" class="btn sm" :title="$t('session.copyContinueHelp')" @click="copy(continueCommand)"><Copy :size="13" aria-hidden="true" /> {{ $t('session.copyContinue') }}</button>
       <button v-if="!s.archivedAt && s.status !== 'active'" type="button" class="btn sm" @click="actions.setSessionArchived(s, true)"><Archive :size="13" aria-hidden="true" /> {{ $t('sessions.archive') }}</button>
       <button v-if="s.archivedAt" type="button" class="btn sm" @click="actions.setSessionArchived(s, false)"><ArchiveRestore :size="13" aria-hidden="true" /> {{ $t('sessions.restore') }}</button>
+    </div>
+    <div v-if="previous || continuation" class="line chain">
+      <span v-if="previous">{{ $t('session.continues') }} <button type="button" class="link" @click="openSession(previous.id)">{{ previous.title }}</button></span>
+      <span v-if="continuation">{{ $t('session.continuedIn') }} <button type="button" class="link" @click="openSession(continuation.id)">{{ continuation.title }}</button></span>
     </div>
     <WaitingBox v-if="s.status === 'waiting'" :session="s" />
     <div v-else-if="running" class="running-box">
@@ -78,7 +87,7 @@ const resume = computed(() => resumeCommand(s.value.id, map.project(s.value.proj
 .line { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 .ses-dot { width: 10px; height: 10px; }
 h1 { margin: 0; font-size: var(--fs-xl); line-height: 1.25; }
-.dates { font-size: var(--fs-s); color: var(--muted); }
+.dates, .chain { font-size: var(--fs-s); color: var(--muted); }
 .bar { width: 200px; }
 .spacer { flex: 1; }
 .running-box { display: grid; gap: 4px; background: color-mix(in srgb, var(--s-in_progress) 8%, transparent); border-radius: 6px; padding: 6px 10px; }

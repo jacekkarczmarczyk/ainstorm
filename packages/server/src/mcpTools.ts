@@ -34,7 +34,7 @@ const jsonSchema = (schema: z.ZodType): Record<string, unknown> => {
 };
 
 // Sessions join the map only on request
-const NOT_REGISTERED = 'This session is not tracked in ainstorm. Use the ainstorm tools only if the user wants it: they run /ainstorm:open, which adds this session to the map (and offers to register the folder as a project when it is none).';
+const NOT_REGISTERED = 'This session is not tracked in ainstorm. Use the ainstorm tools only if the user wants it: they run /ainstorm:open, which adds this session to the map (and offers to register the folder as a project when it is none), or /ainstorm:continue <session id> to continue an earlier session here.';
 
 /** Tools that change the map; Claude Code permissions decide which run without asking. */
 const WRITE_TOOLS: ReadonlyArray<{ name: string; op: OpName; description: string }> = [
@@ -51,6 +51,7 @@ const WRITE_TOOLS: ReadonlyArray<{ name: string; op: OpName; description: string
   { name: 'session_wait', op: 'wait', description: 'Say that this session now waits for the user on a task (a decision, an action of theirs, or approval to start). End your turn afterwards.' },
   { name: 'session_archive', op: 'archive', description: 'Archive this session in the map: it leaves the lists of sessions, and its tasks stay as they are. Only when the user asks for it (e.g. "archive"). The result lists the session\'s tasks still open: name them to the user. An archived session cannot change the map until it is restored.' },
   { name: 'session_restore', op: 'restore', description: 'Restore this archived session, so it can change the map again. Only when the user asks for it or agrees to it, e.g. after you told them a change was refused because the session is archived.' },
+  { name: 'session_continue', op: 'continue', description: 'Continue an earlier session of the project in this one (/ainstorm:continue, or the user asks to work on an ainstorm session by its id). First call it without confirm: it only tells which session that is (title, project, open tasks, the task it was running). Show that to the user and ask them to confirm; only after they agree, call it again with confirm true and the full session id. This session then takes over its open tasks and running task, and the old session is archived.' },
   { name: 'session_set_title', op: 'setTitle', description: 'Give this session a short title describing its main task, in the conversation language. Do it early in the session.' },
   { name: 'area_create', op: 'createArea', description: 'Add a new area (a part of the project, e.g. "billing") that tasks can be tagged with. Tasks may only use known areas; propose a new one to the user first and add it only after they agree.' },
   { name: 'project_set_repo', op: 'setRepo', description: 'Set (or with null remove) the GitHub repository of this project, https://github.com/<owner>/<repo>. Then #1234 and the issue field of tasks link to its issues. Only when the user gives or confirms the address.' },

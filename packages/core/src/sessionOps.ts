@@ -54,6 +54,16 @@ export const SessionOp = z.discriminatedUnion('op', [
   z.object({ op: z.literal('archive') }),
   /** The user asked to restore this archived session, so it can change the map again */
   z.object({ op: z.literal('restore') }),
+  /**
+   * This session continues an earlier one (/ainstorm:continue), given by its id or the first 8 characters of it.
+   * Without confirm only what that session is, for the user to confirm; with it, this session takes over its open
+   * tasks and the task it was running, and the old session is archived.
+   */
+  z.object({
+    op: z.literal('continue'),
+    from: z.string().regex(/^[0-9a-f]{8}[0-9a-f-]{0,28}$/, 'Expected a session id or its first 8 characters'),
+    confirm: z.boolean().default(false),
+  }),
   z.object({ op: z.literal('setTitle'), title: Text(200) }),
   z.object({ op: z.literal('setRunning'), taskId: TaskId.nullable() }),
   /** The tasks the session takes up next, in order (the user asked for several in the conversation) */
@@ -94,7 +104,7 @@ export interface SessionOpResult {
 }
 
 // Sessions join the map only on request
-const SESSION_UNKNOWN = 'This session is not tracked in ainstorm. Use the ainstorm tools only if the user wants it: they run /ainstorm:open, which adds this session to the map (and offers to register the folder as a project when it is none).';
+const SESSION_UNKNOWN = 'This session is not tracked in ainstorm. Use the ainstorm tools only if the user wants it: they run /ainstorm:open, which adds this session to the map (and offers to register the folder as a project when it is none), or /ainstorm:continue <session id> to continue an earlier session here.';
 
 // An archived session reads the map but changes nothing in it until the user restores it; hooks still track its state
 const SESSION_ARCHIVED = 'This session is archived in ainstorm, so it cannot change the map. Tell the user what you wanted to change, and ask whether to restore the session (session_restore) and go on.';
@@ -194,6 +204,49 @@ export function applySessionOp(engine: MapEngine, sessionId: string, input: unkn
         ctx.session(s);
         return { archived: false };
       });
+    case 'continue': {
+      const matches = state.sessions.filter(s => s.id.startsWith(op.from));
+      if (matches.length === 0) throw new EngineError(`No session ${op.from} in the map`, 'not_found');
+      if (matches.length > 1) throw new EngineError(`${op.from} matches ${matches.length} sessions; give more of its id`, 'invalid');
+      const old = matches[0]!;
+      const existing = findSession();
+      if (old.id === sessionId) throw new EngineError('This is that session; continue it from a new Claude Code session', 'invalid');
+      // One line of work: a session is continued once, and a session continues one session
+      const next = state.sessions.find(s => s.continuedFrom === old.id);
+      if (next && next.id !== sessionId) {
+        throw new EngineError(`„${old.title}” is already continued in „${next.title}” (${shortId(next.id)}); continue that one`, 'invalid');
+      }
+      if (existing?.continuedFrom && existing.continuedFrom !== old.id) {
+        throw new EngineError(`This session already continues session ${shortId(existing.continuedFrom)}`, 'invalid');
+      }
+      if (existing && existing.projectKey !== old.projectKey) {
+        throw new EngineError(`„${old.title}” belongs to project ${old.projectKey}, this session to ${existing.projectKey}`, 'invalid');
+      }
+      // Closed tasks stay with the old session; changes to them reach this one through the continuation
+      const open = state.tasks.filter(t => t.sessionIds.includes(old.id) && t.archivedAt === null && !isClosed(t.status));
+      const running = open.find(t => t.id === old.runningTaskId) ?? null;
+      const about = {
+        session: old.id, title: old.title, project: old.projectKey, openTasks: open.length,
+        running: running ? `${running.id} ${running.title}` : null,
+      };
+      if (!op.confirm) return { record: emptyRecord(), value: { ...about, confirmed: false } };
+      return run('claude', ctx => {
+        const s = existing ?? newSession(state, sessionId, old.projectKey, ctx.now);
+        if (s.title === `Session ${shortId(s.id)}`) s.title = old.title;
+        s.status = 'active';
+        s.continuedFrom = old.id;
+        if (running) s.runningTaskId = running.id;
+        ctx.session(s);
+        open.forEach(t => join(ctx, t));
+        old.archivedAt ??= ctx.now;
+        if (old.waiting) {
+          old.waiting = null;
+          old.status = 'idle';
+        }
+        ctx.session(old);
+        return { ...about, confirmed: true };
+      });
+    }
     case 'setTitle':
       return run('claude', ctx => {
         const s = session();
@@ -482,7 +535,7 @@ export function checkPrompt(engine: MapEngine, sessionId: string, prompt: string
 function newSession(state: MapEngine['state'], id: string, projectKey: string, now: string): Session {
   const session: Session = {
     id, projectKey, title: `Session ${shortId(id)}`, status: 'active', startedAt: now, archivedAt: null,
-    runningTaskId: null, waiting: null, note: null, compactions: 0,
+    runningTaskId: null, waiting: null, note: null, compactions: 0, continuedFrom: null,
   };
   state.sessions.push(session);
   return session;

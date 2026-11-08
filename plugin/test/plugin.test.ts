@@ -141,6 +141,17 @@ describe('MCP proxy', () => {
     expect((await tool('task_tree', {})).content[0]!.text).toBe('- PRJ-1 [todo] Pierwsze');
   });
 
+  it('a new, untracked session continues an earlier one: first only what it is, then on confirm', async () => {
+    await start(OTHER);
+    await handle({ ...mcp, sessionId: OTHER }, { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'task_create', arguments: { title: 'Zadanie' } } });
+    const preview = JSON.parse((await tool('session_continue', { from: OTHER.slice(0, 8) })).content[0]!.text) as Record<string, unknown>;
+    expect(preview).toMatchObject({ session: OTHER, openTasks: 1, confirmed: false });
+    expect(daemon.snapshot().sessions.some(s => s.id === SESSION)).toBe(false);
+    await tool('session_continue', { from: OTHER, confirm: true });
+    expect(daemon.snapshot().sessions.find(s => s.id === SESSION)).toMatchObject({ continuedFrom: OTHER, projectKey: 'PRJ' });
+    expect((await tool('task_tree', {})).content[0]!.text).toBe('- PRJ-1 [todo] Zadanie');
+  });
+
   it('returns bad input and broken rules as tool errors', async () => {
     await start();
     const bad = await tool('task_create', { title: '' });

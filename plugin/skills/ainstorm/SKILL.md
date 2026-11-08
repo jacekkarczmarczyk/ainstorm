@@ -13,6 +13,9 @@ what was parked on the way, and what waits for them. Keep it true as you work. T
 - A session is in the map only when the user wants it: they ran /ainstorm:open, or pasted a prompt copied from the map.
   If the context says this session is not tracked, do not use the ainstorm tools and do not mention the map; if the
   user asks for it, tell them to run /ainstorm:open. Everything below applies to tracked sessions.
+- A new session can continue an earlier one (/ainstorm:continue, or the user asks to work on an ainstorm session by
+  its id): `session_continue` first without `confirm`, show the user which session it is and ask; with `confirm: true`
+  only after they agree.
 
 ## One session, one main task
 

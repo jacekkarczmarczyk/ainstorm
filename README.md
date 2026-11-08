@@ -58,6 +58,9 @@ In the session:
   browser in and opens the session's open tasks. Sessions join the map only this way (or with a prompt copied from the
   map); others are left alone. In a folder that is no project yet, it first suggests a project key and name; Claude
   registers the project once you agree (or give your own);
+- `/ainstorm:continue <session id>` continues an earlier session with a clean context: Claude shows which session it
+  is and, once you confirm, this session takes over its open tasks and the old one is archived. The map's "Copy
+  continue command" button in a session's view copies this command; paste it into a new session;
 - `/ainstorm:status` tells where the session stands;
 - `/ainstorm:defer "…"` parks a side issue for later;
 - `/ainstorm:backfill` rebuilds the tasks of the current conversation, for work begun before ainstorm was running
@@ -90,7 +93,8 @@ and allow that commit; Claude Code still asks for `git commit` unless it is allo
 ## How changes reach the session
 
 - Status changes, answers, decisions and other changes made in the map are added to Claude's context by a hook at
-  your next message in that session (or at Claude's next tool call while it works).
+  your next message in that session (or at Claude's next tool call while it works). Changes to tasks of a continued
+  session, closed ones included, go to the session that continues it.
 - Run, Pause and Approve and start are copied prompts: paste them into the session. Run on several tasks ticked in
   the tree puts them into one prompt, in the order they were ticked.
 - Prompts are in English by default; Settings → Prompt language offers 15 languages.

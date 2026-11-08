@@ -9,7 +9,7 @@ describe('store', () => {
   it('migrates an empty database', () => {
     const db = openDatabase(':memory:');
     expect(loadSnapshot(db)).toEqual({ projects: [], tasks: [], sessions: [], events: [] });
-    expect((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(4);
+    expect((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(5);
   });
 
   it('round-trips the whole real-data fixture', () => {

@@ -38,7 +38,8 @@ const NOT_REGISTERED = [
 ].join(' ');
 const NOT_TRACKED = (project: string) => [
   `ainstorm: this directory is project ${project} in the task map, but this session is not tracked.`,
-  'Do not use the ainstorm tools here unless the user asks; /ainstorm:open adds this session to the map.',
+  'Do not use the ainstorm tools here unless the user asks; /ainstorm:open adds this session to the map,',
+  'and /ainstorm:continue <session id> continues an earlier session here.',
 ].join(' ');
 
 /** A prompt copied from the map for no particular session (`[ainstorm #N · project · …]`): the user wants this session tracked */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { canRun, focusView, openQuestions, progress } from '@ainstorm/core';
+import { canRun, focusView, openQuestions, progress, taskSession } from '@ainstorm/core';
 import { Crosshair, GitBranch, Play } from '@lucide/vue';
 import { computed } from 'vue';
 import DoneCheckbox from '../components/DoneCheckbox.vue';
@@ -28,7 +28,7 @@ const view = computed(() => (project.value ? focusView(scoped.value, project.val
 const focusElsewhere = computed(() => {
   const focus = map.task(project.value?.focusTaskId);
   if (!focus || view.value) return null;
-  const owner = map.snapshot.sessions.find(s => focus.sessionIds.includes(s.id));
+  const owner = taskSession(focus, map.snapshot.sessions);
   return owner ? { task: focus, session: owner } : null;
 });
 const detailsShown = computed(() => !ui.panelHidden && taskId.value === view.value?.focus.id);

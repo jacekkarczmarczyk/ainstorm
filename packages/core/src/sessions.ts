@@ -188,8 +188,24 @@ export function sessionHighlights(index: TaskIndex, marks: ReadonlyMap<string, R
   };
 }
 
-/** Open sessions linked to the task or its ancestors: where changes made in the UI are sent. */
+/** Where the work of a session goes on now: the end of its chain of continuations, or the session itself. */
+export function currentSessionId(sessions: readonly Pick<Session, 'id' | 'continuedFrom'>[], id: string): string {
+  const seen = new Set([id]);
+  for (let next = sessions.find(s => s.continuedFrom === id); next && !seen.has(next.id); next = sessions.find(s => s.continuedFrom === id)) {
+    seen.add(next.id);
+    id = next.id;
+  }
+  return id;
+}
+
+/** The session a task opens in: its first one still in the lists (not archived), otherwise its first one. */
+export function taskSession(task: Pick<Task, 'sessionIds'>, sessions: readonly Session[]): Session | undefined {
+  const own = task.sessionIds.map(id => sessions.find(s => s.id === id)).filter((s): s is Session => s !== undefined);
+  return own.find(s => s.archivedAt === null) ?? own[0];
+}
+
+/** Open sessions linked to the task or its ancestors (a continued one through its continuation): where changes made in the UI are sent. */
 export function targetSessions(index: TaskIndex, task: Task, sessions: readonly Session[]): Session[] {
-  const linked = new Set(pathTo(index, task.id).flatMap(t => t.sessionIds));
+  const linked = new Set(pathTo(index, task.id).flatMap(t => t.sessionIds).map(id => currentSessionId(sessions, id)));
   return sessions.filter(s => isSessionOpen(s) && linked.has(s.id));
 }

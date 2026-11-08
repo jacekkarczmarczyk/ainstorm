@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inherited, progress } from '@ainstorm/core';
+import { inherited, progress, taskSession } from '@ainstorm/core';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useSelection } from '../composables/useSelection.ts';
@@ -29,8 +29,9 @@ function open() {
   const x = task.value;
   if (!x) return;
   const own = session.value && x.sessionIds.includes(session.value.id);
-  if (own || x.sessionIds.length === 0) selectTask(x.id);
-  else selectTask(x.id, { sessionId: x.sessionIds[0]! });
+  const home = taskSession(x, map.snapshot.sessions);
+  if (own || !home) selectTask(x.id);
+  else selectTask(x.id, { sessionId: home.id });
 }
 </script>
 

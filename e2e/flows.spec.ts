@@ -492,6 +492,12 @@ test('the resume command goes to the project folder and uses the plugin folder f
     .toBe('cd ~/dev/shop && claude --resume ed08d5d7-18da-4b7e-8239-87b2b703b793 --plugin-dir C:/Dev/ainstorm/plugin');
 });
 
+test('the continue command names the session, for a new Claude session to take it over', async ({ page }) => {
+  await page.goto(`${SHOP}/tree`);
+  await page.getByRole('button', { name: 'Copy continue command' }).click();
+  expect(await clipboardText(page)).toBe('/ainstorm:continue ed08d5d7-18da-4b7e-8239-87b2b703b793');
+});
+
 test('the Focus tab is a link where the focus is in the session, disabled elsewhere', async ({ page }) => {
   const nav = page.getByRole('navigation', { name: 'Views' });
   await page.goto(`${SHOP}/tree`);

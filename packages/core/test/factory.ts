@@ -49,6 +49,7 @@ export function makeSession(overrides: Partial<Session> = {}): Session {
     waiting: null,
     note: null,
     compactions: 0,
+    continuedFrom: null,
     ...overrides,
   };
 }

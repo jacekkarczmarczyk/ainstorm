@@ -136,6 +136,8 @@ export const Session = z.object({
   waiting: Waiting.nullable(),
   note: z.string().max(1000).nullable(),
   compactions: z.number().int().nonnegative(),
+  /** The session this one continues (/ainstorm:continue): it took over its open tasks, and the old one was archived */
+  continuedFrom: SessionId.nullable().default(null),
 });
 export type Session = z.infer<typeof Session>;
 

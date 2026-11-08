@@ -241,6 +241,52 @@ describe('session operations', () => {
     expect(() => op(S2, { op: 'createProject', key: 'NEW', name: 'x', path: '/x' })).toThrow(/exists/);
   });
 
+  it('continues an earlier session only once confirmed: takes over its open tasks and archives it', () => {
+    const { engine, op } = setup();
+    op(S1, { op: 'setTitle', title: 'Koszyk' });
+    op(S1, { op: 'createTask', title: 'Open one' });
+    op(S1, { op: 'createTask', title: 'Finished', status: 'done' });
+    op(S1, { op: 'createTask', title: 'Later', deferReason: { summary: 'side issue' } });
+    op(S1, { op: 'setRunning', taskId: 'PRJ-3' });
+
+    // Without confirm: only what the session is, nothing changes
+    const preview = op(S2, { op: 'continue', from: S1.slice(0, 8) });
+    expect(preview.value).toEqual({ session: S1, title: 'Koszyk', project: 'PRJ', openTasks: 2, running: 'PRJ-3 Open one', confirmed: false });
+    expect(preview.record.sessionIds).toEqual([]);
+    expect(engine.state.sessions.some(s => s.id === S2)).toBe(false);
+
+    expect(op(S2, { op: 'continue', from: S1, confirm: true }).value).toMatchObject({ confirmed: true, openTasks: 2 });
+    expect(engine.session(S2)).toMatchObject({ projectKey: 'PRJ', title: 'Koszyk', continuedFrom: S1, runningTaskId: 'PRJ-3', status: 'active' });
+    expect(engine.session(S1).archivedAt).toBe(NOW);
+    expect(engine.task('PRJ-3').sessionIds).toEqual([S1, S2]);
+    expect(engine.task('PRJ-5').sessionIds).toEqual([S1, S2]);
+    expect(engine.task('PRJ-4').sessionIds).toEqual([S1]);
+    expect(sessionContext(engine.state, S2)).toContain('PRJ-3');
+    // The new session works; the old one cannot change the map
+    op(S2, { op: 'updateTask', taskId: 'PRJ-3', status: 'done' });
+    expect(() => op(S1, { op: 'createTask', title: 'x' })).toThrow(/archived/);
+  });
+
+  it('keeps one line of work: a session is continued once, from another session of its project', () => {
+    const { engine, op } = setup();
+    const S3 = '33333333-3333-4333-8333-333333333333';
+    expect(() => op(S1, { op: 'continue', from: S1 })).toThrow(/is that session/);
+    expect(() => op(S2, { op: 'continue', from: '99999999' })).toThrow(/No session/);
+    expect(() => op(S2, { op: 'continue', from: 'not-an-id' })).toThrow();
+    op(S2, { op: 'continue', from: S1, confirm: true });
+    // Again in the same session: nothing new; in another one: points to the continuation
+    expect(op(S2, { op: 'continue', from: S1, confirm: true }).value).toMatchObject({ confirmed: true });
+    expect(() => op(S3, { op: 'continue', from: S1 })).toThrow(/already continued in .*22222222/);
+    // A session continues one session only
+    op(S3, { op: 'start', cwd: 'C:/Users/me/dev/shop/shop', source: 'startup', register: true });
+    op(S3, { op: 'continue', from: S2, confirm: true });
+    expect(engine.session(S3).continuedFrom).toBe(S2);
+    expect(() => op(S3, { op: 'continue', from: S1 })).toThrow(/already continued/);
+    const PP = '44444444-4444-4444-8444-444444444444';
+    op(PP, { op: 'start', cwd: 'C:/Users/me/dev/pp', source: 'startup', register: true });
+    expect(() => op(PP, { op: 'continue', from: S3 })).toThrow(/project PRJ, this session to PP/);
+  });
+
   it('never reuses task numbers', () => {
     expect(nextTaskId([makeTask('PRJ-9', { archivedAt: NOW }), makeTask('PRJ-2'), makeTask('PP-40')], 'PRJ')).toBe('PRJ-10');
     expect(nextTaskId([], 'X')).toBe('X-1');
@@ -261,6 +307,17 @@ describe('delivery of UI changes', () => {
     expect(events).toHaveLength(1);
     expect(record.updatedEventIds).toHaveLength(1);
     expect(engine.state.events.at(-1)!.delivery).toMatchObject({ state: 'delivered', deliveredTo: [S1, S2] });
+  });
+
+  it('changes to tasks of a continued session, closed ones and answers included, go to its continuation', () => {
+    const { engine, op } = setup();
+    op(S1, { op: 'createTask', title: 'Finished', status: 'done' });
+    op(S1, { op: 'askQuestion', taskId: 'PRJ-1', text: 'Which way?' });
+    op(S2, { op: 'continue', from: S1, confirm: true });
+    engine.execute({ type: 'setStatus', taskId: 'PRJ-3', to: 'todo', notify: true });
+    expect(engine.state.events.at(-1)!.delivery).toMatchObject({ state: 'pending', sessionIds: [S2] });
+    engine.execute({ type: 'answerQuestion', taskId: 'PRJ-1', questionId: 'q1', answer: 'This one' });
+    expect(engine.state.events.at(-1)!.delivery).toMatchObject({ state: 'pending', sessionIds: [S2] });
   });
 });
 

@@ -146,7 +146,9 @@ export const enGB = {
     unknownProject: 'There is no project {key}.',
   },
   session: {
-    copyResume: 'Copy resume command', notFound: 'This session does not exist or was removed.', backHome: 'Back to the project',
+    copyResume: 'Copy resume command', copyContinue: 'Copy continue command',
+    copyContinueHelp: 'Paste it into a new Claude Code session: after you confirm, it takes over the open tasks of this session, and this one is archived.',
+    continues: 'Continues', continuedIn: 'Continued in', notFound: 'This session does not exist or was removed.', backHome: 'Back to the project',
     historyEmpty: 'No events in this session yet.',
   },
   sessions: {
