@@ -108,7 +108,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 }
 .body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 10px var(--detail-w); padding-block: 4px 16px; }
 .body.no-panel { grid-template-columns: minmax(0, 1fr); }
-.view { min-height: 0; min-width: 0; overflow: auto; padding-right: 6px; }
+/* The left padding keeps focus outlines at the left edge from being clipped by the scrolling; the margin keeps the content in place */
+.view { min-height: 0; min-width: 0; overflow: auto; padding-right: 6px; padding-left: 4px; margin-left: -4px; }
 .blocked { max-width: 520px; margin: 12vh auto 0; display: grid; gap: 10px; text-align: center; justify-items: center; }
 .blocked h1 { margin: 0; font-size: var(--fs-xxl); }
 .blocked p { margin: 0; color: var(--muted); }
