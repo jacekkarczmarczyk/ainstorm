@@ -1,4 +1,4 @@
-import { isClosed, type Task } from './model.ts';
+import { isClosed, TASK_STATUSES, type Task } from './model.ts';
 import { needsUser } from './status.ts';
 import { matchesQuery } from './text.ts';
 import { descendants, effectiveAreas, inherited, type TaskIndex } from './tree.ts';
@@ -34,8 +34,8 @@ export function cycleRule(rules: RuleSet, key: string): RuleSet {
 
 /** One-click presets of status rules; the status dropdown shows (and can refine) what they set. */
 export const QUICK_FILTERS = {
-  // The statuses it shows are ticked, not the ones it hides
-  open: { todo: 1, in_progress: 1, blocked: 1, deferred: 1 },
+  // The statuses it shows are ticked, not the ones it hides; open is every status that is not closed, also new ones
+  open: Object.fromEntries(TASK_STATUSES.filter(s => !isClosed(s)).map(s => [s, 1 as const])),
   inProgress: { in_progress: 1, blocked: 1 },
 } as const satisfies Record<string, RuleSet>;
 export type QuickFilter = keyof typeof QUICK_FILTERS;

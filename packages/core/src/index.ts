@@ -12,3 +12,4 @@ export * from './sessionOps.ts';
 export * from './context.ts';
 export * from './commitMessage.ts';
 export * from './github.ts';
+export * from './history.ts';

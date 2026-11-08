@@ -145,6 +145,11 @@ export const enGB = {
     sessionsOpen: '{n} open session | {n} open sessions', deferredCount: '{n} deferred', noProjects: 'No projects yet. They are registered from a Claude Code session.',
     unknownProject: 'There is no project {key}.',
   },
+  closed: {
+    only: 'Closed only', when: 'When', event: 'Event', details: 'Details', at: 'Closed', status: 'Status', task: 'Task', areas: 'Areas', commit: 'Commit', copyCommit: 'Copy {sha} ({message})', moreCommits: 'and {n} more',
+    help: 'Done and dropped tasks of this session, latest closed first: what left the open tasks, and when. A thicker line separates days.',
+    empty: 'No closed tasks in this session yet.',
+  },
   session: {
     copyResume: 'Copy resume command', copyContinue: 'Copy continue command',
     copyContinueHelp: 'Paste it into a new Claude Code session: after you confirm, it takes over the open tasks of this session, and this one is archived.',

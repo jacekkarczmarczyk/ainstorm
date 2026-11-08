@@ -3751,7 +3751,7 @@
    "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
    "taskId": "PRJ-3",
    "type": "done",
-   "text": "Example event (done)",
+   "text": "in_progress → done",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -3916,7 +3916,7 @@
    "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
    "taskId": "PRJ-37",
    "type": "done",
-   "text": "Example event (done)",
+   "text": "in_progress → done",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -3927,7 +3927,7 @@
    "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
    "taskId": "PRJ-40",
    "type": "done",
-   "text": "Example event (done)",
+   "text": "in_progress → done",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -3960,7 +3960,7 @@
    "sessionId": "ed08d5d7-18da-4b7e-8239-87b2b703b793",
    "taskId": "PRJ-22",
    "type": "drop",
-   "text": "Example event (drop)",
+   "text": "todo → dropped",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -4059,7 +4059,7 @@
    "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
    "taskId": "PP-46",
    "type": "done",
-   "text": "Example event (done)",
+   "text": "in_progress → done",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -4070,7 +4070,7 @@
    "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
    "taskId": "PP-47",
    "type": "done",
-   "text": "Example event (done)",
+   "text": "in_progress → done",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -4092,7 +4092,7 @@
    "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
    "taskId": "PP-62",
    "type": "drop",
-   "text": "Example event (drop)",
+   "text": "todo → dropped",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -4103,7 +4103,7 @@
    "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
    "taskId": "PP-63",
    "type": "drop",
-   "text": "Example event (drop)",
+   "text": "todo → dropped",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -4114,7 +4114,7 @@
    "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
    "taskId": "PP-53",
    "type": "done",
-   "text": "Example event (done)",
+   "text": "in_progress → done",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -4147,7 +4147,7 @@
    "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
    "taskId": "PP-59",
    "type": "drop",
-   "text": "Example event (drop)",
+   "text": "todo → dropped",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -4191,7 +4191,7 @@
    "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
    "taskId": "PP-69",
    "type": "done",
-   "text": "Example event (done)",
+   "text": "in_progress → done",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -4235,7 +4235,7 @@
    "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
    "taskId": "PP-68",
    "type": "done",
-   "text": "Example event (done)",
+   "text": "in_progress → done",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -4279,7 +4279,7 @@
    "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
    "taskId": "PP-58",
    "type": "done",
-   "text": "Example event (done)",
+   "text": "in_progress → done",
    "actor": "claude",
    "changeId": null,
    "delivery": null
@@ -4290,7 +4290,7 @@
    "sessionId": "b6a48e5f-385f-4b08-8dd6-8857e0f81313",
    "taskId": "PP-56",
    "type": "done",
-   "text": "Example event (done)",
+   "text": "in_progress → done",
    "actor": "claude",
    "changeId": null,
    "delivery": null

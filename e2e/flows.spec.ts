@@ -492,6 +492,24 @@ test('the resume command goes to the project folder and uses the plugin folder f
     .toBe('cd ~/dev/shop && claude --resume ed08d5d7-18da-4b7e-8239-87b2b703b793 --plugin-dir C:/Dev/ainstorm/plugin');
 });
 
+test('the history shows events, or only the closed tasks latest closed first; a task opens in the panel', async ({ page }) => {
+  await page.goto(`${SHOP}/history`);
+  await expect(page.locator('tbody .ev').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Closed only' }).click();
+  await expect(page).toHaveURL(/closed=1/);
+  const tasks = await page.locator('tbody .task').allInnerTexts();
+  // The whole id: PRJ-3 is not PRJ-37
+  const at = (id: string) => tasks.findIndex(t => new RegExp(`\\b${id}\\b`).test(t));
+  expect(at('PRJ-40')).toBeGreaterThan(-1);
+  expect(at('PRJ-40')).toBeLessThan(at('PRJ-37'));
+  expect(at('PRJ-37')).toBeLessThan(at('PRJ-3'));
+  // A task opens in the panel next to the list
+  await page.locator('tbody .task').nth(at('PRJ-40')).getByRole('button').click();
+  await expect(page).toHaveURL(/\/s\/ed08d5d7\/history\/PRJ-40\?closed=1$/);
+  await expect(page.getByRole('button', { name: 'Closed only' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('complementary', { name: 'Task details' })).toBeVisible();
+});
+
 test('the continue command names the session, for a new Claude session to take it over', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await page.getByRole('button', { name: 'Copy continue command' }).click();
