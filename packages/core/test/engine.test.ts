@@ -272,6 +272,27 @@ describe('MapEngine', () => {
     expect(engine.state.events.at(-1)).toMatchObject({ type: 'pause', delivery: { state: 'copied', sessionIds: [open.id] } });
   });
 
+  it('adds a task to a session and takes it out of one, telling only that session, and reverts it', () => {
+    const { engine, open, ended } = setup();
+    const added = engine.execute({ type: 'setTaskSession', taskId: 'PRJ-5', sessionId: open.id, on: true, notify: true });
+    expect(engine.task('PRJ-5').sessionIds).toEqual([ended.id, open.id]);
+    expect(engine.state.events.at(-1)).toMatchObject({ type: 'session', text: `added to session „${open.title}”`, delivery: { state: 'pending', sessionIds: [open.id] } });
+    const taken = engine.execute({ type: 'setTaskSession', taskId: 'PRJ-5', sessionId: ended.id, on: false, notify: true });
+    expect(engine.task('PRJ-5').sessionIds).toEqual([open.id]);
+    // An ended session is not told
+    expect(engine.state.events.at(-1)).toMatchObject({ text: `taken out of session „${ended.title}”`, delivery: { state: 'none', sessionIds: [] } });
+    engine.revert(taken.changeId);
+    engine.revert(added.changeId);
+    expect(engine.task('PRJ-5').sessionIds).toEqual([ended.id]);
+    expect(engine.state.events).toHaveLength(0);
+  });
+
+  it('rejects adding a task to a session it is in, or taking it out of one it is not in', () => {
+    const { engine, open, ended } = setup();
+    expect(() => engine.execute({ type: 'setTaskSession', taskId: 'PRJ-1', sessionId: open.id, on: true, notify: true })).toThrow(/already in session/);
+    expect(() => engine.execute({ type: 'setTaskSession', taskId: 'PRJ-1', sessionId: ended.id, on: false, notify: true })).toThrow(/is not in session/);
+  });
+
   it('rejects unknown tasks, sessions, projects and questions', () => {
     const { engine } = setup();
     const unknown = [

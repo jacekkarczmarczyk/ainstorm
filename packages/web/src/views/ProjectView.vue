@@ -7,6 +7,7 @@ import OwnerBadge from '../components/OwnerBadge.vue';
 import ProgressBar from '../components/ProgressBar.vue';
 import RunIndicator from '../components/RunIndicator.vue';
 import TaskName from '../components/TaskName.vue';
+import TaskSessionsCard from '../components/TaskSessionsCard.vue';
 import { useFormat } from '../composables/useFormat.ts';
 import { useSelection } from '../composables/useSelection.ts';
 import { useMapStore } from '../stores/map.ts';
@@ -72,6 +73,7 @@ const toggleArchived = () => router.replace({ query: { ...route.query, archived:
         <ProgressBar :ratio="stats.ratio" />
       </div>
     </div>
+    <TaskSessionsCard v-if="projectKey" :project-key="projectKey" />
     <div class="tools">
       <div class="search-box search">
         <Search :size="15" aria-hidden="true" />

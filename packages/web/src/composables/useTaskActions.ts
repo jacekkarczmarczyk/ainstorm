@@ -427,5 +427,12 @@ export function useTaskActions() {
     toasts.show(t(archived ? 'toast.archived' : 'toast.restored', { session: session.title }), undoAction(changeId));
   }
 
-  return { targetsFor, createTask, editTask, setStatus, toggleDone, onStatusInput, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, runMany, requestIssue, markCriteria, checkCriteria, requestSession, setFocus, clearFocus, setSessionArchived };
+  /** Add the task to a session or take it out of one (the task stays): applied straight away, the session is told. */
+  async function setTaskSession(task: Task, session: Session, on: boolean) {
+    const changeId = await run({ type: 'setTaskSession', taskId: task.id, sessionId: session.id, on, notify: true });
+    if (changeId === null) return;
+    toasts.show(t(on ? 'toast.addedToSession' : 'toast.takenOutOfSession', { id: task.id, session: session.title }), undoAction(changeId));
+  }
+
+  return { targetsFor, createTask, setTaskSession, editTask, setStatus, toggleDone, onStatusInput, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, runMany, requestIssue, markCriteria, checkCriteria, requestSession, setFocus, clearFocus, setSessionArchived };
 }

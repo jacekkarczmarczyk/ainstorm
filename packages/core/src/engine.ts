@@ -24,6 +24,8 @@ export const UserCommand = z.discriminatedUnion('type', [
   z.object({ type: z.literal('moveTask'), taskId: TaskId, parentId: TaskId.nullable(), notify: z.boolean() }),
   z.object({ type: z.literal('archiveSession'), sessionId: SessionId }),
   z.object({ type: z.literal('restoreSession'), sessionId: SessionId }),
+  /** Add the task to a session (on) or take it out of one; the task itself stays. Only that session is told */
+  z.object({ type: z.literal('setTaskSession'), taskId: TaskId, sessionId: SessionId, on: z.boolean(), notify: z.boolean() }),
   /** Run, Pause and Go ahead are prompts the user pastes; only recorded */
   z.object({ type: z.literal('requestSession'), request: z.enum(['run', 'pause', 'goAhead']), taskId: TaskId, sessionId: SessionId.nullable() }),
   /** Ask the session whether an open question still applies; only recorded, the session answers or closes it */
@@ -188,7 +190,7 @@ export class MapEngine {
           }
           this.touch(t);
           // The question goes along, so the session reads the answer in its context
-          log({ taskId: t.id, type: 'answer', text: `${oneLine(question.text, 300)} → ${command.answer}`.slice(0, 2000), delivery: this.questionDelivery(question.sessionId, true) });
+          log({ taskId: t.id, type: 'answer', text: `${oneLine(question.text, 300)} → ${command.answer}`.slice(0, 2000), delivery: this.sessionDelivery(question.sessionId, true) });
         });
       }
       case 'promoteTask': {
@@ -217,7 +219,7 @@ export class MapEngine {
         const t = this.task(command.taskId);
         const question = this.question(t, command.questionId);
         return this.change(id, actor, [], [], null, log => {
-          log({ taskId: t.id, type: 'recheck', text: question.text, delivery: this.questionDelivery(question.sessionId, command.notify) });
+          log({ taskId: t.id, type: 'recheck', text: question.text, delivery: this.sessionDelivery(question.sessionId, command.notify) });
         });
       }
       case 'decideTask': {
@@ -241,6 +243,19 @@ export class MapEngine {
         const s = this.session(command.sessionId);
         return this.change(id, actor, [], [s.id], null, () => {
           s.archivedAt = command.type === 'archiveSession' ? this.now() : null;
+        });
+      }
+      case 'setTaskSession': {
+        const t = this.task(command.taskId);
+        const s = this.session(command.sessionId);
+        if (s.projectKey !== t.projectKey) throw new EngineError(`${t.id} belongs to another project`, 'invalid');
+        if (t.sessionIds.includes(s.id) === command.on) {
+          throw new EngineError(command.on ? `${t.id} is already in session „${s.title}”` : `${t.id} is not in session „${s.title}”`, 'invalid');
+        }
+        return this.change(id, actor, [t.id], [], null, log => {
+          t.sessionIds = command.on ? [...t.sessionIds, s.id] : t.sessionIds.filter(x => x !== s.id);
+          this.touch(t);
+          log({ taskId: t.id, type: 'session', text: `${command.on ? 'added to' : 'taken out of'} session „${s.title}”`, delivery: this.sessionDelivery(s.id, command.notify) });
         });
       }
       case 'requestSession': {
@@ -496,9 +511,12 @@ export class MapEngine {
     return { state: notify ? 'pending' : 'copied', sessionIds };
   }
 
-  /** Answers and rechecks go only to the session that asked (or its continuation), if it is still open. */
-  private questionDelivery(asked: string | null, notify: boolean): z.input<typeof Delivery> {
-    const sessionId = asked === null ? null : currentSessionId(this.state.sessions, asked);
+  /**
+   * Changes for one session (answers and rechecks: the one that asked) go only to it or its continuation, if it is
+   * still open.
+   */
+  private sessionDelivery(target: string | null, notify: boolean): z.input<typeof Delivery> {
+    const sessionId = target === null ? null : currentSessionId(this.state.sessions, target);
     const open = sessionId !== null && this.state.sessions.some(s => s.id === sessionId && isSessionOpen(s));
     if (!open) return { state: 'none', sessionIds: [] };
     return { state: notify ? 'pending' : 'copied', sessionIds: [sessionId] };

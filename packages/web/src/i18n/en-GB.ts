@@ -156,6 +156,10 @@ export const enGB = {
     allProjects: 'All projects', projects: 'Projects', waitingAnywhere: 'Waiting on you', noFocus: 'No focus set',
     sessionsOpen: '{n} open session | {n} open sessions', deferredCount: '{n} deferred', noProjects: 'No projects yet. They are registered from a Claude Code session.',
     unknownProject: 'There is no project {key}.',
+    outsideSessions: 'Open tasks outside sessions', inSeveral: 'Open tasks in several sessions', addToSession: 'Add to session',
+    takeOut: 'Take out of {session}', takeOutTitle: 'Take {id} out of {session}?', takeOutConfirm: 'Take out',
+    takeOutText: 'The task stays in the map and in its other sessions ({sessions}). The session is told; you can undo it.',
+    showAll: 'Show all ({n})', showLess: 'Show less',
   },
   closed: {
     only: 'Closed only', day: 'Day', time: 'Time', event: 'Event', details: 'Details', status: 'Status', task: 'Task', areas: 'Areas', commit: 'Commit', copyCommit: 'Copy {sha} ({message})', moreCommits: 'and {n} more',
@@ -197,6 +201,7 @@ export const enGB = {
     copied: 'Copied to clipboard.', clipboardBlocked: 'The clipboard is blocked here. Select the text and copy it by hand.',
     deleted: '{id} deleted.', dropped: '{id} dropped.', moved: '{id} moved under {to}.', decided: 'Decision on {id} recorded.',rechecked: 'Asked Claude to recheck the question on {id}.', answered: 'Answer sent.', focusSet: 'Focus of {project} is now {id}.', focusCleared: '{project} has no focus now.',
     promoted: '{id} is back in the plan.', archived: 'Session {session} archived.', restored: 'Session {session} restored.',
+    addedToSession: '{id} added to {session}.', takenOutOfSession: '{id} taken out of {session}.',
     runCopied: 'Prompt for {session} copied. Paste it into that session; only the request is recorded until then.',
     newSessionCopied: 'No open session works on {id}. A command that starts one is copied; only the request is recorded.',
     filtersCleared: 'Filters cleared so that {id} is visible.', failed: 'That did not work: {error}',
