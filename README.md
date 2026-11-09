@@ -7,6 +7,33 @@ and a skill); you view and change it in a local web UI, and your changes reach t
 Everything runs on your machine: the daemon listens on `127.0.0.1` only and makes no outbound connections
 (see [docs/security.md](docs/security.md)).
 
+## What it looks like
+
+A project's sessions at a glance: what each one works on, which one waits for you, and what is yours to do.
+
+![Project overview: three sessions of a bookshop project, one waiting on the user's decision](docs/screenshots/project.png)
+
+A session's tasks as a tree. Claude splits the work into subtasks, parks a side issue it found on the way (SHOP-8,
+"from SHOP-3") and shows what it is running; the panel holds the task's details, commit message, branch, plan and
+"done when" criteria.
+
+![Tree of a session's tasks with the running task open in the side panel](docs/screenshots/tree.png)
+
+When Claude needs you, it asks in the map and waits. You answer there, and the answer reaches the session.
+
+![A decision of the user's with Claude's question and three options](docs/screenshots/decision.png)
+
+The same tasks as a board by status, and the session's history: what was created, run, committed, parked and decided,
+by Claude or by you in the map.
+
+![Board of a session's tasks by status](docs/screenshots/board.png)
+
+![History of a session: events by day, with tasks and areas](docs/screenshots/history.png)
+
+In the dark theme:
+
+![Tree in the dark theme, with a session waiting on the user's decision](docs/screenshots/tree-dark.png)
+
 ## Requirements
 
 - Node.js 26 or later (the daemon uses `node:sqlite`; scripts are TypeScript run by Node directly)
@@ -111,6 +138,7 @@ pnpm test           # unit and integration tests
 pnpm e2e            # Playwright, against the dev server
 pnpm e2e:daemon     # Playwright, against a real daemon serving the built UI (pnpm build first)
 pnpm daemon:restart # restart your daemon with the current code; says when sessions need /reload-plugins
+node scripts/screenshots.ts  # the README screenshots, from the dev UI with made-up data (pnpm dev first)
 ```
 
 Packages: `packages/core` (domain rules, no I/O), `packages/server` (daemon), `packages/web` (Vue 3 UI),
