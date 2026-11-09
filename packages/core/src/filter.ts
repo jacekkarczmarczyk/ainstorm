@@ -1,5 +1,4 @@
-import { isClosed, TASK_STATUSES, type Task } from './model.ts';
-import { needsUser } from './status.ts';
+import { isClosed, TASK_STATUSES, type Owner, type Task } from './model.ts';
 import { matchesQuery } from './text.ts';
 import { descendants, effectiveAreas, inherited, type TaskIndex } from './tree.ts';
 
@@ -14,13 +13,16 @@ export interface TaskFilter {
   readonly type: RuleSet;
   readonly status: RuleSet;
   readonly area: RuleSet;
-  /** Only what is waiting for the user */
-  readonly mine: boolean;
+  /** Only the user's tasks or only Claude's; null shows both */
+  readonly owner: Owner | null;
   /** Search by id, title and description */
   readonly text: string;
 }
 
-export const EMPTY_FILTER: TaskFilter = { type: {}, status: {}, area: {}, mine: false, text: '' };
+export const EMPTY_FILTER: TaskFilter = { type: {}, status: {}, area: {}, owner: null, text: '' };
+
+/** The owner switch, one click after another: both → the user's → Claude's → both. */
+export const nextOwner = (owner: Owner | null): Owner | null => (owner === null ? 'me' : owner === 'me' ? 'claude' : null);
 
 /** Next rule state: off → show → hide → off. */
 export function cycleRule(rules: RuleSet, key: string): RuleSet {
@@ -52,13 +54,13 @@ export function toggleQuickFilter(filter: TaskFilter, quick: QuickFilter): TaskF
   return { ...filter, status: isQuickFilterOn(filter, quick) ? {} : { ...QUICK_FILTERS[quick] } };
 }
 
-/** Query parameters of a filter (the URL keeps it across reloads): q, mine=1, and per facet the values, "!" = hide. */
+/** Query parameters of a filter (the URL keeps it across reloads): q, owner, and per facet the values, "!" = hide. */
 export type FilterQuery = Record<string, string | string[]>;
 
 export function filterToQuery(filter: TaskFilter): FilterQuery {
   const query: FilterQuery = {};
   if (filter.text.trim()) query.q = filter.text;
-  if (filter.mine) query.mine = '1';
+  if (filter.owner) query.owner = filter.owner;
   for (const facet of FACETS) {
     const values = Object.entries(filter[facet]).map(([value, rule]) => (rule === -1 ? `!${value}` : value));
     if (values.length) query[facet] = values;
@@ -71,14 +73,15 @@ export function filterFromQuery(query: Readonly<Record<string, unknown>>): TaskF
   const list = (v: unknown): string[] => (Array.isArray(v) ? v : [v]).filter((x): x is string => typeof x === 'string' && x !== '' && x !== '!');
   const rules = (v: unknown): RuleSet => Object.fromEntries(list(v).map(x => (x.startsWith('!') ? [x.slice(1), -1] : [x, 1])));
   const text = list(query.q)[0] ?? '';
-  return { type: rules(query.type), status: rules(query.status), area: rules(query.area), mine: list(query.mine)[0] === '1', text };
+  const owner = list(query.owner)[0];
+  return { type: rules(query.type), status: rules(query.status), area: rules(query.area), owner: owner === 'me' || owner === 'claude' ? owner : null, text };
 }
 
 /** The filter's keys in a query, so the rest of the query (paging etc.) can be kept. */
-export const FILTER_QUERY_KEYS: readonly string[] = ['q', 'mine', ...FACETS];
+export const FILTER_QUERY_KEYS: readonly string[] = ['q', 'owner', ...FACETS];
 
 export function isFilterActive(filter: TaskFilter): boolean {
-  return filter.mine || filter.text.trim() !== '' || FACETS.some(f => Object.keys(filter[f]).length > 0);
+  return filter.owner !== null || filter.text.trim() !== '' || FACETS.some(f => Object.keys(filter[f]).length > 0);
 }
 
 export function matchRuleSet(rules: RuleSet, values: readonly string[]): boolean {
@@ -117,7 +120,7 @@ export function facetValues(index: TaskIndex): FacetValues {
 }
 
 export function taskMatches(task: Task, filter: TaskFilter, facets: FacetValues): boolean {
-  if (filter.mine && !needsUser(task)) return false;
+  if (filter.owner !== null && task.owner !== filter.owner) return false;
   if (!FACETS.every(f => matchRuleSet(filter[f], facets.valuesOf(task, f)))) return false;
   return matchesQuery(filter.text, task.id, task.title, task.description);
 }

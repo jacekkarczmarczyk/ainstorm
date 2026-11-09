@@ -29,9 +29,9 @@ test('the project overview lists its session cards', async ({ page }) => {
   await page.goto('/p/PRJ');
   await expect(page.locator('article.session')).toHaveCount(2);
   await page.locator('article.session', { hasText: 'Cart and payments rework' }).locator('h2').click();
-  // Only open tasks: the "Open" quick filter is on
+  // Only open tasks: the status preset "Open" is on
   await expect(page).toHaveURL(new RegExp(`${SHOP}/tree\\?status=todo&status=in_progress&status=blocked&status=deferred$`));
-  await expect(page.getByRole('button', { name: 'Open', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Status: Open' })).toBeVisible();
   await expect(row(page, 'PRJ-1')).toBeVisible();
   await expect(row(page, 'PRJ-2')).toHaveCount(0);
 });

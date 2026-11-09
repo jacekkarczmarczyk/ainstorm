@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { cycleRule, facetCounts, matchesQuery, type Facet, type RuleSet, type Task } from '@ainstorm/core';
+import {
+  cycleRule, EMPTY_FILTER, facetCounts, isQuickFilterOn, matchesQuery, QUICK_FILTERS, toggleQuickFilter, type Facet, type QuickFilter, type RuleSet, type Task,
+} from '@ainstorm/core';
 import { Check, ChevronDown, X } from '@lucide/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -24,9 +26,15 @@ const items = computed(() => {
   // Status keeps its natural order; types and areas are sorted by how often they occur
   return props.facet === 'status' ? list : list.sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
 });
+// Status starts with its presets: each one sets its status rules, or clears them when it is on
+const QUICK = Object.keys(QUICK_FILTERS) as QuickFilter[];
+const asFilter = () => ({ ...EMPTY_FILTER, status: props.rules });
+const presetOn = (q: QuickFilter) => props.facet === 'status' && isQuickFilterOn(asFilter(), q);
 const summary = computed(() => {
   const parts = Object.entries(props.rules).map(([value, rule]) => (rule === -1 ? t('filter.not', { value: label(value) }) : label(value)));
   const name = t(`facet.${props.facet}`);
+  const preset = QUICK.find(presetOn);
+  if (preset) return `${name}: ${t(`filter.quickLabel.${preset}`)}`;
   if (parts.length === 0) return name;
   return parts.length === 1 ? `${name}: ${parts[0]}` : t('filter.rules', { facet: name, n: parts.length });
 });
@@ -39,6 +47,12 @@ const summary = computed(() => {
     </button>
     <div v-if="open" class="dd-pop pop" role="dialog" :aria-label="$t(`facet.${facet}`)">
       <div class="head">
+        <div v-if="facet === 'status'" class="presets" role="group" :aria-label="$t('filter.quick')">
+          <button
+            v-for="q in QUICK" :key="q" type="button" class="preset" :aria-pressed="presetOn(q)" :title="$t(`filter.quickHelp.${q}`)"
+            @click="emit('change', toggleQuickFilter(asFilter(), q).status)"
+          >{{ $t(`filter.quickLabel.${q}`) }}</button>
+        </div>
         <label class="sr-only" :for="`dd-search-${facet}`">{{ $t('filter.find') }}</label>
         <input :id="`dd-search-${facet}`" ref="search" v-model="query" class="input" type="search" :placeholder="$t('filter.find')" autocomplete="off">
         <p class="help">{{ $t('filter.help') }}</p>
@@ -75,6 +89,9 @@ const summary = computed(() => {
 .pop { z-index: 15; width: 290px; max-height: 420px; }
 .head { padding: 8px 8px 0; }
 .head .input { width: 100%; font-size: var(--fs-m); }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.preset { border: 1.5px solid var(--line-strong); color: var(--ink); background: var(--panel); border-radius: 12px; padding: 2px 10px; font-size: var(--fs-s); font-weight: 600; cursor: pointer; }
+.preset[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-strong); }
 .help { font-size: var(--fs-xs); color: var(--muted); margin: 6px 4px; }
 /* Only the list scrolls; search and the Clear/Done footer stay in place */
 .list { overflow: auto; flex: 1; min-height: 0; padding: 0 8px; display: grid; gap: 2px; align-content: start; }

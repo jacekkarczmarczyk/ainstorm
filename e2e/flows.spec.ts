@@ -22,6 +22,13 @@ const panelMenu = async (page: Page, item: string) => {
   await page.getByRole('menuitem', { name: item }).click();
 };
 
+// A status preset ("Open", "In progress") at the top of the Status dropdown, clicked and the dropdown closed
+const statusPreset = async (page: Page, name: string) => {
+  await page.getByRole('button', { name: /^Status/ }).click();
+  await page.getByRole('group', { name: 'Presets' }).getByRole('button', { name, exact: true }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
+};
+
 // Done is set from the status list of the row (the checkbox selects the task for bulk actions)
 const markDone = (page: Page, id: string) => row(page, id).getByRole('combobox', { name: `Status of ${id}` }).selectOption('done');
 
@@ -450,11 +457,11 @@ test('status filter hides done tasks; dropdown search is focused', async ({ page
 
 test('filters live in the URL and survive a reload', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
-  await page.getByRole('button', { name: 'Open', exact: true }).click();
+  await statusPreset(page, 'Open');
   await page.getByLabel('Search tasks').fill('Inventory: refactor');
   await expect(page).toHaveURL(/status=todo&status=in_progress&status=blocked&status=deferred/);
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Open', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Status: Open' })).toBeVisible();
   await expect(page.getByLabel('Search tasks')).toHaveValue('Inventory: refactor');
   await expect(row(page, 'PRJ-45')).toBeVisible();
   await expect(row(page, 'PRJ-2')).toHaveCount(0);
@@ -471,17 +478,18 @@ test('the panel lists only other sessions of the task', async ({ page }) => {
 test('top-level titles are bold, but not while a filter is on', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await expect(rowTitle(page, 'PRJ-1')).toHaveCSS('font-weight', '600');
-  await page.getByRole('button', { name: 'Open', exact: true }).click();
+  await statusPreset(page, 'Open');
   await expect(rowTitle(page, 'PRJ-1')).toHaveCSS('font-weight', '400');
 });
 
-test('quick filter "Open" hides done and dropped tasks and toggles off', async ({ page }) => {
+test('the status preset "Open" hides done and dropped tasks and toggles off', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
-  const open = page.getByRole('button', { name: 'Open', exact: true });
+  await page.getByRole('button', { name: 'Status', exact: true }).click();
+  const open = page.getByRole('group', { name: 'Presets' }).getByRole('button', { name: 'Open', exact: true });
   await open.click();
   await expect(open).toHaveAttribute('aria-pressed', 'true');
   await expect(row(page, 'PRJ-2')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /^Status: 4 rules/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Status: Open' })).toBeVisible();
   await open.click();
   await expect(open).toHaveAttribute('aria-pressed', 'false');
   await expect(row(page, 'PRJ-2')).toBeVisible();
@@ -534,6 +542,49 @@ test('the history shows events, or only the closed tasks latest closed first; a 
   await expect(page).toHaveURL(/\/s\/ed08d5d7\/history\/PRJ-40\?closed=1$/);
   await expect(page.getByRole('button', { name: 'Closed only' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('complementary', { name: 'Task details' })).toBeVisible();
+});
+
+test('the history has a type and area filter of its own, and whose tasks for the closed ones', async ({ page }) => {
+  await page.goto(`${SHOP}/history`);
+  // The column is there (on phones the header row is hidden)
+  await expect(page.locator('thead th', { hasText: 'Areas' })).toHaveCount(1);
+  const owners = page.locator('.who');
+  await expect(owners).toBeDisabled();
+  await page.getByRole('button', { name: 'Closed only' }).click();
+  await expect(owners).toHaveAccessibleName('Tasks of you and Claude');
+  // One click after another: yours, Claude's, both
+  await owners.click();
+  await expect(owners).toHaveAccessibleName('Your tasks');
+  await expect(page).toHaveURL(/howner=me/);
+  await expect(page.locator('tbody .task')).toHaveCount(1);
+  await expect(page.locator('tbody .task')).toContainText('PRJ-4');
+  await owners.click();
+  await expect(owners).toHaveAccessibleName('Claude\'s tasks');
+  await owners.click();
+  await expect(owners).toHaveAccessibleName('Tasks of you and Claude');
+  await page.getByRole('button', { name: /^Type/ }).click();
+  await page.locator('.pop .row', { hasText: 'security' }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
+  await expect(page).toHaveURL(/htype=security/);
+  await expect(page.locator('tbody .task')).toHaveCount(2);
+  // The tree's filter is not touched
+  await page.goto(page.url().replace('/history', '/tree'));
+  await expect(page.getByRole('button', { name: 'Type', exact: true })).toBeVisible();
+  await expect(page.locator('.who')).toHaveAccessibleName('Tasks of you and Claude');
+});
+
+test('the tree shows the user\'s tasks or Claude\'s', async ({ page }) => {
+  await page.goto(`${SHOP}/tree`);
+  const owners = page.locator('.who');
+  await owners.click();
+  await expect(owners).toHaveAccessibleName('Your tasks');
+  await expect(page).toHaveURL(/owner=me/);
+  await expect(row(page, 'PRJ-4')).toBeVisible();
+  // PRJ-2 is Claude's and has no task of the user's under it
+  await expect(row(page, 'PRJ-2')).toHaveCount(0);
+  await owners.click();
+  await expect(owners).toHaveAccessibleName('Claude\'s tasks');
+  await expect(row(page, 'PRJ-2')).toBeVisible();
 });
 
 test('"done when" criteria are marked in their own dialog and sent to Claude, or Claude is asked to check them', async ({ page }) => {

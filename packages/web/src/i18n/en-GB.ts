@@ -30,10 +30,10 @@ export const enGB = {
     theme: { auto: 'Auto', light: 'Light', dark: 'Dark' }, themeLabel: 'Theme: {theme}. Click to change.',
   },
   filter: {
-    search: 'Search by number, title or description…', searchLabel: 'Search tasks', forYou: 'For you',
+    search: 'Search by number, title or description…', searchLabel: 'Search tasks',
     clearAll: 'Clear filters', find: 'Find…', help: 'Click once to show only these, twice to hide them, a third time to clear.',
     clear: 'Clear', done: 'Done', nothing: 'Nothing matches.', not: 'not {value}', rules: '{facet}: {n} rules',
-    quick: 'Quick filters',
+    quick: 'Presets',
     quickLabel: { open: 'Open', inProgress: 'In progress' },
     quickHelp: { open: 'Only open tasks: to do, in progress, blocked or deferred', inProgress: 'Only tasks in progress or blocked' },
   },
@@ -161,6 +161,12 @@ export const enGB = {
     only: 'Closed only', day: 'Day', time: 'Time', event: 'Event', details: 'Details', status: 'Status', task: 'Task', areas: 'Areas', commit: 'Commit', copyCommit: 'Copy {sha} ({message})', moreCommits: 'and {n} more',
     help: 'Done and dropped tasks of this session, latest closed first: what left the open tasks, and when. A thicker line separates days.',
     empty: 'No closed tasks in this session yet.',
+    ownersClosedOnly: 'Whose tasks to show: available with "Closed only".',
+  },
+  owners: {
+    you: 'You', claude: 'Claude',
+    state: { both: 'Tasks of you and Claude', me: 'Your tasks', claude: 'Claude\'s tasks' },
+    help: 'Whose tasks to show. Click to switch between you and Claude, only yours, and only Claude\'s.',
   },
   session: {
     copyResume: 'Copy resume command', copyContinue: 'Copy continue command',

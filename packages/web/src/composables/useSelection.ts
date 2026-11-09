@@ -35,7 +35,7 @@ export function useSelection() {
     void router.push({ name: target?.view ?? view.value ?? 'tree', params: { sessionId: sessionParam, taskId: id }, query: route.query });
   }
 
-  /** Opens a session view without filters, or with the given ones (e.g. "For you" from the header). */
+  /** Opens a session view without filters, or with the given ones (e.g. the open tasks from a project). */
   function openSession(sessionId: string, target: SessionView = 'tree', taskId?: string, filter?: Partial<TaskFilter>) {
     if (taskId) openPanel();
     void router.push({

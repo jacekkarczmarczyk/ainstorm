@@ -48,7 +48,7 @@ const stats = computed(() => ({
   ...projectStats(map.index, map.snapshot.sessions, projectKey.value ?? ''),
   forYou: map.forUser.filter(t => t.projectKey === projectKey.value).length,
 }));
-// A session card opens the tree with the "Open" quick filter on: what is still to be done
+// A session card opens the tree with the status preset "Open" on: what is still to be done
 const openOpenTasks = (sessionId: string) => openSession(sessionId, 'tree', undefined, toggleQuickFilter(EMPTY_FILTER, 'open'));
 const goToPage =(n: number) => router.replace({ query: { ...route.query, page: n === 1 ? undefined : String(n) } });
 const toggleArchived = () => router.replace({ query: { ...route.query, archived: showArchived.value ? undefined : '1', page: undefined } });

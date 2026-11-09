@@ -49,7 +49,7 @@ const sessionItems = computed<PickerItem[]>(() => [
 ]);
 
 // Waiting sessions of the current project, of all projects on the start page. Tasks for you are counted on the project
-// cards and filtered with "For you" in the tree, not here
+// cards, not here
 const waiting = computed(() => map.waitingSessions.filter(s => !projectKey.value || s.projectKey === projectKey.value));
 
 function openWaiting() {

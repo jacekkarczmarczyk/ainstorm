@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  cycleRule, EMPTY_FILTER, facetCounts, facetValues, filterFromQuery, filterToQuery, isFilterActive, isQuickFilterOn,
+  cycleRule, EMPTY_FILTER, facetCounts, facetValues, filterFromQuery, filterToQuery, isFilterActive, isQuickFilterOn, nextOwner,
   matchRuleSet, taskMatches, toggleQuickFilter, treeRows, type TaskFilter,
 } from '../src/filter.ts';
 import { buildTaskIndex } from '../src/tree.ts';
@@ -43,7 +43,7 @@ describe('rules', () => {
     expect(isFilterActive(EMPTY_FILTER)).toBe(false);
     expect(isFilterActive(filter({ text: '  ' }))).toBe(false);
     expect(isFilterActive(filter({ text: 'x' }))).toBe(true);
-    expect(isFilterActive(filter({ mine: true }))).toBe(true);
+    expect(isFilterActive(filter({ owner: 'claude' }))).toBe(true);
     expect(isFilterActive(filter({ area: { php: -1 } }))).toBe(true);
   });
 });
@@ -69,9 +69,12 @@ describe('taskMatches', () => {
     expect(taskMatches(get('P-1'), filter({ text: 'migracja maili' }), facets)).toBe(false);
   });
 
-  it('filters what needs the user', () => {
-    expect(taskMatches(get('P-4'), filter({ mine: true }), facets)).toBe(false);
-    expect(taskMatches(get('P-3'), filter({ mine: true }), facets)).toBe(false);
+  it('shows the tasks of one owner, switched in turn: both, the user\'s, Claude\'s', () => {
+    expect(taskMatches(get('P-3'), filter({ owner: 'claude' }), facets)).toBe(true);
+    expect(taskMatches(get('P-3'), filter({ owner: 'me' }), facets)).toBe(false);
+    // Closed ones too: P-4 is the user's and dropped
+    expect(taskMatches(get('P-4'), filter({ owner: 'me' }), facets)).toBe(true);
+    expect([nextOwner(null), nextOwner('me'), nextOwner('claude')]).toEqual(['me', 'claude', null]);
   });
 });
 
@@ -116,15 +119,15 @@ describe('treeRows', () => {
 
 describe('filter in the URL', () => {
   it('round-trips through query parameters', () => {
-    const f = filter({ text: 'invoices', mine: true, type: { fix: 1, idea: -1 }, status: { done: -1, dropped: -1 }, area: { 'admin panel': 1 } });
+    const f = filter({ text: 'invoices', owner: 'me', type: { fix: 1, idea: -1 }, status: { done: -1, dropped: -1 }, area: { 'admin panel': 1 } });
     const query = filterToQuery(f);
-    expect(query).toEqual({ q: 'invoices', mine: '1', type: ['fix', '!idea'], status: ['!done', '!dropped'], area: ['admin panel'] });
+    expect(query).toEqual({ q: 'invoices', owner: 'me', type: ['fix', '!idea'], status: ['!done', '!dropped'], area: ['admin panel'] });
     expect(filterFromQuery(query)).toEqual(f);
   });
 
   it('is empty for an empty filter and ignores junk', () => {
     expect(filterToQuery(EMPTY_FILTER)).toEqual({});
-    expect(filterFromQuery({ type: 'fix', mine: 'yes', q: ['a', 'b'], status: ['', '!', 7], page: '2' }))
+    expect(filterFromQuery({ type: 'fix', mine: 'yes', owner: 'you', q: ['a', 'b'], status: ['', '!', 7], page: '2' }))
       .toEqual({ ...EMPTY_FILTER, type: { fix: 1 }, text: 'a' });
   });
 });

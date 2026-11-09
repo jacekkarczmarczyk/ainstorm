@@ -44,7 +44,7 @@ export const useUiStore = defineStore('ui', () => {
   const storedConfirm = useStoredRef<Partial<ConfirmSettings>>('confirm', DEFAULT_CONFIRM, isConfirmSettings);
   const confirm = computed<ConfirmSettings>(() => ({ ...DEFAULT_CONFIRM, ...storedConfirm.value }));
 
-  // The filter lives in the URL query (q, mine, type, status, area), so it survives a reload and can be shared
+  // The filter lives in the URL query (q, owner, type, status, area), so it survives a reload and can be shared
   const filter = computed<TaskFilter>(() => filterFromQuery(router.currentRoute.value.query));
   function setFilter(next: TaskFilter) {
     const rest = Object.fromEntries(Object.entries(router.currentRoute.value.query).filter(([key]) => !FILTER_QUERY_KEYS.includes(key)));
