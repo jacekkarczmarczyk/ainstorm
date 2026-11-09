@@ -56,7 +56,7 @@ const parentPath = (task: Task) => pathTo(scoped.value, task.id).slice(0, -1).ma
             <span v-if="openQuestions(task).length" class="badge-question">? {{ openQuestions(task).length }}</span>
             <TypeChip v-if="inherited(map.index, task.id, 'type')" :type="inherited(map.index, task.id, 'type')!.value" :inherited="!task.type" />
             <span v-if="task.fromId && task.fromId !== task.parentId" class="badge from"><GitBranch :size="12" aria-hidden="true" /> {{ $t('detail.from') }} <TaskLink :id="task.fromId" /></span>
-            <span v-if="openDeps(task, map.task).length" class="badge dep">
+            <span v-if="openDeps(task, map.task).length" class="badge dep" :title="openDeps(task, map.task).join(', ')">
               <Hourglass :size="12" aria-hidden="true" /> {{ $t('task.waitsForLabel') }}
               <template v-for="(id, i) in openDeps(task, map.task)" :key="id"><template v-if="i">, </template><TaskLink :id="id" /></template>
             </span>
@@ -84,6 +84,9 @@ h3 .frac { margin-left: auto; }
 .path { font-family: var(--f-mono); font-size: var(--fs-xs); color: var(--muted); }
 .title-line { display: flex; gap: 6px; align-items: baseline; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+/* A long list of tasks waited for ends in an ellipsis inside the card; the tooltip names them all */
+.meta .dep { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.meta .dep svg { vertical-align: -2px; }
 .tree-link { margin-left: auto; display: inline-flex; gap: 4px; align-items: center; text-decoration: none; }
 @media (max-width: 760px) {
   .board { scroll-snap-type: x mandatory; }
