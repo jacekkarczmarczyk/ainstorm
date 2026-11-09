@@ -5,6 +5,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useFormat } from '../composables/useFormat.ts';
+import { SESSION_VIEWS } from '../router.ts';
 import { useSelection } from '../composables/useSelection.ts';
 import { useMapStore } from '../stores/map.ts';
 import { useUiStore } from '../stores/ui.ts';
@@ -16,7 +17,7 @@ const ui = useUiStore();
 const router = useRouter();
 const { t } = useI18n();
 const { when } = useFormat();
-const { session, openSession } = useSelection();
+const { session, view, openSession } = useSelection();
 
 // No project on the start page: it covers all of them
 const route = useRoute();
@@ -32,10 +33,16 @@ const projectModel = computed({
     void router.push({ name: 'project', params: { projectKey: key } });
   },
 });
-// The project overview is the project's name in the header, not an item of this list
+// The project overview is the project's name in the header, not an item of this list. From a session view another
+// session opens in the same view with the same filters
 const sessionModel = computed({
   get: () => session.value?.id ?? '',
-  set: (id: string) => { if (id) openSession(id); },
+  set: (id: string) => {
+    if (!id) return;
+    if (view.value && SESSION_VIEWS.includes(view.value)) {
+      void router.push({ name: view.value, params: { sessionId: map.sessionParam(id) }, query: route.query });
+    } else openSession(id);
+  },
 });
 
 // All projects are the start page, reached by the logo
