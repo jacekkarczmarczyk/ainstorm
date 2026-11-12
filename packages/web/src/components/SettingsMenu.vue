@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { PROMPT_LANGUAGES, PROMPT_PHRASES } from '@ainstorm/core';
-import { Bell, Monitor, Settings, ShieldCheck, SquareTerminal } from '@lucide/vue';
+import { Bell, DatabaseBackup, Monitor, Settings, ShieldCheck, SquareTerminal } from '@lucide/vue';
 import { ref } from 'vue';
 import { notificationsSupported, requestNotifications } from '../composables/useWaitNotifications.ts';
 import { SESSION_ACTIONS, useUiStore } from '../stores/ui.ts';
 import AppModal from './AppModal.vue';
+import BackupSettings from './BackupSettings.vue';
 
 // The gear opens the settings dialog: a side menu of sections, only the chosen one shown, so the dialog keeps its size
 const ui = useUiStore();
@@ -16,6 +17,7 @@ const SECTIONS = [
   { id: 'notifications', icon: Bell },
   { id: 'sessions', icon: SquareTerminal },
   { id: 'confirm', icon: ShieldCheck },
+  { id: 'backup', icon: DatabaseBackup },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]['id'];
 const section = ref<SectionId>('display');
@@ -71,6 +73,9 @@ async function toggleNotifications(e: Event) {
           </select>
         </label>
         <p class="help">{{ $t('settings.promptLanguageHelp') }}</p>
+      </section>
+      <section v-else-if="section === 'backup'" class="section">
+        <BackupSettings />
       </section>
       <section v-else class="section">
         <p class="help">{{ $t('settings.confirmHelp') }}</p>

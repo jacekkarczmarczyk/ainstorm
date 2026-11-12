@@ -209,12 +209,23 @@ export function uiSessionStore(db: DatabaseSync): UiSessionStore {
   };
 }
 
+function writeAll(db: DatabaseSync, snapshot: MapSnapshot) {
+  snapshot.projects.forEach(p => writeProject(db, p));
+  snapshot.sessions.forEach(s => writeSession(db, s));
+  snapshot.tasks.forEach(t => writeTask(db, t));
+  snapshot.events.forEach(e => writeEvent(db, e));
+}
+
 /** Write a whole snapshot (first import into an empty database). */
 export function saveSnapshot(db: DatabaseSync, snapshot: MapSnapshot) {
+  transaction(db, () => writeAll(db, snapshot));
+}
+
+/** Replace the whole map by a snapshot in one transaction (restore of a backup); UI sessions are kept. */
+export function replaceSnapshot(db: DatabaseSync, snapshot: MapSnapshot) {
   transaction(db, () => {
-    snapshot.projects.forEach(p => writeProject(db, p));
-    snapshot.sessions.forEach(s => writeSession(db, s));
-    snapshot.tasks.forEach(t => writeTask(db, t));
-    snapshot.events.forEach(e => writeEvent(db, e));
+    // Child rows of tasks, projects and events go by cascade
+    for (const table of ['events', 'tasks', 'sessions', 'projects']) db.exec(`DELETE FROM ${table}`);
+    writeAll(db, snapshot);
   });
 }

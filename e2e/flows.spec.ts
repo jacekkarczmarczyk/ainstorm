@@ -165,6 +165,12 @@ test('settings show one section at a time and keep their size', async ({ page })
   expect((await settings.boundingBox())!.height).toBe(before);
 });
 
+test('backup is a settings section; the demo map without the service says it is unavailable', async ({ page }) => {
+  await page.goto(`${SHOP}/tree`);
+  await openSettings(page, 'Backup');
+  await expect(settingsDialog(page).getByText('Backup and restore work only with the ainstorm service')).toBeVisible();
+});
+
 test('notifications are an option in the settings, off until turned on', async ({ page }) => {
   await stubNotifications(page, 'granted');
   await page.goto(`${SHOP}/tree`);

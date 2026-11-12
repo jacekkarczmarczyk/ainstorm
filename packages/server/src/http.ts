@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { extname, join, normalize, sep } from 'node:path';
 import { defaultSessionTitle, EMPTY_FILTER, filterToQuery, suggestProject, toggleQuickFilter } from '@ainstorm/core';
 import { z, ZodError } from 'zod';
+import { BackupError } from './backup.ts';
 import { EngineError, type Daemon } from './daemon.ts';
 import { callTool, toolDefinitions } from './mcpTools.ts';
 import { allowedHost, allowedOrigin, bearer, COOKIE, readCookie, sameSecret, SECURITY_HEADERS, UiSessions } from './security.ts';
@@ -13,9 +14,15 @@ export interface HttpOptions {
   /** Built web UI (packages/web/dist); null serves the API only */
   staticDir: string | null;
   sessions?: UiSessions;
+  /** Data directory for the temporary copies of backup and restore; without it both are unavailable */
+  dataDir?: string | null;
 }
 
 const MAX_BODY = 1024 * 1024;
+const MAX_BACKUP = 64 * 1024 * 1024;
+const BackupBody = z.object({ password: z.string().min(8).max(1024) });
+// Header values are ASCII: the UI sends the password as base64 of its UTF-8 bytes
+const RestorePassword = z.base64().max(4096).transform(v => Buffer.from(v, 'base64').toString('utf8')).pipe(z.string().min(1).max(1024));
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.woff': 'font/woff', '.json': 'application/json',
@@ -88,6 +95,19 @@ export function createHttpServer(options: HttpOptions): Server {
     } catch {
       throw new HttpError(400, 'Invalid JSON');
     }
+  }
+
+  async function readBinary(req: IncomingMessage, limit: number): Promise<Buffer> {
+    if (!(req.headers['content-type'] ?? '').startsWith('application/octet-stream')) throw new HttpError(415, 'File body expected');
+    if (Number(req.headers['content-length'] ?? 0) > limit) throw new HttpError(413, 'Body too large');
+    const chunks: Buffer[] = [];
+    let size = 0;
+    for await (const chunk of req as AsyncIterable<Buffer>) {
+      size += chunk.length;
+      if (size > limit) throw new HttpError(413, 'Body too large');
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
   }
 
   /** The code from the form of the open page (application/x-www-form-urlencoded). */
@@ -225,6 +245,24 @@ export function createHttpServer(options: HttpOptions): Server {
         const s = options.daemon.snapshot().sessions.find(x => x.id === sessionId);
         return send(res, 200, { url: openUrl(sessionId), unnamed: s !== undefined && s.claudeTitle === null && s.title === defaultSessionTitle(s.id) });
       }
+      // Backup and restore: the web UI only, never a Claude session (restore replaces the whole map)
+      if (pathname === '/api/backup' || pathname === '/api/restore') {
+        if (caller !== 'ui') throw new HttpError(403, 'Only the web UI can do this');
+        const dir = options.dataDir;
+        if (!dir) throw new HttpError(404, 'Not found');
+        if (pathname === '/api/backup') {
+          const { password } = BackupBody.parse(await readJson(req));
+          const { file, name } = options.daemon.backup(password, dir);
+          res.writeHead(200, {
+            ...SECURITY_HEADERS, 'Content-Type': 'application/octet-stream', 'Cache-Control': 'no-store',
+            'Content-Disposition': `attachment; filename="${name}"`,
+          });
+          return res.end(file);
+        }
+        const password = RestorePassword.parse(req.headers['x-ainstorm-password']);
+        const before = options.daemon.restore(await readBinary(req, MAX_BACKUP), password, dir);
+        return send(res, 200, { before });
+      }
       if (pathname === '/api/reserve') return send(res, 200, { changeId: options.daemon.reserveChangeId() });
       if (pathname === '/api/commands') {
         const body = ChangeBody.parse(await readJson(req));
@@ -247,7 +285,7 @@ export function createHttpServer(options: HttpOptions): Server {
   const server = createServer((req, res) => {
     route(req, res).catch((error: unknown) => {
       const status = error instanceof HttpError ? error.status
-        : error instanceof ZodError ? 400
+        : error instanceof ZodError || error instanceof BackupError ? 400
           : error instanceof EngineError ? (error.code === 'not_found' ? 404 : 409)
             : 500;
       // Internal errors are not described to the client

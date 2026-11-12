@@ -15,25 +15,28 @@ export const makeTask = (id: string, projectKey: string): Task => ({
   criteria: [], decisions: [], commits: [], sessionIds: [], questions: [], archivedAt: null, createdAt: T0, updatedAt: T0, version: 1,
 });
 
-export interface Reply { status: number; headers: Record<string, string | string[] | undefined>; body: string }
-export interface CallOptions { method?: string; headers?: Record<string, string>; body?: unknown; form?: string }
+export interface Reply { status: number; headers: Record<string, string | string[] | undefined>; body: string; bytes: Buffer }
+export interface CallOptions { method?: string; headers?: Record<string, string>; body?: unknown; form?: string; file?: Buffer }
 
 /** A raw request to the daemon: the path goes out exactly as written (no URL normalisation by a client) */
 export function call(port: number, path: string, options: CallOptions = {}): Promise<Reply> {
-  const body = options.form ?? (options.body === undefined ? undefined : JSON.stringify(options.body));
+  const body = options.file ?? options.form ?? (options.body === undefined ? undefined : JSON.stringify(options.body));
   return new Promise((resolve, reject) => {
     const req = request({
       host: '127.0.0.1', port, path, method: options.method ?? 'GET',
       headers: {
         Host: `127.0.0.1:${port}`,
-        ...(options.form !== undefined ? { 'Content-Type': 'application/x-www-form-urlencoded' } : body ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.file !== undefined ? { 'Content-Type': 'application/octet-stream' }
+          : options.form !== undefined ? { 'Content-Type': 'application/x-www-form-urlencoded' } : body ? { 'Content-Type': 'application/json' } : {}),
         ...options.headers,
       },
     }, res => {
-      let text = '';
-      res.setEncoding('utf8');
-      res.on('data', chunk => { text += chunk; });
-      res.on('end', () => resolve({ status: res.statusCode!, headers: res.headers, body: text }));
+      const chunks: Buffer[] = [];
+      res.on('data', (chunk: Buffer) => chunks.push(chunk));
+      res.on('end', () => {
+        const bytes = Buffer.concat(chunks);
+        resolve({ status: res.statusCode!, headers: res.headers, body: bytes.toString('utf8'), bytes });
+      });
     });
     req.on('error', reject);
     req.end(body);

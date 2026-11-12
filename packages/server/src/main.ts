@@ -45,6 +45,6 @@ writeFileSync(paths.daemon, `${JSON.stringify({ entry: fileURLToPath(import.meta
 const staticDir = join(import.meta.dirname, '..', '..', 'web', 'dist');
 // Signed-in browsers stay signed in across restarts
 const sessions = new UiSessions(undefined, undefined, uiSessionStore(db));
-const server = createHttpServer({ daemon: new Daemon(db), token: config.token, staticDir: existsSync(staticDir) ? staticDir : null, sessions });
+const server = createHttpServer({ daemon: new Daemon(db), token: config.token, staticDir: existsSync(staticDir) ? staticDir : null, sessions, dataDir: paths.dir });
 const port = await listenLoopback(server, Number(values.port));
 console.log(`ainstorm listening on http://127.0.0.1:${port}`);

@@ -17,10 +17,14 @@ export function openDatabase(path: string): DatabaseSync {
   return db;
 }
 
+const migrationFiles = () => readdirSync(MIGRATIONS_DIR).filter(f => /^\d{3}_.+\.sql$/.test(f)).sort();
+
+/** Schema version after all migrations of this build (a backup from a later one cannot be read) */
+export const latestSchemaVersion = (): number => Math.max(0, ...migrationFiles().map(f => Number(f.slice(0, 3))));
+
 function migrate(db: DatabaseSync) {
   const current = Number((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version);
-  const files = readdirSync(MIGRATIONS_DIR).filter(f => /^\d{3}_.+\.sql$/.test(f)).sort();
-  for (const file of files) {
+  for (const file of migrationFiles()) {
     const version = Number(file.slice(0, 3));
     if (version <= current) continue;
     transaction(db, () => {

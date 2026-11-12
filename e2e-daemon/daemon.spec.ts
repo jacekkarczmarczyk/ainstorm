@@ -73,6 +73,53 @@ test('a task added in the UI is saved by the daemon', async ({ page, request }) 
   await expect.poll(titles).toContain(title);
 });
 
+test('a backup downloaded in the UI restores the map from a local file', async ({ page, request }) => {
+  const password = 'e2e backup password';
+  const statusOf = async () => ((await (await request.get('/api/snapshot', { headers: { Authorization: `Bearer ${token()}` } }))
+    .json()) as { tasks: { id: string; status: string }[] }).tasks.find(t => t.id === 'PRJ-44')!.status;
+  await page.goto(await openLink(request));
+  await page.getByRole('button', { name: 'Open the map' }).click();
+  await page.goto('/s/ed08d5d7/tree');
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  const settings = page.getByRole('dialog', { name: 'Settings' });
+  await settings.getByRole('navigation', { name: 'Settings sections' }).getByRole('button', { name: 'Backup' }).click();
+
+  // Backup: the browser downloads an encrypted .ainbak file
+  const backupForm = settings.getByRole('form', { name: 'Back up the map' });
+  await backupForm.getByLabel('Password', { exact: true }).fill(password);
+  await backupForm.getByLabel('Repeat the password').fill(password);
+  const [download] = await Promise.all([page.waitForEvent('download'), backupForm.getByRole('button', { name: 'Download backup' }).click()]);
+  expect(download.suggestedFilename()).toMatch(/^ainstorm-.+\.ainbak$/);
+  const file = await download.path();
+  expect(readFileSync(file).subarray(0, 6).toString('ascii')).toBe('AINBAK');
+
+  // A change after the backup
+  const before = await statusOf();
+  const other = before === 'done' ? 'todo' : 'done';
+  await settings.getByRole('button', { name: 'Close' }).click();
+  await page.locator('#row-PRJ-44').getByRole('combobox', { name: 'Status of PRJ-44' }).selectOption(other);
+  await page.getByRole('dialog', { name: /\?$/ }).locator('.primary-action').click();
+  await expect.poll(statusOf).toBe(other);
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  await settings.getByRole('navigation', { name: 'Settings sections' }).getByRole('button', { name: 'Backup' }).click();
+
+  // Restore from the local file: a wrong password changes nothing, the right one brings the map back
+  const restoreForm = settings.getByRole('form', { name: 'Restore from a backup' });
+  await restoreForm.getByLabel('Backup file (.ainbak)').setInputFiles(file);
+  await restoreForm.getByLabel('Password', { exact: true }).fill('wrong password');
+  await restoreForm.getByRole('button', { name: 'Restore…' }).click();
+  await restoreForm.getByRole('button', { name: 'Replace the map' }).click();
+  await expect(restoreForm.getByText('Wrong password or damaged file')).toBeVisible();
+  expect(await statusOf()).toBe(other);
+
+  await restoreForm.getByLabel('Password', { exact: true }).fill(password);
+  await restoreForm.getByRole('button', { name: 'Restore…' }).click();
+  await restoreForm.getByRole('button', { name: 'Replace the map' }).click();
+  // Playwright keeps the download under a generated name, so the file name is not checked here
+  await expect(restoreForm.getByText(/^Map restored from .+ The map as it was is kept in the ainstorm folder as before-restore-[\dT-]+Z\.db\.$/)).toBeVisible();
+  await expect.poll(statusOf).toBe(before);
+});
+
 test('a browser that loses its sign-in sees the sign-in screen instead of a stale map', async ({ page, request, context }) => {
   await page.goto(await openLink(request));
   await page.getByRole('button', { name: 'Open the map' }).click();

@@ -1,6 +1,7 @@
 import type { MapSnapshot } from '@ainstorm/core';
+import { mkdtempSync, rmSync } from 'node:fs';
 import type { Server } from 'node:http';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Daemon } from '../src/daemon.ts';
@@ -31,14 +32,20 @@ async function uiCookie(): Promise<string> {
   return String(opened.headers['set-cookie']).split(';')[0]!;
 }
 
+let dataDir: string;
+
 beforeEach(async () => {
   const db = openDatabase(':memory:');
   saveSnapshot(db, fixture());
   daemon = new Daemon(db);
-  server = createHttpServer({ daemon, token: TOKEN, staticDir: null });
+  dataDir = mkdtempSync(join(tmpdir(), 'ainstorm-http-'));
+  server = createHttpServer({ daemon, token: TOKEN, staticDir: null, dataDir });
   port = await listenLoopback(server, 0);
 });
-afterEach(() => new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); }));
+afterEach(async () => {
+  await new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); });
+  rmSync(dataDir, { recursive: true, force: true });
+});
 
 describe('daemon over HTTP', () => {
   it('listens on the loopback address only', () => {
@@ -172,5 +179,43 @@ describe('daemon over HTTP', () => {
   it('does not let the UI issue links', async () => {
     const cookie = await uiCookie();
     expect((await call('/api/open-link', { method: 'POST', headers: { Cookie: cookie, Origin: `http://127.0.0.1:${port}` } })).status).toBe(403);
+  });
+});
+
+describe('backup and restore over HTTP', () => {
+  const password = 'długie hasło 123';
+  const encoded = Buffer.from(password, 'utf8').toString('base64');
+
+  it('lets the UI download an archive and restore it; the map comes back and the listeners get it', async () => {
+    const ui = { Cookie: await uiCookie(), Origin: `http://127.0.0.1:${port}` };
+    const original = structuredClone(daemon.snapshot());
+    const backup = await call('/api/backup', { method: 'POST', headers: ui, body: { password } });
+    expect(backup.status).toBe(200);
+    expect(backup.headers['content-type']).toBe('application/octet-stream');
+    expect(backup.headers['content-disposition']).toMatch(/^attachment; filename="ainstorm-.+\.ainbak"$/);
+    expect(backup.bytes.subarray(0, 6).toString('ascii')).toBe('AINBAK');
+
+    const task = original.tasks.find(t => t.status === 'todo')!;
+    daemon.execute({ type: 'setStatus', taskId: task.id, to: 'done', notify: false });
+    const wrong = await call('/api/restore', { method: 'POST', headers: { ...ui, 'X-Ainstorm-Password': Buffer.from('wrong').toString('base64') }, file: backup.bytes });
+    expect(wrong.status).toBe(400);
+    expect(JSON.parse(wrong.body)).toEqual({ error: 'Wrong password or damaged file' });
+    expect(daemon.snapshot().tasks.find(t => t.id === task.id)!.status).toBe('done');
+
+    const restored = await call('/api/restore', { method: 'POST', headers: { ...ui, 'X-Ainstorm-Password': encoded }, file: backup.bytes });
+    expect(restored.status).toBe(200);
+    expect(JSON.parse(restored.body)).toEqual({ before: expect.stringMatching(/^before-restore-.+\.db$/) as unknown });
+    expect(daemon.snapshot()).toEqual(original);
+  });
+
+  it('refuses Claude sessions, foreign origins, short passwords and oversized files', async () => {
+    const cookie = await uiCookie();
+    const ui = { Cookie: cookie, Origin: `http://127.0.0.1:${port}` };
+    expect((await call('/api/backup', { method: 'POST', headers: auth, body: { password } })).status).toBe(403);
+    expect((await call('/api/restore', { method: 'POST', headers: { ...auth, 'X-Ainstorm-Password': encoded }, file: Buffer.from('x') })).status).toBe(403);
+    expect((await call('/api/backup', { method: 'POST', headers: { Cookie: cookie, Origin: 'http://evil.example' }, body: { password } })).status).toBe(403);
+    expect((await call('/api/backup', { method: 'POST', headers: ui, body: { password: 'short' } })).status).toBe(400);
+    expect((await call('/api/restore', { method: 'POST', headers: ui, file: Buffer.from('x') })).status).toBe(400);
+    expect((await call('/api/restore', { method: 'POST', headers: { ...ui, 'X-Ainstorm-Password': encoded }, file: Buffer.alloc(65 * 1024 * 1024) })).status).toBe(413);
   });
 });

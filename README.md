@@ -128,6 +128,16 @@ and allow that commit; Claude Code still asks for `git commit` unless it is allo
 - A copied prompt carries a header (`[ainstorm #change · session … · project]`); pasting it into the wrong session,
   twice, or after undoing the change is blocked.
 
+## Backup and restore
+
+Settings → Backup downloads the whole map as one `.ainbak` file encrypted with a password you choose (AES-256-GCM,
+key from scrypt); put it wherever you keep backups. ainstorm does not keep the password; with the fixed user name
+`ainstorm-backup` your browser's password manager can save it. "Restore…" there takes such a file and its password
+and replaces the whole map. The map as it was is kept first as `~/.ainstorm/before-restore-<time>.db`.
+
+The archive holds the map only. `config.json` (the token), `daemon.json` and `plugin.sha256` belong to the machine
+and are made again on a new one.
+
 ## Development
 
 ```sh

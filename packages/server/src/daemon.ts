@@ -3,8 +3,10 @@ import {
   type ChangeRecord, type MapSnapshot, type PathOptions, type UserChangeRecord,
 } from '@ainstorm/core';
 import { homedir } from 'node:os';
+import { join } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
-import { loadSnapshot, saveChange } from './store.ts';
+import { createBackup, readBackup, stamp } from './backup.ts';
+import { loadSnapshot, replaceSnapshot, saveChange } from './store.ts';
 
 // Project paths in the map may start with ~ and use either slash; on Windows they compare case-insensitively
 const PATH_OPTIONS: PathOptions = { home: homedir(), windows: process.platform === 'win32' };
@@ -14,13 +16,39 @@ const PATH_OPTIONS: PathOptions = { home: homedir(), windows: process.platform =
  * and a list of listeners (SSE clients) told about each new state.
  */
 export class Daemon {
-  private readonly engine: MapEngine;
+  private engine: MapEngine;
   private readonly db: DatabaseSync;
+  private readonly now: (() => string) | undefined;
   private readonly listeners = new Set<(snapshot: MapSnapshot) => void>();
 
   constructor(db: DatabaseSync, now?: () => string) {
     this.db = db;
+    this.now = now;
     this.engine = new MapEngine(loadSnapshot(db), now);
+  }
+
+  /** Encrypted backup archive of the map; dir is the data directory, for the temporary copy. */
+  backup(password: string, dir: string): { file: Buffer; name: string } {
+    return { file: createBackup(this.db, dir, password), name: `ainstorm-${stamp(this.time())}.ainbak` };
+  }
+
+  /**
+   * Replace the map by the one in a backup archive. Throws BackupError (nothing changed) when the file or password
+   * is wrong. Runs synchronously from start to end, so no other change can come in between. The map as it was is
+   * kept in the data directory first; its file name is returned. Undo of earlier changes starts afresh.
+   */
+  restore(file: Buffer, password: string, dir: string): string {
+    const snapshot = readBackup(file, password, dir);
+    const before = `before-restore-${stamp(this.time())}.db`;
+    this.db.prepare('VACUUM INTO ?').run(join(dir, before));
+    replaceSnapshot(this.db, snapshot);
+    this.engine = new MapEngine(loadSnapshot(this.db), this.now);
+    for (const listener of this.listeners) listener(this.engine.state);
+    return before;
+  }
+
+  private time(): string {
+    return this.now ? this.now() : new Date().toISOString();
   }
 
   snapshot(): MapSnapshot {
