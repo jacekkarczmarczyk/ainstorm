@@ -107,7 +107,8 @@ test('ticked tasks get bulk actions: one dialog and one Undo for all, Run in the
   // Ticking selects only: the tasks stay open
   await expect(rowTitle(page, 'PRJ-44')).not.toHaveClass(/t-done/);
 
-  await bar.getByRole('button', { name: 'Drop' }).click();
+  // Dropping is a status like the others, picked from the list
+  await bar.getByLabel('Set status…').selectOption('dropped');
   await expect(dialog(page).locator('.tasks li')).toHaveCount(2);
   await expect(dialog(page).locator('pre').first()).toContainText('PRJ-45');
   await dialog(page).getByRole('button', { name: 'Drop', exact: true }).click();

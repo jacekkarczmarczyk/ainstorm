@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { canRun, projectAreas, TASK_STATUSES, TASK_TYPES, type Session, type Task, type TaskStatus, type TaskType } from '@ainstorm/core';
-import { ArrowRightLeft, Ban, CornerDownRight, Play, X } from '@lucide/vue';
+import { ArrowRightLeft, CornerDownRight, Play, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useTaskActions } from '../composables/useTaskActions.ts';
 import { useMapStore } from '../stores/map.ts';
@@ -76,7 +76,6 @@ const setStatus = (e: Event) => actions.setStatusMany(tasks.value, choice(e) as 
       <button type="button" class="btn sm" :title="$t('bulk.transferHelp')" @click="transferring = true">
         <ArrowRightLeft :size="13" aria-hidden="true" /> {{ $t('bulk.transfer') }}
       </button>
-      <button type="button" class="btn sm drop" @click="actions.setStatusMany(tasks, 'dropped')"><Ban :size="13" aria-hidden="true" /> {{ $t('bulk.drop') }}</button>
     </div>
     <!-- Out of the bar: it is sticky with a z-index of its own, so dialogs in it would stay below the bottom navigation -->
     <Teleport to="body">
@@ -99,7 +98,6 @@ const setStatus = (e: Event) => actions.setStatusMany(tasks.value, choice(e) as 
 }
 .clear:hover, .clear:focus-visible { background: var(--s-blocked); color: var(--on-strong); }
 .buttons { display: flex; flex-wrap: wrap; gap: 6px; }
-.drop { color: var(--s-blocked); }
 /* A list, not a button: the native options take their colours from it, so it keeps the panel background */
 select.btn { padding-right: 4px; background: var(--panel); }
 @media (max-width: 760px) {

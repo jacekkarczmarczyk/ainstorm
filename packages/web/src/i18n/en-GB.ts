@@ -76,7 +76,7 @@ export const enGB = {
   },
   board: { showInTree: 'Show in tree' },
   bulk: {
-    label: 'Selected tasks', count: '{n} selected', clearHelp: 'Clear the selection', move: 'Move…', drop: 'Drop', status: 'Set status…',
+    label: 'Selected tasks', count: '{n} selected', clearHelp: 'Clear the selection', move: 'Move…', status: 'Set status…',
     run: 'Run ({n})', runHelp: 'Run in this session, in the order you ticked them. Tasks of yours, finished or deferred are left out.',
     runTitle: 'Start {n} task(s) in this session?',
     runCopied: 'Prompt for {n} task(s) copied, paste it into „{session}”. Only the request is recorded; the tasks change when the session starts them.',
