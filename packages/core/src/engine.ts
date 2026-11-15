@@ -6,7 +6,7 @@ import {
 import { splitCommit, withCommit } from './commitMessage.ts';
 import { issueNumber } from './github.ts';
 import { nextTaskId, projectAreas } from './sessionOps.ts';
-import { currentSessionId, isSessionOpen, targetSessions } from './sessions.ts';
+import { currentSessionId, isSessionOpen, pendingTransferText, targetSessions, transferTask, transferText } from './sessions.ts';
 import { openQuestions } from './status.ts';
 import { buildTaskIndex, descendants, wouldCreateParentCycle } from './tree.ts';
 
@@ -26,6 +26,14 @@ export const UserCommand = z.discriminatedUnion('type', [
   z.object({ type: z.literal('restoreSession'), sessionId: SessionId }),
   /** Add the task to a session (on) or take it out of one; the task itself stays. Only that session is told */
   z.object({ type: z.literal('setTaskSession'), taskId: TaskId, sessionId: SessionId, on: z.boolean(), notify: z.boolean() }),
+  /**
+   * Move tasks from one session to another (one change). Without a target, nothing moves yet: the tasks move to the
+   * session the copied prompt is pasted into (checkPrompt), also one not yet in the map
+   */
+  z.object({
+    type: z.literal('transferTasks'), taskIds: z.array(TaskId).min(1).max(100), fromSessionId: SessionId, toSessionId: SessionId.nullable(),
+    notify: z.boolean(),
+  }),
   /** Run, Pause and Go ahead are prompts the user pastes; only recorded */
   z.object({ type: z.literal('requestSession'), request: z.enum(['run', 'pause', 'goAhead']), taskId: TaskId, sessionId: SessionId.nullable() }),
   /** Ask the session whether an open question still applies; only recorded, the session answers or closes it */
@@ -348,6 +356,35 @@ export class MapEngine {
             this.touch(t);
             log({ taskId: t.id, type: 'status', text: `moved: ${from ?? 'top level'} → ${command.parentId ?? 'top level'}`, delivery: this.delivery(t, command.notify) });
           }
+        });
+      }
+      case 'transferTasks': {
+        const from = this.session(command.fromSessionId);
+        const to = command.toSessionId === null ? null : this.session(command.toSessionId);
+        if (to?.id === from.id) throw new EngineError('Pick another session than the one the tasks come from', 'invalid');
+        if (to && to.projectKey !== from.projectKey) throw new EngineError(`Session „${to.title}” belongs to another project`, 'invalid');
+        if (to && !isSessionOpen(to)) throw new EngineError(`Session „${to.title}” is not open`, 'invalid');
+        const tasks = [...new Set(command.taskIds)].map(taskId => this.task(taskId));
+        for (const t of tasks) {
+          if (t.projectKey !== from.projectKey) throw new EngineError(`${t.id} belongs to another project`, 'invalid');
+          if (!t.sessionIds.includes(from.id)) throw new EngineError(`${t.id} is not in session „${from.title}”`, 'invalid');
+        }
+        return this.change(id, actor, tasks.map(t => t.id), [from.id], null, log => {
+          // Into a session not chosen yet: waits for the prompt to be pasted; the source learns it then
+          if (!to) {
+            tasks.forEach(t => log({ taskId: t.id, type: 'session', text: pendingTransferText(from), delivery: { state: 'copied', sessionIds: [from.id] } }));
+            return;
+          }
+          const sessionIds = [from, to].filter(isSessionOpen).map(s => s.id);
+          for (const t of tasks) {
+            transferTask(t, from.id, to.id);
+            this.touch(t);
+            log({
+              taskId: t.id, type: 'session', text: transferText(from, to),
+              delivery: sessionIds.length ? { state: command.notify ? 'pending' : 'copied', sessionIds } : { state: 'none', sessionIds: [] },
+            });
+          }
+          if (tasks.some(t => t.id === from.runningTaskId)) from.runningTaskId = null;
         });
       }
       case 'requestRunMany': {

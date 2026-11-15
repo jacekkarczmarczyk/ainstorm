@@ -46,9 +46,14 @@ export function deliveriesText(state: MapSnapshot, events: readonly MapEvent[]):
   const rows = events.map(e => `- #${e.changeId} ${e.type} ${e.taskId} „${quoteSafe(titles.get(e.taskId) ?? '', 120)}”: ${quoteSafe(e.text, 300)}`);
   // An answer or a decision is the user settling something the session asked: say so, so it is acted on, not just noted
   const settled = events.some(e => e.type === 'answer' || (e.type === 'drop' && e.text.startsWith('decided:')));
+  const sessions = events.some(e => e.type === 'session');
   return fence([
     'The user changed the map in the web UI since your last turn. Take it into account; if a change looks unusual, ask the user before acting on it.',
     ...rows,
+    ...(sessions ? [
+      'A task added or moved to a session is only taken over there: do not start it until the user asks, and do not queue it. '
+      + 'A session a task was taken out of or moved from no longer works on it.',
+    ] : []),
     ...(settled ? [
       'Answers and decisions above are the user\'s rulings on what you asked. They are already recorded in the map (a decision also closes its task).',
       'Act on them now: go on with the work that waited for them, or leave out what the user decided against; ask only if the answer leaves it unclear.',

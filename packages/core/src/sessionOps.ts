@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { EngineError, type ChangeContext, type ChangeRecord, type MapEngine } from './engine.ts';
+import { isPendingTransfer, isSessionOpen, isTransfer, transferTask, transferText } from './sessions.ts';
 import {
   Ask, isClosed, Owner, ProjectKey, TaskId, TaskStatus, TaskType,
   type EventType, type MapEvent, type MapSnapshot, type Project, type Session, type Task,
@@ -532,15 +533,21 @@ export type PromptCheck = { block: null; record: ChangeRecord } | { block: strin
 /**
  * UserPromptSubmit: a prompt copied from the UI carries a header naming its change and target.
  * Blocks it when pasted into another session or project, twice, or after the change was undone.
- * A message without the header is an ordinary prompt and passes.
+ * A message without the header is an ordinary prompt and passes. A session not in the map is checked against the
+ * project of its folder (`place`).
+ *
+ * Tasks moved to a session not chosen yet (transferTasks without a target) move here, to the session the prompt is
+ * pasted into; one not in the map yet is added to it. The source session learns it with its next hook.
  */
-export function checkPrompt(engine: MapEngine, sessionId: string, prompt: string): PromptCheck {
+export function checkPrompt(engine: MapEngine, sessionId: string, prompt: string, place?: { cwd: string; paths?: PathOptions }): PromptCheck {
   const header = parseHeader(prompt);
   const pass = (): PromptCheck => ({ block: null, record: emptyRecord() });
   if (!header) return pass();
   const state = engine.state;
   const session = state.sessions.find(s => s.id === sessionId);
-  const project = session ? state.projects.find(p => p.key === session.projectKey) : undefined;
+  const project = session
+    ? state.projects.find(p => p.key === session.projectKey)
+    : (place?.cwd ? matchProject(place.cwd, state.projects, place.paths) ?? undefined : undefined);
   const block = (reason: string): PromptCheck => ({ block: `ainstorm: ${reason}`, record: emptyRecord() });
 
   if (header.sessionShort !== null && header.sessionShort !== shortId(sessionId)) {
@@ -559,13 +566,56 @@ export function checkPrompt(engine: MapEngine, sessionId: string, prompt: string
     return block(`change #${header.changeId} does not exist in the map.`);
   }
   if (events.every(e => e.delivery?.deliveredTo.includes(sessionId))) return block(`change #${header.changeId} was already delivered to this session.`);
+  if (header.sessionShort === null && events.some(e => e.type === 'session')) return claimTransfer(engine, sessionId, events, project, block);
 
   const { record } = engine.record(sessionId, 'hook', ctx => {
     for (const e of events) {
       if (!e.delivery) continue;
       if (!e.delivery.sessionIds.includes(sessionId)) e.delivery.sessionIds.push(sessionId);
       markDelivered(ctx, e, sessionId);
+      // A move gives a prompt only to the session taking the tasks over: the one they left learns it with its next hook
+      if (isTransfer(e) && e.delivery.state === 'copied') e.delivery.state = 'pending';
     }
+  });
+  return { block: null, record };
+}
+
+/**
+ * The prompt of a move into a session not chosen yet, pasted here: the tasks move to this session, which is added to
+ * the map when it is not in it yet. Once taken over, the prompt is refused anywhere else.
+ */
+function claimTransfer(
+  engine: MapEngine, sessionId: string, events: MapEvent[], project: Project | undefined, block: (reason: string) => PromptCheck,
+): PromptCheck {
+  const state = engine.state;
+  const claimedBy = events.find(e => !isPendingTransfer(e))?.delivery?.deliveredTo.find(id => id !== sessionId);
+  if (claimedBy) {
+    const by = state.sessions.find(s => s.id === claimedBy);
+    return block(`these tasks were already taken over by session ${by ? `„${by.title}” (${shortId(by.id)})` : shortId(claimedBy)}.`);
+  }
+  const fromId = events[0]!.delivery!.sessionIds[0]!;
+  const from = engine.session(fromId);
+  if (fromId === sessionId) return block('these tasks come from this session. Paste the prompt into the Claude session that should take them over.');
+  if (!project) return block('this folder belongs to no project in the map. Paste the prompt into a Claude session started in the project folder.');
+  if (project.key !== from.projectKey) return block(`these tasks belong to project ${from.projectKey}, this session works in ${project.key}.`);
+  const existing = state.sessions.find(s => s.id === sessionId);
+  if (existing?.archivedAt) return block('this session is archived in the map. Restore it first, or paste the prompt into another session.');
+
+  const { record } = engine.record(sessionId, 'hook', ctx => {
+    const s = existing ?? newSession(state, sessionId, project.key, ctx.now);
+    ctx.session(s);
+    const sourceOpen = isSessionOpen(from);
+    for (const e of events) {
+      const t = engine.task(e.taskId);
+      transferTask(t, from.id, s.id);
+      ctx.task(t);
+      if (from.runningTaskId === t.id) from.runningTaskId = null;
+      e.text = transferText(from, s);
+      // This session has the prompt; the source learns it with its next hook
+      e.delivery = { state: sourceOpen ? 'pending' : 'delivered', sessionIds: sourceOpen ? [from.id, s.id] : [s.id], deliveredTo: [s.id] };
+      ctx.event(e);
+    }
+    ctx.session(from);
   });
   return { block: null, record };
 }

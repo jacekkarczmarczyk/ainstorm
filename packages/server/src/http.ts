@@ -52,7 +52,7 @@ function sendHtml(res: ServerResponse, status: number, html: string) {
 }
 
 const ChangeBody = z.object({ command: z.unknown(), changeId: z.number().int().positive().optional() });
-const PromptBody = z.object({ prompt: z.string().max(200_000) });
+const PromptBody = z.object({ prompt: z.string().max(200_000), cwd: z.string().max(1000).optional() });
 // The tree of the session opens with the "Open" quick filter on: only tasks still to be done
 const OPEN_TASKS = new URLSearchParams(
   Object.entries(filterToQuery(toggleQuickFilter(EMPTY_FILTER, 'open'))).flatMap(([key, v]) => (Array.isArray(v) ? v : [v]).map(x => [key, x])),
@@ -226,8 +226,8 @@ export function createHttpServer(options: HttpOptions): Server {
         if (method !== 'POST') throw new HttpError(405, 'Method not allowed');
         if (action === 'ops') return send(res, 200, options.daemon.sessionOp(sessionId, await readJson(req)));
         if (action === 'deliveries') return send(res, 200, { context: options.daemon.takeDeliveries(sessionId) });
-        const { prompt } = PromptBody.parse(await readJson(req));
-        return send(res, 200, { block: options.daemon.checkPrompt(sessionId, prompt) });
+        const { prompt, cwd } = PromptBody.parse(await readJson(req));
+        return send(res, 200, { block: options.daemon.checkPrompt(sessionId, prompt, cwd) });
       }
       if (method !== 'POST') throw new HttpError(405, 'Method not allowed');
       if (pathname === '/api/open-link') {

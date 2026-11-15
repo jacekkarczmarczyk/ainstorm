@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { canRun, projectAreas, TASK_STATUSES, TASK_TYPES, type Session, type Task, type TaskStatus, type TaskType } from '@ainstorm/core';
-import { Ban, CornerDownRight, Play, SquareCheck, X } from '@lucide/vue';
+import { ArrowRightLeft, Ban, CornerDownRight, Play, SquareCheck, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useTaskActions } from '../composables/useTaskActions.ts';
 import { useMapStore } from '../stores/map.ts';
 import { useTaskSelectionStore } from '../stores/taskSelection.ts';
 import MoveTaskDialog from './MoveTaskDialog.vue';
+import TransferSessionDialog from './TransferSessionDialog.vue';
 
 // Actions on the tasks ticked in the tree; each one is a single change with one Undo
 const props = defineProps<{ session: Session }>();
@@ -13,6 +14,7 @@ const map = useMapStore();
 const picked = useTaskSelectionStore();
 const actions = useTaskActions();
 const moving = ref(false);
+const transferring = ref(false);
 
 const tasks = computed(() => picked.ids.map(id => map.task(id)).filter((t): t is Task => t !== undefined && t.archivedAt === null));
 const runnable = computed(() => tasks.value.filter(canRun));
@@ -21,6 +23,7 @@ const runnable = computed(() => tasks.value.filter(canRun));
 watch(() => props.session.id, () => picked.clear());
 
 const run = () => actions.runMany(tasks.value, props.session, () => picked.clear());
+const transfer = (to: Session | null) => actions.transferMany(tasks.value, props.session, to, () => picked.clear());
 
 // Areas can only be ones the project knows; removing offers those the ticked tasks have
 const knownAreas = computed(() => projectAreas(map.snapshot, props.session.projectKey));
@@ -67,10 +70,17 @@ const setStatus = (e: Event) => actions.setStatusMany(tasks.value, choice(e) as 
         </optgroup>
       </select>
       <button type="button" class="btn sm" @click="moving = true"><CornerDownRight :size="13" aria-hidden="true" /> {{ $t('bulk.move') }}</button>
+      <button type="button" class="btn sm" :title="$t('bulk.transferHelp')" @click="transferring = true">
+        <ArrowRightLeft :size="13" aria-hidden="true" /> {{ $t('bulk.transfer') }}
+      </button>
       <button type="button" class="btn sm drop" @click="actions.setStatusMany(tasks, 'dropped')"><Ban :size="13" aria-hidden="true" /> {{ $t('bulk.drop') }}</button>
       <button type="button" class="btn sm" @click="picked.clear()"><X :size="13" aria-hidden="true" /> {{ $t('bulk.clear') }}</button>
     </div>
-    <MoveTaskDialog v-if="moving" :tasks="tasks" @close="moving = false" />
+    <!-- Out of the bar: it is sticky with a z-index of its own, so dialogs in it would stay below the bottom navigation -->
+    <Teleport to="body">
+      <MoveTaskDialog v-if="moving" :tasks="tasks" @close="moving = false" />
+      <TransferSessionDialog v-if="transferring" :tasks="tasks" :from="session" @close="transferring = false" @pick="transfer" />
+    </Teleport>
   </section>
 </template>
 

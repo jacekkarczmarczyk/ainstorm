@@ -58,18 +58,20 @@ const promptLabel = (sessionTitle: string | null) => (sessionTitle ? t('dialog.p
 
 <template>
   <AppModal v-if="change" :key="change.changeId" :title="change.title" tone="claude" @close="dialog.close()">
-    <p v-if="change.tasks.length === 1" class="task"><span class="tid">{{ change.task.id }}</span> {{ change.task.title }}</p>
-    <ul v-else class="tasks">
-      <li v-for="x in change.tasks" :key="x.id" class="task"><span class="tid">{{ x.id }}</span> {{ x.title }}</li>
-    </ul>
+    <template v-if="change.listTasks">
+      <p v-if="change.tasks.length === 1" class="task"><span class="tid">{{ change.task.id }}</span> {{ change.task.title }}</p>
+      <ul v-else class="tasks">
+        <li v-for="x in change.tasks" :key="x.id" class="task"><span class="tid">{{ x.id }}</span> {{ x.title }}</li>
+      </ul>
+    </template>
     <p v-if="change.description" class="desc">{{ change.description }}</p>
     <p v-if="change.warning" class="warning"><TriangleAlert :size="16" aria-hidden="true" /> {{ change.warning }}</p>
 
     <p v-if="pasteOnly" class="paste">
       <ClipboardPaste :size="16" aria-hidden="true" />
-      {{ change.prompts[0]?.session ? $t('dialog.pasteInto', { session: change.prompts[0].session.title }) : $t('dialog.pasteNewSession') }}
+      {{ change.prompts[0]?.session ? $t('dialog.pasteInto', { session: change.prompts[0].session.title }) : change.pasteHint ?? $t('dialog.pasteNewSession') }}
     </p>
-    <p v-if="pasteOnly" class="help">{{ $t('dialog.pasteRecords') }}</p>
+    <p v-if="pasteOnly && !change.pasteHint" class="help">{{ $t('dialog.pasteRecords') }}</p>
     <!-- Starting a code task accepts its commit message: it can be corrected here, before the prompt is pasted -->
     <section v-if="runTasks.length" class="commits">
       <div v-for="task in runTasks" :key="task.id">
@@ -108,7 +110,8 @@ const promptLabel = (sessionTitle: string | null) => (sessionTitle ? t('dialog.p
 <style scoped>
 p { margin: 0; }
 .task { font-weight: 500; }
-.tasks { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; max-height: 180px; overflow: auto; }
+/* No scrolling of its own: in the scrolling content it would be squeezed to a few pixels when space runs short */
+.tasks { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
 .desc { color: var(--muted); }
 .warning { display: flex; gap: 8px; align-items: flex-start; color: var(--s-blocked); font-weight: 500; }
 .check { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }

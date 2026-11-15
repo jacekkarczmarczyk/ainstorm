@@ -1,6 +1,6 @@
 import { PROMPT_PHRASES, type PromptLanguage, type PromptPhrases } from './promptLanguages.ts';
 import type { IssueDraft } from './github.ts';
-import type { Task, TaskStatus } from './model.ts';
+import type { Session, Task, TaskStatus } from './model.ts';
 import { shortId } from './text.ts';
 
 /**
@@ -68,6 +68,8 @@ export type PromptKind =
   | { kind: 'moveMany'; tasks: readonly Task[]; to: Task | null }
   | { kind: 'typeMany'; tasks: readonly Task[]; type: string | null }
   | { kind: 'areaMany'; tasks: readonly Task[]; area: string; on: boolean }
+  /** Tasks moved from one session to another; without a target, to the session the prompt is pasted into */
+  | { kind: 'transferMany'; tasks: readonly Task[]; from: Session; to: Session | null }
   /** A task the user added; with run, the session is asked to start it */
   | { kind: 'create'; task: Task; parent: Task | null; run: boolean }
   | { kind: 'edit'; task: Task };
@@ -85,7 +87,7 @@ function fill(template: string, values: Record<string, string | number>): string
   return template.replace(/\{(\w+)\}/g, (all, name: string) => (name in values ? String(values[name]) : all));
 }
 
-function render(p: PromptKind, l: PromptPhrases, ref: (t: Task) => string, q: (s: string) => string): string {
+function render(p: PromptKind, l: PromptPhrases, ref: (t: Task) => string, q: (s: string) => string, target: PromptTarget): string {
   const s = l.status;
   switch (p.kind) {
     case 'status': return fill(l.statusChanged, { task: ref(p.task), from: s[p.from], to: s[p.to] });
@@ -140,6 +142,15 @@ function render(p: PromptKind, l: PromptPhrases, ref: (t: Task) => string, q: (s
       ...p.tasks.map(t => `- ${ref(t)}`),
       l.statusManyOther,
     ].join('\n');
+    case 'transferMany': {
+      // The session the tasks leave is told to let them go; the one they come to (or the one it is pasted into) takes them over
+      const name = (s: Session) => `${l.quotes[0]}${quoteSafe(s.title, 100)}${l.quotes[1]}`;
+      const leaving = target.sessionId !== null && target.sessionId === p.from.id;
+      const intro = leaving
+        ? fill(l.transferOut, { to: p.to ? name(p.to) : '?' })
+        : fill(p.to ? l.transferIn : l.transferNew, { from: name(p.from) });
+      return [intro, ...p.tasks.map(t => `- ${ref(t)}`), leaving ? l.transferOutOutro : l.transferInOutro].join('\n');
+    }
     case 'decide': {
       if (p.approve === null) return fill(l.decideAnswer, { task: ref(p.task), answer: q(p.note) });
       const text = fill(p.approve ? l.decideYes : l.decideNo, { task: ref(p.task) });
@@ -157,7 +168,7 @@ export function buildPrompt(prompt: PromptKind, changeId: number, target: Prompt
   const l = PROMPT_PHRASES[language];
   const ref = (t: Task) => `${t.id} ${l.quotes[0]}${quoteSafe(t.title)}${l.quotes[1]}`;
   const q = (text: string) => quoteSafe(text, 2000);
-  return `${formatHeader(changeId, target)}\n${render(prompt, l, ref, q)}`;
+  return `${formatHeader(changeId, target)}\n${render(prompt, l, ref, q, target)}`;
 }
 
 /**

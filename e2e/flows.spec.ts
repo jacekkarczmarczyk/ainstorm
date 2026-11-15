@@ -56,6 +56,37 @@ test('an action without confirmation applies at once and offers "Always ask"', a
   await expect(dialog(page)).toBeVisible();
 });
 
+test('ticked tasks move to another session at once, or wait for the prompt pasted into a session not in the map', async ({ page }) => {
+  await page.goto(`${SHOP}/tree`);
+  const bar = page.getByRole('region', { name: 'Selected tasks' });
+  const tick = (id: string) => row(page, id).getByRole('checkbox', { name: `Select ${id}` }).check();
+  await tick('PRJ-44');
+  await tick('PRJ-45');
+  await bar.getByRole('button', { name: 'To session…' }).click();
+  const picker = page.getByRole('dialog', { name: 'Move 2 task(s) to session…' });
+  // A new session is picked by default; another one comes from the list, as in the header
+  await picker.getByRole('button', { name: 'Session: New session (not in the map yet)' }).click();
+  await picker.getByRole('option', { name: /Session 3c9e1f20/ }).click();
+  await picker.getByRole('button', { name: 'Next' }).click();
+  // One prompt, for the session taking them over; the one they leave is told with its next message
+  await expect(dialog(page).locator('pre')).toHaveCount(1);
+  await expect(dialog(page).locator('pre')).toContainText('do not start any of them');
+  await expect(dialog(page).getByText('„Cart and payments rework”, the session the tasks leave, is told with its next message.')).toBeVisible();
+  await dialog(page).getByRole('button', { name: 'Move', exact: true }).click();
+  await expect(row(page, 'PRJ-44')).toHaveCount(0);
+  await toast(page).getByRole('button', { name: 'Undo' }).click();
+  await expect(row(page, 'PRJ-44')).toBeVisible();
+
+  await tick('PRJ-44');
+  await bar.getByRole('button', { name: 'To session…' }).click();
+  await page.getByRole('dialog', { name: 'Move 1 task(s) to session…' }).getByRole('button', { name: 'Next' }).click();
+  await expect(dialog(page).getByText(/Paste the prompt into the Claude session/)).toBeVisible();
+  await dialog(page).getByRole('button', { name: 'Copy and record' }).click();
+  expect(await clipboardText(page)).toMatch(/^\[ainstorm #\d+ · project · shop\]\r?\nI am moving these tasks from session “Cart and payments rework” to this session/);
+  // The task stays here until the prompt is pasted
+  await expect(row(page, 'PRJ-44')).toBeVisible();
+});
+
 test('"Don’t ask again" in the dialog turns confirmation off for that action', async ({ page }) => {
   await page.goto(`${SHOP}/tree`);
   await markDone(page, 'PRJ-44');

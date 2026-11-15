@@ -5,6 +5,20 @@ import { pathTo, type TaskIndex } from './tree.ts';
 
 export const isSessionOpen = (s: Session) => s.archivedAt === null && s.status !== 'ended';
 
+/** A move of tasks into a session not chosen yet, until its prompt is pasted (event text) */
+const PENDING_TRANSFER = 'to a new session from ';
+export const pendingTransferText = (from: Session) => `${PENDING_TRANSFER}„${from.title}”`;
+export const isPendingTransfer = (e: Pick<MapEvent, 'type' | 'text'>) => e.type === 'session' && e.text.startsWith(PENDING_TRANSFER);
+const TRANSFERRED = 'moved from ';
+export const transferText = (from: Session, to: Session) => `${TRANSFERRED}„${from.title}” to „${to.title}”`;
+/** The user moved the task from one session to another (as opposed to adding it to one or taking it out of one) */
+export const isTransfer = (e: Pick<MapEvent, 'type' | 'text' | 'actor'>) => e.type === 'session' && e.actor === 'user' && e.text.startsWith(TRANSFERRED);
+
+/** The task leaves one session for another (it may already be in that one) */
+export function transferTask(t: Task, fromId: string, toId: string) {
+  t.sessionIds = [...t.sessionIds.filter(x => x !== fromId && x !== toId), toId];
+}
+
 /** The status shown for a session: an archived one shows that instead of its last status */
 export const sessionStatusKey = (s: Pick<Session, 'archivedAt' | 'status'>): SessionStatus | 'archived' => (s.archivedAt ? 'archived' : s.status);
 
@@ -145,10 +159,11 @@ export function queuedRuns(tasks: readonly Task[], events: readonly MapEvent[], 
   // task after it
   const latest = new Map<string, MapEvent>();
   for (const e of events) {
-    if (e.type !== 'run') continue;
-    const request = e.actor === 'user' ? e.changeId !== null && RUN_REQUEST.test(e.text) : e.sessionId !== null && SESSION_QUEUE.test(e.text);
+    if (e.type !== 'run' && !isTransfer(e)) continue;
+    const request = e.type === 'run' && (e.actor === 'user' ? e.changeId !== null && RUN_REQUEST.test(e.text) : e.sessionId !== null && SESSION_QUEUE.test(e.text));
     if (request) latest.set(e.taskId, e);
-    else if (e.actor !== 'user' && e.sessionId !== null && (latest.get(e.taskId)?.id ?? Infinity) < e.id) latest.delete(e.taskId);
+    // Started by the session, or moved to another session (which only takes it over, not the request)
+    else if ((isTransfer(e) || (e.actor !== 'user' && e.sessionId !== null)) && (latest.get(e.taskId)?.id ?? Infinity) < e.id) latest.delete(e.taskId);
   }
   const waiting = (id: string) => {
     const t = byId.get(id);

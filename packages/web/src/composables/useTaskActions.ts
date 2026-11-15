@@ -35,7 +35,11 @@ interface ChangeSpec {
   doneText: string;
   /** Run, Pause and Go ahead are prompts to paste: without a dialog they are copied straight away */
   copyNow?: boolean;
+  /** A prompt to paste without a session is copied as it is, not as a command that starts a new session */
+  pasteHint?: string;
   session?: Session | null;
+  /** The sessions told about the change, when they are not the ones working on its tasks */
+  sessions?: Session[];
   /** Called once the change is applied (e.g. to clear the ticked tasks) */
   onDone?: () => void;
 }
@@ -63,12 +67,12 @@ export function useTaskActions() {
 
   /** One prompt per open session working on the task; without one, a project-wide prompt (or a command that starts a session). */
   function preparePrompts(spec: ChangeSpec, changeId: number): PreparedPrompt[] {
-    const sessions = spec.session !== undefined
+    const sessions = spec.sessions ?? (spec.session !== undefined
       ? (spec.session ? [spec.session] : [])
-      : [...new Map((spec.tasks ?? [spec.task]).flatMap(targetsFor).map(s => [s.id, s])).values()];
+      : [...new Map((spec.tasks ?? [spec.task]).flatMap(targetsFor).map(s => [s.id, s])).values()]);
     if (sessions.length === 0) {
       const text = buildPrompt(spec.prompt, changeId, { sessionId: null, projectName: projectName(spec.task) }, ui.promptLanguage);
-      return [{ session: null, text: spec.copyNow ? newSessionCommand(text) : text }];
+      return [{ session: null, text: spec.copyNow && spec.pasteHint === undefined ? newSessionCommand(text) : text }];
     }
     return sessions.map(session => ({ session, text: buildPrompt(spec.prompt, changeId, { sessionId: session.id, projectName: projectName(spec.task) }, ui.promptLanguage) }));
   }
@@ -107,7 +111,7 @@ export function useTaskActions() {
       dialog.open({
         action: spec.action, task: spec.task, tasks: spec.tasks ?? [spec.task], changeId, title: spec.title, description: spec.description ?? '',
         warning: spec.warning ?? null, confirmLabel: spec.confirmLabel, danger: spec.danger ?? false, prompts, targets,
-        pasteOnly: spec.copyNow ?? false,
+        pasteOnly: spec.copyNow ?? false, pasteHint: spec.pasteHint ?? null, listTasks: spec.prompt.kind !== 'transferMany',
         runTasks: spec.prompt.kind === 'runMany' ? [...spec.prompt.tasks] : spec.prompt.kind === 'run' ? [spec.task] : [],
         commit: notify => commit(notify),
       });
@@ -364,6 +368,52 @@ export function useTaskActions() {
   }
 
   /**
+   * Move the ticked tasks from the session being viewed to another open one (both are told), or with to null to the
+   * session the copied prompt is pasted into, also one not yet in the map (the tasks move then). Only the ticked tasks
+   * move: subtasks left behind and tasks in progress, running or queued are warned about, not refused.
+   */
+  const movable = (from: Session) => (x: Task) => x.sessionIds.includes(from.id) && x.archivedAt === null;
+
+  /** What the session picker of a move warns about: subtasks left behind in the source, and tasks in progress, running or queued */
+  function transferWarnings(all: Task[], from: Session): string[] {
+    const tasks = all.filter(movable(from));
+    const ticked = new Set(tasks.map(x => x.id));
+    const left = [...new Map(tasks.flatMap(x => descendants(map.index, x.id))
+      .filter(d => !ticked.has(d.id) && d.archivedAt === null && d.sessionIds.includes(from.id))
+      .map(d => [d.id, d])).values()];
+    const busy = tasks.filter(x => x.status === 'in_progress' || x.id === from.runningTaskId || map.queued.has(x.id));
+    const list = (xs: Task[]) => xs.map(x => `${x.id} „${x.title}”`).join(', ');
+    return [
+      left.length ? t('bulk.transferSubtasks', { list: list(left) }) : '',
+      busy.length ? t('bulk.transferBusy', { list: list(busy) }) : '',
+    ].filter(Boolean);
+  }
+
+  function transferMany(all: Task[], from: Session, to: Session | null, onDone?: () => void) {
+    return performMany(all, movable(from), (tasks, taskIds) => {
+      // Warnings were shown in the session picker
+      const base = {
+        action: 'transfer' as const, prompt: { kind: 'transferMany' as const, tasks, from, to },
+        command: (notify: boolean): Command => ({ type: 'transferTasks', taskIds, fromSessionId: from.id, toSessionId: to?.id ?? null, notify }),
+        ...(onDone ? { onDone } : {}),
+      };
+      if (!to) {
+        return {
+          ...base, title: t('bulk.transferNewTitle', { n: tasks.length }), confirmLabel: t('dialog.copyAndRecord'),
+          doneText: t('bulk.transferNewDone', { n: tasks.length }), copyNow: true, pasteHint: t('bulk.transferPaste'), session: null,
+        };
+      }
+      // One prompt, for the session that takes them over; the source learns it with its next hook (after the prompt is
+      // pasted, when it is copied)
+      return {
+        ...base, title: t('bulk.transferTitle', { n: tasks.length, session: to.title }), confirmLabel: t('bulk.transferConfirm'),
+        description: isSessionOpen(from) ? t('bulk.transferSource', { session: from.title }) : '',
+        doneText: t('bulk.transferDone', { n: tasks.length, session: to.title }), sessions: [to],
+      };
+    });
+  }
+
+  /**
    * A task the user adds to a session (under a parent or at the top level). "Add" tells the session about it;
    * "Add and run" also asks the session to start it, as a prompt to paste like Run.
    */
@@ -434,5 +484,5 @@ export function useTaskActions() {
     toasts.show(t(on ? 'toast.addedToSession' : 'toast.takenOutOfSession', { id: task.id, session: session.title }), undoAction(changeId));
   }
 
-  return { targetsFor, createTask, setTaskSession, editTask, setStatus, toggleDone, onStatusInput, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, runMany, requestIssue, markCriteria, checkCriteria, requestSession, setFocus, clearFocus, setSessionArchived };
+  return { targetsFor, createTask, setTaskSession, editTask, setStatus, toggleDone, onStatusInput, remove, drop, promote, move, answer, recheck, decide, setCommitMessage, setStatusMany, setTypeMany, setAreaMany, moveMany, transferMany, transferWarnings, runMany, requestIssue, markCriteria, checkCriteria, requestSession, setFocus, clearFocus, setSessionArchived };
 }

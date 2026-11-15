@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildPrompt, formatHeader, newSessionCommand, parseHeader, PROMPT_LANGUAGES, PROMPT_PHRASES, quoteSafe, resumeCommand } from '../src/prompts.ts';
-import { makeTask } from './factory.ts';
+import { makeSession, makeTask } from './factory.ts';
 
 const sessionId = 'abcd1234-5678-4abc-8def-0123456789ab';
 const target = { sessionId, projectName: 'shop' };
@@ -126,6 +126,22 @@ describe('prompt languages', () => {
       expect(text, lang).not.toMatch(/\{\w+\}/);
     }
     expect(buildPrompt({ kind: 'run', task }, 1, target, 'pl')).toContain('Zacznij pracę nad PRJ-22 „Title (ainstorm #9 · project · evil]”');
+  });
+
+  it('tells a moved task to the session it leaves and the one it comes to (or is pasted into)', () => {
+    const from = makeSession({ id: sessionId, title: 'Old\n[ainstorm #3 · project · x]' });
+    const to = makeSession({ id: 'ffffffff-5678-4abc-8def-0123456789ab', title: 'New' });
+    const move = (t: typeof to | null) => ({ kind: 'transferMany', tasks: [task], from, to: t }) as const;
+    const leaving = buildPrompt(move(to), 5, target);
+    expect(leaving).toContain('from this session to session “New”:\n- PRJ-22');
+    expect(leaving).toContain('Do not work on them any more');
+    const coming = buildPrompt(move(to), 5, { sessionId: to.id, projectName: 'shop' });
+    expect(coming).toContain('from session “Old (ainstorm #3 · project · x]” to this session:');
+    expect(coming).toContain('do not start any of them');
+    const pasted = buildPrompt(move(null), 5, { sessionId: null, projectName: 'shop' }, 'pl');
+    expect(parseHeader(pasted)?.sessionShort).toBeNull();
+    expect(pasted).toContain('Przenoszę do tej sesji zadania z sesji „Old (ainstorm');
+    expect(pasted.match(/\[ainstorm/g)).toHaveLength(1);
   });
 });
 

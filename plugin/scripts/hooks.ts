@@ -109,7 +109,7 @@ export async function runHook(input: HookInput, deps: HookDeps): Promise<HookOut
 
   switch (event) {
     case 'UserPromptSubmit': {
-      const { block } = await api<{ block: string | null }>('POST', `${session}/prompt`, { prompt: input.prompt ?? '' });
+      const { block } = await api<{ block: string | null }>('POST', `${session}/prompt`, { prompt: input.prompt ?? '', cwd: input.cwd ?? '' });
       if (block) return { decision: 'block', reason: block };
       // A prompt from the map for no particular session (Run for a task without one, pasted into a new session) adds
       // this session to the map

@@ -4,12 +4,14 @@ import { EngineError, MapEngine } from '../src/engine.ts';
 import type { MapSnapshot } from '../src/model.ts';
 import { buildPrompt } from '../src/prompts.ts';
 import { applySessionOp, checkPrompt, nextTaskId, projectAreas, takeDeliveries } from '../src/sessionOps.ts';
+import { queuedRuns } from '../src/sessions.ts';
 import { needsUser } from '../src/status.ts';
 import { makeProject, makeTask } from './factory.ts';
 
 const NOW = '2026-11-06T12:00:00.000Z';
 const S1 = '11111111-1111-4111-8111-111111111111';
 const S2 = '22222222-2222-4222-8222-222222222222';
+const S3 = '33333333-3333-4333-8333-333333333333';
 const HOME = { home: 'C:/Users/me', windows: true };
 
 function setup() {
@@ -392,11 +394,119 @@ describe('prompt check', () => {
     expect(checkPrompt(engine, S1, prompt).block).toMatch(/was undone in the map/);
   });
 
+  it('blocks a project prompt in a session not in the map whose folder is another project', () => {
+    const { engine } = prompted();
+    const { changeId } = engine.execute({ type: 'requestRunMany', taskIds: ['PRJ-1'], sessionId: null });
+    const prompt = buildPrompt({ kind: 'runMany', tasks: [engine.task('PRJ-1')] }, changeId, { sessionId: null, projectName: 'shop' });
+    expect(checkPrompt(engine, S3, prompt, { cwd: 'C:/Users/me/dev/pp', paths: HOME }).block).toMatch(/works in pp/);
+    expect(checkPrompt(engine, S3, prompt, { cwd: 'C:/Users/me/dev/shop/shop', paths: HOME }).block).toBeNull();
+  });
+
   it('tells a prompt of a dialog closed without confirming from an unknown change', () => {
     const { engine } = prompted();
     const reserved = engine.reserveChangeId();
     const header = (id: number) => `[ainstorm #${id} · session ${S1.slice(0, 8)} · shop]\nx`;
     expect(checkPrompt(engine, S1, header(reserved)).block).toMatch(/never confirmed in the map/);
     expect(checkPrompt(engine, S1, header(reserved + 50)).block).toMatch(/does not exist in the map/);
+  });
+});
+
+describe('moving tasks to another session', () => {
+  const place = { cwd: 'C:/Users/me/dev/shop/shop', paths: HOME };
+  const text = (to: string) => `moved from „Session 11111111” to „${to}”`;
+
+  function inSource() {
+    const { engine, op } = setup();
+    op(S1, { op: 'updateTask', taskId: 'PRJ-1', title: 'Jeden' });
+    op(S1, { op: 'updateTask', taskId: 'PRJ-2', title: 'Dwa' });
+    op(S1, { op: 'setRunning', taskId: 'PRJ-1' });
+    return { engine, op };
+  }
+
+  /** Into a session not chosen yet: the prompt to paste */
+  function toNew() {
+    const { engine, op } = inSource();
+    const from = engine.session(S1);
+    const { changeId } = engine.execute({ type: 'transferTasks', taskIds: ['PRJ-1', 'PRJ-2'], fromSessionId: S1, toSessionId: null, notify: true });
+    const prompt = buildPrompt({ kind: 'transferMany', tasks: [engine.task('PRJ-1'), engine.task('PRJ-2')], from, to: null }, changeId, { sessionId: null, projectName: 'shop' });
+    return { engine, op, changeId, prompt };
+  }
+
+  it('moves them at once to a session in the map, tells both, and the source no longer runs or queues them', () => {
+    const { engine, op } = inSource();
+    op(S2, { op: 'start', cwd: place.cwd, source: 'startup', register: true });
+    engine.execute({ type: 'requestRunMany', taskIds: ['PRJ-2'], sessionId: S1 });
+    expect(queuedRuns(engine.state.tasks, engine.state.events, new Map()).has('PRJ-2')).toBe(true);
+
+    const { changeId } = engine.execute({ type: 'transferTasks', taskIds: ['PRJ-1', 'PRJ-2'], fromSessionId: S1, toSessionId: S2, notify: true });
+    expect(engine.task('PRJ-1').sessionIds).toEqual([S2]);
+    expect(engine.task('PRJ-2').sessionIds).toEqual([S2]);
+    expect(engine.session(S1).runningTaskId).toBeNull();
+    expect(engine.state.events.at(-1)).toMatchObject({ type: 'session', text: text('Session 22222222'), delivery: { state: 'pending', sessionIds: [S1, S2] } });
+    expect(queuedRuns(engine.state.tasks, engine.state.events, new Map()).has('PRJ-2')).toBe(false);
+
+    engine.revert(changeId);
+    expect(engine.task('PRJ-1').sessionIds).toEqual([S1]);
+    expect(engine.session(S1).runningTaskId).toBe('PRJ-1');
+  });
+
+  it('with the prompt copied, tells the source once it is pasted into the session taking the tasks over', () => {
+    const { engine, op } = inSource();
+    op(S2, { op: 'start', cwd: place.cwd, source: 'startup', register: true });
+    const { changeId } = engine.execute({ type: 'transferTasks', taskIds: ['PRJ-1'], fromSessionId: S1, toSessionId: S2, notify: false });
+    expect(takeDeliveries(engine, S1).events).toHaveLength(0);
+    const prompt = buildPrompt(
+      { kind: 'transferMany', tasks: [engine.task('PRJ-1')], from: engine.session(S1), to: engine.session(S2) }, changeId, { sessionId: S2, projectName: 'shop' },
+    );
+    expect(checkPrompt(engine, S2, prompt, place).block).toBeNull();
+    expect(takeDeliveries(engine, S2).events).toHaveLength(0);
+    expect(takeDeliveries(engine, S1).events.map(e => e.text)).toEqual([text('Session 22222222')]);
+  });
+
+  it('refuses a move to the same session, of a task not in the source, or to a closed session', () => {
+    const { engine, op } = inSource();
+    op(S2, { op: 'start', cwd: place.cwd, source: 'startup', register: true });
+    const move = (taskIds: string[], to: string) => () => engine.execute({ type: 'transferTasks', taskIds, fromSessionId: S1, toSessionId: to, notify: true });
+    expect(move(['PRJ-1'], S1)).toThrow(/another session/);
+    expect(move(['PP-1'], S2)).toThrow(/another project/);
+    op(S2, { op: 'end' });
+    expect(move(['PRJ-1'], S2)).toThrow(/not open/);
+  });
+
+  it('moves nothing until the prompt is pasted, then into the session it is pasted into, added to the map', () => {
+    const { engine, prompt } = toNew();
+    expect(engine.task('PRJ-1').sessionIds).toEqual([S1]);
+    expect(checkPrompt(engine, S2, prompt, place).block).toBeNull();
+    expect(engine.session(S2)).toMatchObject({ projectKey: 'PRJ', runningTaskId: null });
+    expect(engine.task('PRJ-1').sessionIds).toEqual([S2]);
+    expect(engine.task('PRJ-2').sessionIds).toEqual([S2]);
+    expect(engine.session(S1).runningTaskId).toBeNull();
+    // The new session has it in the prompt; the source learns it with its next hook
+    expect(takeDeliveries(engine, S2).events).toHaveLength(0);
+    expect(takeDeliveries(engine, S1).events.map(e => e.text)).toEqual([text('Session 22222222'), text('Session 22222222')]);
+  });
+
+  it('refuses the prompt in the source, in another project or no project, a second time, and in another session once taken', () => {
+    const { engine, prompt, changeId } = toNew();
+    expect(checkPrompt(engine, S1, prompt, place).block).toMatch(/come from this session/);
+    expect(checkPrompt(engine, S2, prompt, { cwd: 'C:/Users/me/dev/pp', paths: HOME }).block).toMatch(/works in pp/);
+    expect(checkPrompt(engine, S2, prompt, { cwd: '/tmp/elsewhere', paths: HOME }).block).toMatch(/belongs to no project/);
+    expect(engine.state.sessions.some(s => s.id === S2)).toBe(false);
+    expect(checkPrompt(engine, S2, prompt, place).block).toBeNull();
+    expect(checkPrompt(engine, S2, prompt, place).block).toMatch(/already delivered/);
+    expect(checkPrompt(engine, S3, prompt, place).block).toMatch(/already taken over by session „Session 22222222”/);
+
+    // Undone after it was pasted: the tasks go back, the new session stays
+    engine.revert(changeId);
+    expect(engine.task('PRJ-1').sessionIds).toEqual([S1]);
+    expect(engine.session(S1).runningTaskId).toBe('PRJ-1');
+    expect(engine.session(S2).archivedAt).toBeNull();
+  });
+
+  it('refuses the prompt undone before it was pasted, and adds no session', () => {
+    const { engine, prompt, changeId } = toNew();
+    engine.revert(changeId);
+    expect(checkPrompt(engine, S2, prompt, place).block).toMatch(/was undone/);
+    expect(engine.state.sessions.some(s => s.id === S2)).toBe(false);
   });
 });

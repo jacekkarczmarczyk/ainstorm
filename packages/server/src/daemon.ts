@@ -92,9 +92,9 @@ export class Daemon {
     return deliveriesText(this.engine.state, events);
   }
 
-  /** UserPromptSubmit: block a copied prompt meant for another session, or already delivered. */
-  checkPrompt(sessionId: string, prompt: string): string | null {
-    const { block, record } = checkPrompt(this.engine, sessionId, prompt);
+  /** UserPromptSubmit: block a copied prompt meant for another session, or already delivered; cwd is the session's folder. */
+  checkPrompt(sessionId: string, prompt: string, cwd?: string): string | null {
+    const { block, record } = checkPrompt(this.engine, sessionId, prompt, cwd ? { cwd, paths: PATH_OPTIONS } : undefined);
     if (block === null) this.commit(record);
     return block;
   }
