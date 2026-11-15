@@ -111,7 +111,7 @@ export function useTaskActions() {
       dialog.open({
         action: spec.action, task: spec.task, tasks: spec.tasks ?? [spec.task], changeId, title: spec.title, description: spec.description ?? '',
         warning: spec.warning ?? null, confirmLabel: spec.confirmLabel, danger: spec.danger ?? false, prompts, targets,
-        pasteOnly: spec.copyNow ?? false, pasteHint: spec.pasteHint ?? null, listTasks: spec.prompt.kind !== 'transferMany',
+        pasteOnly: spec.copyNow ?? false, pasteHint: spec.pasteHint ?? null, listTasks: !['transferMany', 'move', 'moveMany'].includes(spec.prompt.kind),
         runTasks: spec.prompt.kind === 'runMany' ? [...spec.prompt.tasks] : spec.prompt.kind === 'run' ? [spec.task] : [],
         commit: notify => commit(notify),
       });

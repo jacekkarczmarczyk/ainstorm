@@ -160,7 +160,7 @@ export const enGB = {
   move: {
     open: 'Move…', title: 'Move {id} under…', search: 'Find a task by number or title…', topLevel: 'top level',
     topLevelOption: 'Top level of the session', current: 'current parent', confirm: 'Move', nothing: 'No task matches.',
-    help: 'Its own subtasks are not offered, so the tree cannot loop.',
+    help: 'Its own subtasks are not offered, so the tree cannot loop.', parent: 'Parent',
   },
   home: {
     working: 'In progress', forYou: 'For you', andMore: 'and {n} more', noSessions: 'No sessions in this project yet.',

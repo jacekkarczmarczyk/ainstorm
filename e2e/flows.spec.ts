@@ -446,14 +446,22 @@ test('a task moves under another parent, never under its own subtask', async ({ 
   await page.goto(`${SHOP}/tree/PRJ-1`);
   await panelMenu(page, 'Move…');
   const picker = page.getByRole('dialog', { name: 'Move PRJ-1 under…' });
-  await picker.getByRole('searchbox').fill('PRJ-45');
-  await expect(picker.getByText('No task matches.')).toBeVisible();
+  // The parent is picked from a list like the header's session picker; the tasks moved are listed above it
+  await expect(picker.getByRole('listitem').filter({ hasText: 'PRJ-1' })).toBeVisible();
+  await picker.getByRole('button', { name: /^Parent/ }).click();
+  await picker.getByRole('combobox').fill('PRJ-45');
+  await expect(picker.getByText('Nothing matches.')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(picker).toBeHidden();
 
   await page.goto(`${SHOP}/tree/PRJ-45`);
   await panelMenu(page, 'Move…');
-  await page.getByRole('dialog', { name: 'Move PRJ-45 under…' }).getByRole('button', { name: 'Top level of the session' }).click();
+  const second = page.getByRole('dialog', { name: 'Move PRJ-45 under…' });
+  await second.getByRole('button', { name: /^Parent/ }).click();
+  await second.getByRole('option', { name: /Top level of the session/ }).click();
+  await second.getByRole('button', { name: 'Next' }).click();
+  // The prompt lists the task; the confirm dialog does not list it again
+  await expect(dialog(page).locator('.task')).toHaveCount(0);
   await dialog(page).getByRole('button', { name: 'Move', exact: true }).click();
   await expect(row(page, 'PRJ-45')).toHaveClass(/\broot\b/);
 });

@@ -1,76 +1,87 @@
 <script setup lang="ts">
-import { matchesQuery, pathTo, possibleParents, type Task } from '@ainstorm/core';
-import { CornerDownRight } from '@lucide/vue';
+import { pathTo, possibleParents, type Task } from '@ainstorm/core';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useScopedIndex } from '../composables/useScopedIndex.ts';
 import { useTaskActions } from '../composables/useTaskActions.ts';
 import AppModal from './AppModal.vue';
-import StatusPill from './StatusPill.vue';
+import PickerDropdown, { type PickerItem } from './PickerDropdown.vue';
 import TaskIdLabel from './TaskIdLabel.vue';
 
-// Pick a new parent within the session; the tasks themselves and their subtasks are never offered.
-// Several tasks (ticked in the tree) move together, in one change.
+// Pick a new parent within the session, in a list like the header's session picker; the tasks themselves and their
+// subtasks are never offered. Several tasks (ticked in the tree) move together, in one change. The tasks moved are
+// listed here, so the confirm dialog after it shows only the prompt.
 const props = defineProps<{ tasks: Task[] }>();
 const emit = defineEmits<{ close: [] }>();
 const scoped = useScopedIndex();
 const actions = useTaskActions();
-const query = ref('');
+const { t } = useI18n();
 
+const TOP = 'top';
 const task = computed(() => props.tasks[0]!);
 const many = computed(() => props.tasks.length > 1);
 // The current parent is only meaningful when all the tasks share it
-const currentParent = computed(() => (props.tasks.every(t => t.parentId === task.value.parentId) ? task.value.parentId : undefined));
-const candidates = computed(() => {
-  const allowed = props.tasks.slice(1).map(t => new Set(possibleParents(scoped.value, t.id).map(p => p.id)));
-  return possibleParents(scoped.value, task.value.id)
-    .filter(p => allowed.every(ids => ids.has(p.id)))
-    .filter(p => matchesQuery(query.value, p.id, p.title))
-    .slice(0, 200);
-});
-const pathOf = (t: Task) => pathTo(scoped.value, t.id).slice(0, -1).map(a => a.id).join(' › ');
+const currentParent = computed(() => (props.tasks.every(x => x.parentId === task.value.parentId) ? task.value.parentId : undefined));
+const current = computed(() => (currentParent.value === undefined ? null : currentParent.value ?? TOP));
+const picked = ref('');
 
-function pick(parent: Task | null) {
+const candidates = computed(() => {
+  const allowed = props.tasks.slice(1).map(x => new Set(possibleParents(scoped.value, x.id).map(p => p.id)));
+  return possibleParents(scoped.value, task.value.id).filter(p => allowed.every(ids => ids.has(p.id)));
+});
+const pathOf = (x: Task) => pathTo(scoped.value, x.id).slice(0, -1).map(a => a.id).join(' › ');
+const currentHint = (value: string) => (value === current.value ? t('move.current') : '');
+const items = computed<PickerItem[]>(() => [
+  { value: TOP, label: t('move.topLevelOption'), hint: currentHint(TOP) },
+  ...candidates.value.map(c => ({
+    value: c.id, code: c.id, label: c.title,
+    hint: [currentHint(c.id), pathOf(c), t(`status.${c.status}`)].filter(Boolean).join(' · '),
+  })),
+]);
+
+function next() {
+  if (!picked.value || picked.value === current.value) return;
+  const parent = picked.value === TOP ? null : candidates.value.find(c => c.id === picked.value) ?? null;
   emit('close');
   void (many.value ? actions.moveMany(props.tasks, parent) : actions.move(task.value, parent));
 }
 </script>
 
 <template>
-  <AppModal :title="many ? $t('bulk.moveDialogTitle', { n: tasks.length }) : $t('move.title', { id: task.id })" :width="640" @close="emit('close')">
-    <label class="sr-only" for="move-search">{{ $t('move.search') }}</label>
-    <input id="move-search" v-model="query" type="search" class="input search" :placeholder="$t('move.search')" autocomplete="off" autofocus>
-    <p class="help">{{ $t('move.help') }}</p>
-    <ul class="list">
-      <li v-if="!query">
-        <button type="button" class="option" :disabled="currentParent === null" @click="pick(null)">
-          <CornerDownRight :size="14" aria-hidden="true" /> {{ $t('move.topLevelOption') }}
-          <span v-if="currentParent === null" class="current">{{ $t('move.current') }}</span>
-        </button>
-      </li>
-      <li v-for="c in candidates" :key="c.id">
-        <button type="button" class="option" :disabled="c.id === currentParent" @click="pick(c)">
-          <TaskIdLabel :id="c.id" />
-          <span class="title">{{ c.title }}<span v-if="pathOf(c)" class="path">{{ pathOf(c) }}</span></span>
-          <span v-if="c.id === currentParent" class="current">{{ $t('move.current') }}</span>
-          <StatusPill :status="c.status" />
-        </button>
-      </li>
+  <AppModal :title="many ? $t('bulk.moveDialogTitle', { n: tasks.length }) : $t('move.title', { id: task.id })" :width="560" @close="emit('close')">
+    <ul class="tasks">
+      <li v-for="x in tasks" :key="x.id"><TaskIdLabel :id="x.id" /> {{ x.title }}</li>
     </ul>
-    <p v-if="!candidates.length" class="empty">{{ $t('move.nothing') }}</p>
+    <div class="field">
+      <span class="label">{{ $t('move.parent') }}</span>
+      <PickerDropdown v-model="picked" :label="$t('move.parent')" :items="items" :placeholder="$t('move.search')" :width="460" />
+    </div>
+    <p class="help">{{ $t('move.help') }}</p>
+    <template #footer>
+      <div class="actions">
+        <button type="button" class="btn" @click="emit('close')">{{ $t('dialog.cancel') }}</button>
+        <button type="button" class="btn primary-action claude" :disabled="!picked || picked === current" @click="next">{{ $t('bulk.transferNext') }}</button>
+      </div>
+    </template>
   </AppModal>
 </template>
 
 <style scoped>
-.search { width: 100%; }
-.help { margin: 0; font-size: var(--fs-s); color: var(--muted); }
-.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-.option {
-  width: 100%; display: flex; gap: 8px; align-items: center; text-align: left; border: 0; background: none;
-  padding: 6px 8px; border-radius: 5px; cursor: pointer;
+/* Many ticked tasks scroll in their own list: the dialog's content does not scroll here (see below) */
+.tasks { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; font-weight: 500; max-height: 200px; overflow: auto; }
+.field { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.label { font-weight: 500; }
+/* The list floats over the dialog, as in the header, and the dialog keeps its size; the corners stay round without
+   the clipping */
+:deep(.modal) { overflow: visible; resize: none; }
+:deep(.content) { overflow: visible; }
+:deep(.titlebar) { border-radius: 8px 8px 0 0; }
+:deep(.footer) { border-radius: 0 0 8px 8px; }
+.field :deep(.picker) { flex: 1; min-width: 0; }
+.field :deep(.trigger) { max-width: 100%; }
+@media (min-width: 761px) {
+  .field :deep(.dd-pop) { right: 0; width: auto !important; max-height: 360px; }
 }
-.option:hover:not(:disabled) { background: var(--sunk); }
-.option:disabled { cursor: default; opacity: .6; }
-.title { flex: 1; min-width: 0; display: grid; }
-.path { font-family: var(--f-mono); font-size: var(--fs-xs); color: var(--muted); }
-.current { font-size: var(--fs-xs); color: var(--muted); font-style: italic; }
+.help { margin: 0; font-size: var(--fs-s); color: var(--muted); }
+.actions { display: flex; gap: 8px; justify-content: flex-end; }
 </style>

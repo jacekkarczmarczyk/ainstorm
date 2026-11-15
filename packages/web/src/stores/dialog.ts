@@ -27,7 +27,7 @@ export interface PendingChange {
   targets: Session[];
   /** Run, Pause and Go ahead are never delivered automatically: the prompt must be pasted into the session */
   pasteOnly: boolean;
-  /** The tasks are listed above the prompts (not for a move: its prompt lists them anyway) */
+  /** The tasks are listed above the prompts (not for moves: their pickers listed them, and the prompt does too) */
   listTasks: boolean;
   /** Where to paste a prompt meant for no session in the map (instead of starting a new session with it) */
   pasteHint: string | null;
