@@ -98,7 +98,8 @@ export const enGB = {
     transferConfirm: 'Move', transferSource: '„{session}”, the session the tasks leave, is told with its next message.', transferDone: '{n} task(s) moved to „{session}”',
     transferNewDone: 'Prompt copied. The {n} task(s) move when you paste it into a Claude session in the project folder.',
     transferPaste: 'Paste the prompt into the Claude session that should take the tasks over (one not yet in the map, started in the project folder). The tasks stay here until then.',
-    transferSubtasks: 'Not ticked, so they stay in this session: {list}.',
+    transferSubtasks: 'Some of their subtasks are not ticked, so they stay in this session: {list}.',
+    transferSubtasksOf: '{task} ({n} subtask not ticked) | {task} ({n} subtasks not ticked)',
     transferBusy: 'In progress, running or queued here: {list}. They are moved anyway; the new session takes them over without starting or queuing them.',
   },
   queue: {

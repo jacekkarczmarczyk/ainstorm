@@ -378,13 +378,15 @@ export function useTaskActions() {
   function transferWarnings(all: Task[], from: Session): string[] {
     const tasks = all.filter(movable(from));
     const ticked = new Set(tasks.map(x => x.id));
-    const left = [...new Map(tasks.flatMap(x => descendants(map.index, x.id))
-      .filter(d => !ticked.has(d.id) && d.archivedAt === null && d.sessionIds.includes(from.id))
-      .map(d => [d.id, d])).values()];
+    // The ticked tasks with subtasks in the source that are not ticked, and how many of those each has
+    const left = tasks.map(x => ({
+      task: x,
+      n: descendants(map.index, x.id).filter(d => !ticked.has(d.id) && d.archivedAt === null && d.sessionIds.includes(from.id)).length,
+    })).filter(x => x.n > 0);
     const busy = tasks.filter(x => x.status === 'in_progress' || x.id === from.runningTaskId || map.queued.has(x.id));
     const list = (xs: Task[]) => xs.map(x => `${x.id} „${x.title}”`).join(', ');
     return [
-      left.length ? t('bulk.transferSubtasks', { list: list(left) }) : '',
+      left.length ? t('bulk.transferSubtasks', { list: left.map(x => t('bulk.transferSubtasksOf', { task: list([x.task]), n: x.n }, x.n)).join(', ') }) : '',
       busy.length ? t('bulk.transferBusy', { list: list(busy) }) : '',
     ].filter(Boolean);
   }
