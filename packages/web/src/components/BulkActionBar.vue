@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { canRun, projectAreas, TASK_STATUSES, TASK_TYPES, type Session, type Task, type TaskStatus, type TaskType } from '@ainstorm/core';
-import { ArrowRightLeft, Ban, CornerDownRight, Play, SquareCheck, X } from '@lucide/vue';
+import { ArrowRightLeft, Ban, CornerDownRight, Play, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { useTaskActions } from '../composables/useTaskActions.ts';
 import { useMapStore } from '../stores/map.ts';
@@ -43,7 +43,10 @@ const setStatus = (e: Event) => actions.setStatusMany(tasks.value, choice(e) as 
 
 <template>
   <section v-if="tasks.length" class="bulk" :aria-label="$t('bulk.label')">
-    <span class="count"><SquareCheck :size="16" aria-hidden="true" /> {{ $t('bulk.count', { n: tasks.length }) }}</span>
+    <span class="count">
+      {{ $t('bulk.count', { n: tasks.length }) }}
+      <button type="button" class="clear" :title="$t('bulk.clearHelp')" :aria-label="$t('bulk.clearHelp')" @click="picked.clear()"><X :size="13" :stroke-width="2.5" aria-hidden="true" /></button>
+    </span>
     <div class="buttons">
       <button type="button" class="btn sm" :disabled="!runnable.length" :title="$t('bulk.runHelp')" @click="run">
         <Play :size="13" aria-hidden="true" /> {{ $t('bulk.run', { n: runnable.length }) }}
@@ -74,7 +77,6 @@ const setStatus = (e: Event) => actions.setStatusMany(tasks.value, choice(e) as 
         <ArrowRightLeft :size="13" aria-hidden="true" /> {{ $t('bulk.transfer') }}
       </button>
       <button type="button" class="btn sm drop" @click="actions.setStatusMany(tasks, 'dropped')"><Ban :size="13" aria-hidden="true" /> {{ $t('bulk.drop') }}</button>
-      <button type="button" class="btn sm" @click="picked.clear()"><X :size="13" aria-hidden="true" /> {{ $t('bulk.clear') }}</button>
     </div>
     <!-- Out of the bar: it is sticky with a z-index of its own, so dialogs in it would stay below the bottom navigation -->
     <Teleport to="body">
@@ -90,6 +92,12 @@ const setStatus = (e: Event) => actions.setStatusMany(tasks.value, choice(e) as 
   padding: 8px 12px; background: var(--panel); border: 1.5px solid var(--accent); border-radius: 8px; box-shadow: 0 -4px 16px rgb(0 0 0 / .08);
 }
 .count { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; color: var(--accent); }
+/* Clearing the ticks is a link-like icon next to the count, not one of the actions */
+.clear {
+  display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%;
+  background: color-mix(in srgb, var(--s-blocked) 14%, transparent); color: var(--s-blocked); cursor: pointer;
+}
+.clear:hover, .clear:focus-visible { background: var(--s-blocked); color: var(--on-strong); }
 .buttons { display: flex; flex-wrap: wrap; gap: 6px; }
 .drop { color: var(--s-blocked); }
 /* A list, not a button: the native options take their colours from it, so it keeps the panel background */
