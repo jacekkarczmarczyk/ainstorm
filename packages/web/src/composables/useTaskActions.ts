@@ -331,14 +331,15 @@ export function useTaskActions() {
     }));
   }
 
-  /** Add an area (one the project knows) to the ticked tasks, or remove it from them. */
-  function setAreaMany(all: Task[], area: string, on: boolean) {
-    return performMany(all, x => x.areas.includes(area) !== on, (tasks, taskIds) => ({
-      action: 'area', prompt: { kind: 'areaMany', tasks, area, on },
-      command: notify => ({ type: 'setAreaMany', taskIds, area, on, notify }),
-      title: t(on ? 'bulk.areaAddTitle' : 'bulk.areaRemoveTitle', { n: tasks.length, area }),
-      confirmLabel: t(on ? 'bulk.areaAdd' : 'bulk.areaRemove'),
-      doneText: t(on ? 'bulk.areaAdded' : 'bulk.areaRemoved', { n: tasks.length, area }),
+  /** Add some areas (ones the project knows) to the ticked tasks and remove others from them, in one change. */
+  function setAreaMany(all: Task[], add: string[], remove: string[]) {
+    const changes = (x: Task) => add.some(a => !x.areas.includes(a)) || remove.some(a => x.areas.includes(a));
+    const areas = [...add.map(a => `+${a}`), ...remove.map(a => `−${a}`)].join(', ');
+    return performMany(all, changes, (tasks, taskIds) => ({
+      action: 'area', prompt: { kind: 'areaMany', tasks, add, remove },
+      command: notify => ({ type: 'setAreaMany', taskIds, add, remove, notify }),
+      title: t('bulk.areaTitle', { n: tasks.length, areas }), confirmLabel: t('bulk.areaApply'),
+      doneText: t('bulk.areaDone', { n: tasks.length, areas }),
     }));
   }
 
@@ -374,29 +375,27 @@ export function useTaskActions() {
    */
   const movable = (from: Session) => (x: Task) => x.sessionIds.includes(from.id) && x.archivedAt === null;
 
-  /** What the session picker of a move warns about: subtasks left behind in the source, and tasks in progress, running or queued */
-  function transferWarnings(all: Task[], from: Session): string[] {
+  /**
+   * What the session list of a move warns about: the ticked tasks with subtasks in the source that are not ticked (and
+   * how many each has), and the tasks in progress, running or queued
+   */
+  function transferWarnings(all: Task[], from: Session): { left: { task: Task; n: number }[]; busy: Task[] } {
     const tasks = all.filter(movable(from));
     const ticked = new Set(tasks.map(x => x.id));
-    // The ticked tasks with subtasks in the source that are not ticked, and how many of those each has
     const left = tasks.map(x => ({
       task: x,
       n: descendants(map.index, x.id).filter(d => !ticked.has(d.id) && d.archivedAt === null && d.sessionIds.includes(from.id)).length,
     })).filter(x => x.n > 0);
     const busy = tasks.filter(x => x.status === 'in_progress' || x.id === from.runningTaskId || map.queued.has(x.id));
-    const list = (xs: Task[]) => xs.map(x => `${x.id} „${x.title}”`).join(', ');
-    return [
-      left.length ? t('bulk.transferSubtasks', { list: left.map(x => t('bulk.transferSubtasksOf', { task: list([x.task]), n: x.n }, x.n)).join(', ') }) : '',
-      busy.length ? t('bulk.transferBusy', { list: list(busy) }) : '',
-    ].filter(Boolean);
+    return { left, busy };
   }
 
   function transferMany(all: Task[], from: Session, to: Session | null, onDone?: () => void) {
     return performMany(all, movable(from), (tasks, taskIds) => {
-      // Warnings were shown in the session picker
       const base = {
         action: 'transfer' as const, prompt: { kind: 'transferMany' as const, tasks, from, to },
         command: (notify: boolean): Command => ({ type: 'transferTasks', taskIds, fromSessionId: from.id, toSessionId: to?.id ?? null, notify }),
+        // The warnings are shown in the session list, before the session is picked
         ...(onDone ? { onDone } : {}),
       };
       if (!to) {

@@ -50,8 +50,11 @@ export const UserCommand = z.discriminatedUnion('type', [
   /** Bulk actions on tasks selected in the tree: one change, undone as a whole */
   z.object({ type: z.literal('setStatusMany'), taskIds: z.array(TaskId).min(1).max(100), to: TaskStatus, notify: z.boolean() }),
   z.object({ type: z.literal('setTypeMany'), taskIds: z.array(TaskId).min(1).max(100), taskType: TaskType.nullable(), notify: z.boolean() }),
-  /** Add (on) or remove an area; only areas known to the project can be added */
-  z.object({ type: z.literal('setAreaMany'), taskIds: z.array(TaskId).min(1).max(100), area: z.string().min(1).max(60), on: z.boolean(), notify: z.boolean() }),
+  /** Add some areas and remove others, in one change; only areas known to the project can be added */
+  z.object({
+    type: z.literal('setAreaMany'), taskIds: z.array(TaskId).min(1).max(100),
+    add: z.array(z.string().min(1).max(60)).max(50), remove: z.array(z.string().min(1).max(60)).max(50), notify: z.boolean(),
+  }),
   z.object({ type: z.literal('moveMany'), taskIds: z.array(TaskId).min(1).max(100), parentId: TaskId.nullable(), notify: z.boolean() }),
   /** Run several tasks in order with one pasted prompt (ticked in the tree); only recorded, one change for all */
   z.object({ type: z.literal('requestRunMany'), taskIds: z.array(TaskId).min(1).max(20), sessionId: SessionId.nullable() }),
@@ -328,17 +331,25 @@ export class MapEngine {
         });
       }
       case 'setAreaMany': {
-        const tasks = [...new Set(command.taskIds)].map(taskId => this.task(taskId)).filter(t => t.areas.includes(command.area) !== command.on);
-        if (tasks.length === 0) throw new EngineError(command.on ? `All tasks already have the area ${command.area}` : `No task has the area ${command.area}`, 'invalid');
-        if (command.on) {
-          const unknown = tasks.find(t => !projectAreas(this.state, t.projectKey).includes(command.area));
-          if (unknown) throw new EngineError(`Unknown area ${command.area} in project ${unknown.projectKey}`, 'invalid');
+        const add = [...new Set(command.add)];
+        const remove = [...new Set(command.remove)];
+        const both = add.find(a => remove.includes(a));
+        if (both) throw new EngineError(`The area ${both} cannot be added and removed at once`, 'invalid');
+        // Only the tasks that change, each with the areas it gains and loses
+        const changes = [...new Set(command.taskIds)].map(taskId => this.task(taskId)).map(t => ({
+          t, added: add.filter(a => !t.areas.includes(a)), removed: remove.filter(a => t.areas.includes(a)),
+        })).filter(c => c.added.length > 0 || c.removed.length > 0);
+        if (changes.length === 0) throw new EngineError('No task changes: they already have the areas to add and none of those to remove', 'invalid');
+        for (const { t, added } of changes) {
+          const unknown = added.find(a => !projectAreas(this.state, t.projectKey).includes(a));
+          if (unknown) throw new EngineError(`Unknown area ${unknown} in project ${t.projectKey}`, 'invalid');
         }
-        return this.change(id, actor, tasks.map(t => t.id), [], null, log => {
-          for (const t of tasks) {
-            t.areas = command.on ? [...t.areas, command.area] : t.areas.filter(a => a !== command.area);
+        return this.change(id, actor, changes.map(c => c.t.id), [], null, log => {
+          for (const { t, added, removed } of changes) {
+            t.areas = [...t.areas.filter(a => !removed.includes(a)), ...added];
             this.touch(t);
-            log({ taskId: t.id, type: 'edit', text: `area ${command.on ? 'added' : 'removed'}: ${command.area}`, delivery: this.delivery(t, command.notify) });
+            const text = `areas: ${[...added.map(a => `+${a}`), ...removed.map(a => `−${a}`)].join(', ')}`;
+            log({ taskId: t.id, type: 'edit', text, delivery: this.delivery(t, command.notify) });
           }
         });
       }

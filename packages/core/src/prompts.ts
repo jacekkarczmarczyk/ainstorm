@@ -67,7 +67,7 @@ export type PromptKind =
   | { kind: 'statusMany'; tasks: readonly Task[]; to: TaskStatus }
   | { kind: 'moveMany'; tasks: readonly Task[]; to: Task | null }
   | { kind: 'typeMany'; tasks: readonly Task[]; type: string | null }
-  | { kind: 'areaMany'; tasks: readonly Task[]; area: string; on: boolean }
+  | { kind: 'areaMany'; tasks: readonly Task[]; add: readonly string[]; remove: readonly string[] }
   /** Tasks moved from one session to another; without a target, to the session the prompt is pasted into */
   | { kind: 'transferMany'; tasks: readonly Task[]; from: Session; to: Session | null }
   /** A task the user added; with run, the session is asked to start it */
@@ -138,7 +138,8 @@ function render(p: PromptKind, l: PromptPhrases, ref: (t: Task) => string, q: (s
       l.statusManyOther,
     ].join('\n');
     case 'areaMany': return [
-      fill(p.on ? l.areaAdded : l.areaRemoved, { area: q(p.area) }),
+      ...(p.add.length ? [fill(l.areaAdded, { area: q(p.add.join(', ')) })] : []),
+      ...(p.remove.length ? [fill(l.areaRemoved, { area: q(p.remove.join(', ')) })] : []),
       ...p.tasks.map(t => `- ${ref(t)}`),
       l.statusManyOther,
     ].join('\n');

@@ -1,20 +1,30 @@
 <script setup lang="ts">
-import { canRun, projectAreas, TASK_STATUSES, TASK_TYPES, type Session, type Task, type TaskStatus, type TaskType } from '@ainstorm/core';
-import { ArrowRightLeft, CornerDownRight, Play, X } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import {
+  canRun, isSessionOpen, listSessions, pathTo, projectAreas, sessionStatusKey, shortId, TASK_STATUSES, TASK_TYPES,
+  type Session, type Task, type TaskStatus, type TaskType,
+} from '@ainstorm/core';
+import { Play, TriangleAlert, X } from '@lucide/vue';
+import { computed, watch } from 'vue';
+import { I18nT, useI18n } from 'vue-i18n';
+import { useFormat } from '../composables/useFormat.ts';
+import { useScopedIndex } from '../composables/useScopedIndex.ts';
 import { useTaskActions } from '../composables/useTaskActions.ts';
 import { useMapStore } from '../stores/map.ts';
 import { useTaskSelectionStore } from '../stores/taskSelection.ts';
-import MoveTaskDialog from './MoveTaskDialog.vue';
-import TransferSessionDialog from './TransferSessionDialog.vue';
+import { TYPE_HUE } from '../ui/colors.ts';
+import AreaBulkDropdown from './AreaBulkDropdown.vue';
+import PickerDropdown, { type PickerItem } from './PickerDropdown.vue';
+import StatusPill from './StatusPill.vue';
 
-// Actions on the tasks ticked in the tree; each one is a single change with one Undo
+// Actions on the tasks ticked in the tree; each one is a single change with one Undo. Parent, status, type and session
+// are lists like the header's session picker, opening on their button: picking goes straight to the confirmation.
 const props = defineProps<{ session: Session }>();
 const map = useMapStore();
 const picked = useTaskSelectionStore();
 const actions = useTaskActions();
-const moving = ref(false);
-const transferring = ref(false);
+const scoped = useScopedIndex();
+const { t } = useI18n();
+const { when } = useFormat();
 
 const tasks = computed(() => picked.ids.map(id => map.task(id)).filter((t): t is Task => t !== undefined && t.archivedAt === null));
 const runnable = computed(() => tasks.value.filter(canRun));
@@ -23,22 +33,65 @@ const runnable = computed(() => tasks.value.filter(canRun));
 watch(() => props.session.id, () => picked.clear());
 
 const run = () => actions.runMany(tasks.value, props.session, () => picked.clear());
-const transfer = (to: Session | null) => actions.transferMany(tasks.value, props.session, to, () => picked.clear());
-
-// Areas can only be ones the project knows; removing offers those the ticked tasks have
-const knownAreas = computed(() => projectAreas(map.snapshot, props.session.projectKey));
-const usedAreas = computed(() => [...new Set(tasks.value.flatMap(t => t.areas))].sort((a, b) => a.localeCompare(b)));
-
-// The lists work as menus: the picked value is read and the list goes back to its label
-function choice(e: Event) {
-  const select = e.target as HTMLSelectElement;
-  const value = select.value;
-  select.value = '';
-  return value;
+// To session: a list like the header's session picker opens on the button, and picking a session goes straight to the
+// confirmation with the prompt. A new session (not in the map yet) comes first, then the open sessions of the project
+// but this one, by latest activity
+const NEW_SESSION = 'new';
+const targets = computed(() => listSessions(map.summaries, map.index, {
+  query: '', sort: 'lastActivity', includeArchived: false, projectKey: props.session.projectKey,
+}).map(s => s.session).filter(s => s.id !== props.session.id && isSessionOpen(s)));
+const targetItems = computed<PickerItem[]>(() => [
+  { value: NEW_SESSION, label: t('bulk.transferNew'), hint: t('bulk.transferNewHint') },
+  ...targets.value.map(s => ({
+    value: s.id, label: s.title, keywords: s.id, attention: s.status === 'waiting',
+    hint: `${shortId(s.id)} · ${t(`sessionStatus.${sessionStatusKey(s)}`)} · ${when(map.summaryById.get(s.id)?.lastActivityAt ?? s.startedAt)}`,
+  })),
+]);
+const warnings = computed(() => actions.transferWarnings(tasks.value, props.session));
+function transfer(value: string) {
+  const to = value === NEW_SESSION ? null : targets.value.find(s => s.id === value);
+  if (to === undefined) return;
+  void actions.transferMany(tasks.value, props.session, to, () => picked.clear());
 }
-const setType = (e: Event) => { const value = choice(e); return actions.setTypeMany(tasks.value, value === '-' ? null : value as TaskType); };
-const setArea = (e: Event) => { const value = choice(e); return actions.setAreaMany(tasks.value, value.slice(1), value.startsWith('+')); };
-const setStatus = (e: Event) => actions.setStatusMany(tasks.value, choice(e) as TaskStatus);
+
+// Parent: the top level first (so Enter picks it), then the tasks of the session. One that cannot be the new parent
+// stays in the list, greyed out, with the reason: a ticked task, a subtask of one (the tree would loop), or the parent
+// all the ticked tasks already have
+const TOP = 'top';
+const parentItems = computed<PickerItem[]>(() => {
+  const ticked = new Set(tasks.value.map(x => x.id));
+  const theirParent = (id: string | null) => tasks.value.every(x => x.parentId === id);
+  const blocked = (reason: string | null) => (reason === null ? {} : { disabled: true, hint: reason });
+  return [
+    { value: TOP, label: t('move.topLevelOption'), ...blocked(theirParent(null) ? t('bulk.parentAlready') : null) },
+    ...[...scoped.value.byId.values()].filter(c => c.archivedAt === null).map(c => {
+      const path = pathTo(scoped.value, c.id);
+      const via = path.find(a => ticked.has(a.id));
+      const reason = via?.id === c.id ? t('bulk.parentTicked') : via ? t('bulk.parentLoop', { id: via.id }) : theirParent(c.id) ? t('bulk.parentAlready') : null;
+      const hint = [path.slice(0, -1).map(a => a.id).join(' › '), t(`status.${c.status}`)].filter(Boolean).join(' · ');
+      return { value: c.id, code: c.id, label: c.title, hint, ...blocked(reason) };
+    }),
+  ];
+});
+function setParent(value: string) {
+  const parent = value === TOP ? null : map.task(value) ?? null;
+  void (tasks.value.length > 1 ? actions.moveMany(tasks.value, parent) : actions.move(tasks.value[0]!, parent));
+}
+
+// Status and type: one that all the ticked tasks already have is greyed out
+const statusItems = computed<PickerItem[]>(() => TASK_STATUSES.map(s => ({
+  value: s, label: t(`status.${s}`), ...(tasks.value.every(x => x.status === s) ? { disabled: true, hint: t('bulk.allHave') } : {}),
+})));
+const NO_TYPE = '-';
+const typeItems = computed<PickerItem[]>(() => [...TASK_TYPES, null].map(ty => ({
+  value: ty ?? NO_TYPE, label: ty ?? t('bulk.noType'), ...(tasks.value.every(x => x.type === ty) ? { disabled: true, hint: t('bulk.allHave') } : {}),
+})));
+const setStatus = (value: string) => actions.setStatusMany(tasks.value, value as TaskStatus);
+const setType = (value: string) => actions.setTypeMany(tasks.value, value === NO_TYPE ? null : value as TaskType);
+
+// Areas: those the project knows, and any the ticked tasks have besides (so they can be removed)
+const areas = computed(() => [...new Set([...projectAreas(map.snapshot, props.session.projectKey), ...tasks.value.flatMap(x => x.areas)])]
+  .sort((a, b) => a.localeCompare(b)));
 </script>
 
 <template>
@@ -48,40 +101,53 @@ const setStatus = (e: Event) => actions.setStatusMany(tasks.value, choice(e) as 
       <button type="button" class="clear" :title="$t('bulk.clearHelp')" :aria-label="$t('bulk.clearHelp')" @click="picked.clear()"><X :size="13" :stroke-width="2.5" aria-hidden="true" /></button>
     </span>
     <div class="buttons">
-      <button type="button" class="btn sm" :disabled="!runnable.length" :title="$t('bulk.runHelp')" @click="run">
+      <button type="button" class="dd-trigger run" :disabled="!runnable.length" :title="$t('bulk.runHelp')" @click="run">
         <Play :size="13" aria-hidden="true" /> {{ $t('bulk.run', { n: runnable.length }) }}
       </button>
-      <label class="sr-only" for="bulk-status">{{ $t('bulk.status') }}</label>
-      <select id="bulk-status" class="btn sm" value="" @change="setStatus">
-        <option value="" disabled>{{ $t('bulk.status') }}</option>
-        <option v-for="s in TASK_STATUSES" :key="s" :value="s">{{ $t(`status.${s}`) }}</option>
-      </select>
-      <label class="sr-only" for="bulk-type">{{ $t('bulk.type') }}</label>
-      <select id="bulk-type" class="btn sm" value="" @change="setType">
-        <option value="" disabled>{{ $t('bulk.type') }}</option>
-        <option v-for="ty in TASK_TYPES" :key="ty" :value="ty">{{ ty }}</option>
-        <option value="-">{{ $t('bulk.noType') }}</option>
-      </select>
-      <label class="sr-only" for="bulk-area">{{ $t('bulk.area') }}</label>
-      <select id="bulk-area" class="btn sm" value="" @change="setArea">
-        <option value="" disabled>{{ $t('bulk.area') }}</option>
-        <optgroup v-if="knownAreas.length" :label="$t('bulk.areaAdd')">
-          <option v-for="a in knownAreas" :key="`+${a}`" :value="`+${a}`">+ {{ a }}</option>
-        </optgroup>
-        <optgroup v-if="usedAreas.length" :label="$t('bulk.areaRemove')">
-          <option v-for="a in usedAreas" :key="`-${a}`" :value="`-${a}`">− {{ a }}</option>
-        </optgroup>
-      </select>
-      <button type="button" class="btn sm" @click="moving = true"><CornerDownRight :size="13" aria-hidden="true" /> {{ $t('bulk.move') }}</button>
-      <button type="button" class="btn sm" :title="$t('bulk.transferHelp')" @click="transferring = true">
-        <ArrowRightLeft :size="13" aria-hidden="true" /> {{ $t('bulk.transfer') }}
-      </button>
+      <div class="pick">
+        <!-- Statuses and types look as in the filters -->
+        <PickerDropdown model-value="" :label="$t('bulk.status')" :items="statusItems" :placeholder="$t('bulk.findStatus')" :width="240" @update:model-value="setStatus">
+          <template #label="{ item }"><StatusPill :status="item.value as TaskStatus" /></template>
+        </PickerDropdown>
+      </div>
+      <div class="pick">
+        <PickerDropdown model-value="" :label="$t('bulk.type')" :items="typeItems" :placeholder="$t('bulk.findType')" :width="240" @update:model-value="setType">
+          <template #label="{ item }">
+            <span v-if="item.value !== NO_TYPE" class="swatch-label" :style="{ '--h': TYPE_HUE[item.value as TaskType] }">{{ item.label }}</span>
+            <template v-else>{{ item.label }}</template>
+          </template>
+        </PickerDropdown>
+      </div>
+      <div class="pick">
+        <AreaBulkDropdown :tasks="tasks" :areas="areas" @apply="(add, remove) => actions.setAreaMany(tasks, add, remove)" />
+      </div>
+      <div class="pick">
+        <PickerDropdown model-value="" :label="$t('bulk.parent')" :items="parentItems" :placeholder="$t('move.search')" :width="460" @update:model-value="setParent" />
+      </div>
+      <div class="pick" :title="$t('bulk.transferHelp')">
+        <PickerDropdown model-value="" :label="$t('bulk.transfer')" :items="targetItems" :placeholder="$t('header.findSession')" :width="400" @update:model-value="transfer">
+          <template #before>
+            <!-- Task numbers only; the title is in the tooltip -->
+            <p v-if="warnings.left.length" class="warning">
+              <TriangleAlert :size="14" aria-hidden="true" />
+              <I18nT keypath="bulk.transferSubtasks" tag="span" scope="global">
+                <template #list>
+                  <template v-for="(x, i) in warnings.left" :key="x.task.id">{{ i ? ', ' : '' }}<span class="tid" :title="x.task.title">{{ x.task.id }}</span> ({{ $t('bulk.transferSubtasksOf', { n: x.n }) }})</template>
+                </template>
+              </I18nT>
+            </p>
+            <p v-if="warnings.busy.length" class="warning">
+              <TriangleAlert :size="14" aria-hidden="true" />
+              <I18nT keypath="bulk.transferBusy" tag="span" scope="global">
+                <template #list>
+                  <template v-for="(x, i) in warnings.busy" :key="x.id">{{ i ? ', ' : '' }}<span class="tid" :title="x.title">{{ x.id }}</span></template>
+                </template>
+              </I18nT>
+            </p>
+          </template>
+        </PickerDropdown>
+      </div>
     </div>
-    <!-- Out of the bar: it is sticky with a z-index of its own, so dialogs in it would stay below the bottom navigation -->
-    <Teleport to="body">
-      <MoveTaskDialog v-if="moving" :tasks="tasks" @close="moving = false" />
-      <TransferSessionDialog v-if="transferring" :tasks="tasks" :from="session" @close="transferring = false" @pick="transfer" />
-    </Teleport>
   </section>
 </template>
 
@@ -98,9 +164,23 @@ const setStatus = (e: Event) => actions.setStatusMany(tasks.value, choice(e) as 
 }
 .clear:hover, .clear:focus-visible { background: var(--s-blocked); color: var(--on-strong); }
 .buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Run looks like the lists next to it */
+.run:disabled { opacity: .5; cursor: default; }
 /* A list, not a button: the native options take their colours from it, so it keeps the panel background */
 select.btn { padding-right: 4px; background: var(--panel); }
+/* The lists are the size of the filter dropdowns and open upwards: the bar sits at the bottom */
+/* On a phone they open from the bottom of the screen, as everywhere */
+@media (min-width: 761px) {
+  .pick :deep(.dd-pop) { top: auto; bottom: calc(100% + 4px); left: auto; right: 0; }
+}
+.warning { margin: 0; display: flex; gap: 6px; align-items: flex-start; color: var(--s-blocked); font-size: var(--fs-s); font-weight: 500; white-space: normal; }
+.warning svg { flex: none; margin-top: 2px; }
+/* The type's colour swatch, as in the type filter */
+.swatch-label { display: inline-flex; align-items: center; gap: 6px; }
+.swatch-label::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: hsl(var(--h) var(--chip-s) var(--chip-l)); }
+.warning .tid { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
 @media (max-width: 760px) {
-  .bulk { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  /* Above the bottom navigation (it sits just over it), so the lists that open from the bottom are not covered */
+  .bulk { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 21; }
 }
 </style>

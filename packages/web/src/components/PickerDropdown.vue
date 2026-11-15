@@ -19,6 +19,8 @@ export interface PickerItem {
   /** Extra text matched by the search but not shown (e.g. a session id) */
   keywords?: string;
   attention?: boolean;
+  /** Shown but not pickable; the hint says why */
+  disabled?: boolean;
 }
 
 const props = defineProps<{
@@ -41,7 +43,7 @@ const current = computed(() => props.items.find(i => i.value === props.modelValu
 const shown = computed(() => props.items.filter(i => matchesQuery(query.value, i.code ?? '', i.label, i.keywords ?? '', i.hint ?? '')));
 
 function pick(item: PickerItem | undefined) {
-  if (!item) return;
+  if (!item || item.disabled) return;
   open.value = false;
   if (item.value !== props.modelValue) emit('update:modelValue', item.value);
 }
@@ -82,6 +84,8 @@ function onKey(e: KeyboardEvent) {
       <span v-if="current?.code" class="code">{{ current.code }}</span><span class="current">{{ current?.label ?? label }}</span><ChevronDown :size="14" aria-hidden="true" />
     </button>
     <div v-if="open" class="dd-pop pop" :style="{ width: `${width ?? 320}px` }">
+      <!-- Something to know before picking, above the search -->
+      <slot name="before" />
       <label class="sr-only" :for="`${id}-search`">{{ placeholder }}</label>
       <input
         :id="`${id}-search`" ref="search" v-model="query" class="input" type="search" :placeholder="placeholder" autocomplete="off"
@@ -91,11 +95,12 @@ function onKey(e: KeyboardEvent) {
       <ul :id="`${id}-list`" ref="list" class="list" role="listbox" :aria-label="label">
         <li
           v-for="(item, i) in shown" :id="`${id}-${i}`" :key="item.value" role="option" :aria-selected="item.value === modelValue"
-          class="option" :class="{ active: i === active }" @click="pick(item)" @pointermove="active = i"
+          :aria-disabled="item.disabled || undefined" class="option" :class="{ active: i === active, disabled: item.disabled }"
+          @click="pick(item)" @pointermove="active = i"
         >
           <span class="mark" aria-hidden="true"><Check v-if="item.value === modelValue" :size="13" /></span>
           <span class="text">
-            <span class="name"><span v-if="item.attention" class="dot" aria-hidden="true"></span><span v-if="item.code" class="code">{{ item.code }}</span>{{ item.label }}</span>
+            <span class="name"><span v-if="item.attention" class="dot" aria-hidden="true"></span><span v-if="item.code" class="code">{{ item.code }}</span><slot name="label" :item="item">{{ item.label }}</slot></span>
             <span v-if="item.hint" class="hint">{{ item.hint }}</span>
           </span>
         </li>
@@ -126,6 +131,8 @@ function onKey(e: KeyboardEvent) {
 .list { list-style: none; margin: 0; padding: 0; overflow: auto; min-height: 0; display: grid; gap: 1px; }
 .option { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 6px; padding: 5px 6px; border-radius: 5px; cursor: pointer; font-size: var(--fs-m); }
 .option.active { background: var(--sunk); }
+.option.disabled { cursor: default; opacity: .45; }
+.option.disabled.active { background: none; }
 .mark { color: var(--accent); padding-top: 2px; }
 .text { display: grid; min-width: 0; }
 .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

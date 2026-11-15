@@ -221,11 +221,20 @@ describe('MapEngine', () => {
     engine.revert(typed.changeId);
     expect(engine.task('PRJ-1').type).toBeNull();
 
-    expect(() => engine.execute({ type: 'setAreaMany', taskIds: ['PRJ-1'], area: 'nowhere', on: true, notify: false })).toThrow(/Unknown area/);
-    engine.state.projects[0]!.areas = ['web'];
-    engine.execute({ type: 'setAreaMany', taskIds: ['PRJ-1', 'PRJ-2'], area: 'web', on: true, notify: false });
+    const areas = (taskIds: string[], add: string[], remove: string[]) => engine.execute({ type: 'setAreaMany', taskIds, add, remove, notify: false });
+    expect(() => areas(['PRJ-1'], ['nowhere'], [])).toThrow(/Unknown area/);
+    engine.state.projects[0]!.areas = ['web', 'api'];
+    areas(['PRJ-1', 'PRJ-2'], ['web'], []);
     expect(engine.task('PRJ-2').areas).toEqual(['web']);
-    engine.execute({ type: 'setAreaMany', taskIds: ['PRJ-1', 'PRJ-2'], area: 'web', on: false, notify: false });
+    // Several areas in one change: one event per task that changes, naming what it gains and loses
+    const both = areas(['PRJ-1', 'PRJ-2'], ['api'], ['web']);
+    expect(engine.task('PRJ-1').areas).toEqual(['api']);
+    expect(engine.state.events.filter(e => e.changeId === both.changeId).map(e => e.text)).toEqual(['areas: +api, −web', 'areas: +api, −web']);
+    engine.revert(both.changeId);
+    expect(engine.task('PRJ-1').areas).toEqual(['web']);
+    expect(() => areas(['PRJ-1'], ['web'], ['web'])).toThrow(/added and removed at once/);
+    expect(() => areas(['PRJ-1'], ['web'], ['api'])).toThrow(/No task changes/);
+    areas(['PRJ-1', 'PRJ-2'], [], ['web']);
     expect(engine.task('PRJ-1').areas).toEqual([]);
   });
 

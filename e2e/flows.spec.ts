@@ -62,12 +62,9 @@ test('ticked tasks move to another session at once, or wait for the prompt paste
   const tick = (id: string) => row(page, id).getByRole('checkbox', { name: `Select ${id}` }).check();
   await tick('PRJ-44');
   await tick('PRJ-45');
-  await bar.getByRole('button', { name: 'To session…' }).click();
-  const picker = page.getByRole('dialog', { name: 'Move 2 task(s) to session…' });
-  // A new session is picked by default; another one comes from the list, as in the header
-  await picker.getByRole('button', { name: 'Session: New session (not in the map yet)' }).click();
-  await picker.getByRole('option', { name: /Session 3c9e1f20/ }).click();
-  await picker.getByRole('button', { name: 'Next' }).click();
+  await bar.getByRole('button', { name: /^To session/ }).click();
+  // The button opens a list like the header's session picker; picking a session goes straight to the confirmation
+  await bar.getByRole('option', { name: /Session 3c9e1f20/ }).click();
   // One prompt, for the session taking them over; the one they leave is told with its next message
   await expect(dialog(page).locator('pre')).toHaveCount(1);
   await expect(dialog(page).locator('pre')).toContainText('do not start any of them');
@@ -78,8 +75,8 @@ test('ticked tasks move to another session at once, or wait for the prompt paste
   await expect(row(page, 'PRJ-44')).toBeVisible();
 
   await tick('PRJ-44');
-  await bar.getByRole('button', { name: 'To session…' }).click();
-  await page.getByRole('dialog', { name: 'Move 1 task(s) to session…' }).getByRole('button', { name: 'Next' }).click();
+  await bar.getByRole('button', { name: /^To session/ }).click();
+  await bar.getByRole('option', { name: /New session/ }).click();
   await expect(dialog(page).getByText(/Paste the prompt into the Claude session/)).toBeVisible();
   await dialog(page).getByRole('button', { name: 'Copy and record' }).click();
   expect(await clipboardText(page)).toMatch(/^\[ainstorm #\d+ · project · shop\]\r?\nI am moving these tasks from session “Cart and payments rework” to this session/);
@@ -107,8 +104,9 @@ test('ticked tasks get bulk actions: one dialog and one Undo for all, Run in the
   // Ticking selects only: the tasks stay open
   await expect(rowTitle(page, 'PRJ-44')).not.toHaveClass(/t-done/);
 
-  // Dropping is a status like the others, picked from the list
-  await bar.getByLabel('Set status…').selectOption('dropped');
+  // Dropping is a status like the others, picked from the list; picking goes straight to the confirmation
+  await bar.getByRole('button', { name: /^Status/ }).click();
+  await bar.getByRole('option', { name: 'Dropped' }).click();
   await expect(dialog(page).locator('.tasks li')).toHaveCount(2);
   await expect(dialog(page).locator('pre').first()).toContainText('PRJ-45');
   await dialog(page).getByRole('button', { name: 'Drop', exact: true }).click();
@@ -119,10 +117,25 @@ test('ticked tasks get bulk actions: one dialog and one Undo for all, Run in the
   await expect(rowTitle(page, 'PRJ-45')).not.toHaveClass(/t-dropped/);
 
   // Type for all ticked tasks: one dialog, one change
-  await bar.getByLabel('Type…').selectOption('docs');
+  await bar.getByRole('button', { name: /^Type/ }).click();
+  await bar.getByRole('option', { name: 'docs' }).click();
   await dialog(page).getByRole('button', { name: 'Set type' }).click();
   await expect(row(page, 'PRJ-44').locator('.name')).toContainText('docs');
   await expect(row(page, 'PRJ-45').locator('.name')).toContainText('docs');
+  // A type all of them have is greyed out
+  await bar.getByRole('button', { name: /^Type/ }).click();
+  await expect(bar.getByRole('option', { name: /docs/ })).toHaveAttribute('aria-disabled', 'true');
+  await page.keyboard.press('Escape');
+
+  // Areas: each one cycles through add and remove; Apply sends them as one change
+  await bar.getByRole('button', { name: 'Area', exact: true }).click();
+  const areas = bar.getByRole('dialog', { name: 'Area' });
+  await areas.locator('.row').first().click();
+  await expect(areas.locator('.tri.add, .tri.remove')).toHaveCount(1);
+  await areas.getByRole('button', { name: 'Apply' }).click();
+  await expect(dialog(page).locator('pre')).toContainText(/I (added|removed) the area/);
+  await dialog(page).getByRole('button', { name: 'Apply' }).click();
+  await toast(page).getByRole('button', { name: 'Undo' }).click();
 
   // Run: one prompt for the ticked tasks in the order they were ticked; unticking takes a task out
   await row(page, 'PRJ-23').getByRole('checkbox', { name: 'Select PRJ-23' }).check();
