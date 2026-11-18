@@ -23,8 +23,8 @@ const items = computed(() => {
   const list = props.values
     .map(value => ({ value, count: counts.value.get(value) ?? 0, rule: props.rules[value] }))
     .filter(i => (i.count > 0 || i.rule !== undefined) && matchesQuery(query.value, label(i.value)));
-  // Status keeps its natural order; types and areas are sorted by how often they occur
-  return props.facet === 'status' ? list : list.sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+  // Status keeps its natural order; types and areas are sorted by name
+  return props.facet === 'status' ? list : list.sort((a, b) => a.value.localeCompare(b.value));
 });
 // Status starts with its presets: each one sets its status rules, or clears them when it is on
 const QUICK = Object.keys(QUICK_FILTERS) as QuickFilter[];

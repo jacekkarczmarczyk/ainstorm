@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TASK_TYPES, type Session, type Task, type TaskType } from '@ainstorm/core';
+import { TASK_TYPES_BY_NAME, type Session, type Task, type TaskType } from '@ainstorm/core';
 import { Play, Plus } from '@lucide/vue';
 import { computed, ref, useId } from 'vue';
 import { useTaskActions } from '../composables/useTaskActions.ts';
@@ -45,7 +45,7 @@ function add(start: boolean) {
       <label class="field" :for="`${id}-type`">{{ $t('create.type') }}
         <select :id="`${id}-type`" v-model="type" class="input">
           <option value="">{{ $t('bulk.noType') }}</option>
-          <option v-for="ty in TASK_TYPES" :key="ty" :value="ty">{{ ty }}</option>
+          <option v-for="ty in TASK_TYPES_BY_NAME" :key="ty" :value="ty">{{ ty }}</option>
         </select>
       </label>
       <fieldset class="field owner">

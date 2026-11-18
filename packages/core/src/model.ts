@@ -11,6 +11,8 @@ export type TaskStatus = z.infer<typeof TaskStatus>;
 export const TASK_TYPES = ['feat', 'fix', 'refactor', 'perf', 'test', 'docs', 'chore', 'ci', 'build', 'security', 'idea'] as const;
 export const TaskType = z.enum(TASK_TYPES);
 export type TaskType = z.infer<typeof TaskType>;
+/** The types by name, as the UI lists them */
+export const TASK_TYPES_BY_NAME: readonly TaskType[] = [...TASK_TYPES].sort((a, b) => a.localeCompare(b));
 
 export const Owner = z.enum(['claude', 'me']);
 export type Owner = z.infer<typeof Owner>;

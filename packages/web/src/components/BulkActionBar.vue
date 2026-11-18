@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {
-  canRun, isSessionOpen, listSessions, pathTo, projectAreas, sessionStatusKey, shortId, TASK_STATUSES, TASK_TYPES,
+  canRun, isSessionOpen, listSessions, pathTo, projectAreas, sessionStatusKey, shortId, TASK_STATUSES, TASK_TYPES_BY_NAME,
   type Session, type Task, type TaskStatus, type TaskType,
 } from '@ainstorm/core';
 import { Play, TriangleAlert, X } from '@lucide/vue';
@@ -83,7 +83,7 @@ const statusItems = computed<PickerItem[]>(() => TASK_STATUSES.map(s => ({
   value: s, label: t(`status.${s}`), ...(tasks.value.every(x => x.status === s) ? { disabled: true, hint: t('bulk.allHave') } : {}),
 })));
 const NO_TYPE = '-';
-const typeItems = computed<PickerItem[]>(() => [...TASK_TYPES, null].map(ty => ({
+const typeItems = computed<PickerItem[]>(() => [...TASK_TYPES_BY_NAME, null].map(ty => ({
   value: ty ?? NO_TYPE, label: ty ?? t('bulk.noType'), ...(tasks.value.every(x => x.type === ty) ? { disabled: true, hint: t('bulk.allHave') } : {}),
 })));
 const setStatus = (value: string) => actions.setStatusMany(tasks.value, value as TaskStatus);
