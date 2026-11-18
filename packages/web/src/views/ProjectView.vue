@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { EMPTY_FILTER, listSessions, projectStats, runMarks, sessionHighlights, sessionStatusKey, toggleQuickFilter } from '@ainstorm/core';
-import { ChevronLeft, ChevronRight, Search } from '@lucide/vue';
-import { computed, watchEffect } from 'vue';
+import { ChevronLeft, ChevronRight, Plus, Search } from '@lucide/vue';
+import { computed, ref, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import AddTaskDialog from '../components/AddTaskDialog.vue';
 import OwnerBadge from '../components/OwnerBadge.vue';
 import ProgressBar from '../components/ProgressBar.vue';
 import RunIndicator from '../components/RunIndicator.vue';
@@ -25,6 +26,8 @@ const { when } = useFormat();
 const { openSession } = useSelection();
 
 const projectKey = computed(() => (typeof route.params.projectKey === 'string' ? route.params.projectKey : null));
+// A task added here belongs to no session; it shows among the tasks without one
+const adding = ref(false);
 watchEffect(() => { if (projectKey.value) ui.projectKey = projectKey.value; });
 
 const query = computed({
@@ -61,7 +64,11 @@ const toggleArchived = () => router.replace({ query: { ...route.query, archived:
       {{ $t('home.unknownProject', { key: projectKey }) }} <RouterLink :to="{ name: 'home' }">{{ $t('home.allProjects') }}</RouterLink>
     </p>
     <template v-else>
-    <h1 class="project-name">{{ map.project(projectKey)?.name }}</h1>
+    <div class="title-row">
+      <h1 class="project-name">{{ map.project(projectKey)?.name }}</h1>
+      <button type="button" class="btn sm" @click="adding = true"><Plus :size="14" aria-hidden="true" /> {{ $t('tree.addTask') }}</button>
+    </div>
+    <AddTaskDialog v-if="adding && projectKey" :project-key="projectKey" :session="null" :parent="null" @close="adding = false" />
     <div class="stats">
       <div class="stat-tile"><span class="value">{{ stats.open }}</span><span class="label">{{ $t('home.openSessions') }}</span></div>
       <div class="stat-tile" :class="{ alert: stats.waiting }"><span class="value">{{ stats.waiting }}</span><span class="label">{{ $t('home.waiting') }}</span></div>
@@ -144,6 +151,7 @@ const toggleArchived = () => router.replace({ query: { ...route.query, archived:
 
 <style scoped>
 .home { display: grid; gap: 12px; max-width: 1100px; }
+.title-row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
 .project-name { margin: 4px 0 0; font-size: var(--fs-xxl); }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
 .stat-tile.wide { grid-column: span 2; }

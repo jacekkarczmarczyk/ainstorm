@@ -33,7 +33,7 @@ onMounted(async () => {
       <label class="check" for="hide-closed"><input id="hide-closed" v-model="ui.hideClosedBranches" type="checkbox"> {{ $t('tree.hideClosed') }}</label>
       <button v-if="session" type="button" class="btn sm add" @click="adding = true"><Plus :size="14" aria-hidden="true" /> {{ $t('tree.addTask') }}</button>
     </div>
-    <AddTaskDialog v-if="adding && session" :session="session" :parent="null" @close="adding = false" />
+    <AddTaskDialog v-if="adding && session" :project-key="session.projectKey" :session="session" :parent="null" @close="adding = false" />
     <ul v-if="rows.length" class="rows">
       <TaskRow v-for="row in rows" :key="row.task.id" :row="row" :selected="row.task.id === taskId" @select="id => selectTask(id)" />
     </ul>

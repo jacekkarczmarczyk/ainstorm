@@ -145,7 +145,7 @@ describe('MapEngine', () => {
   it('adds a task to the session under a parent, with the id the UI proposed, and archives it on undo', () => {
     const { engine, open } = setup();
     const add = (taskId: string, run = false) => engine.execute({
-      type: 'createTask', taskId, sessionId: open.id, parentId: 'PRJ-2', title: ' New one ', description: 'why', taskType: 'fix',
+      type: 'createTask', taskId, projectKey: 'PRJ', sessionId: open.id, parentId: 'PRJ-2', title: ' New one ', description: 'why', taskType: 'fix',
       owner: 'claude', ask: null, run, notify: true,
     });
     expect(() => add('PRJ-6')).toThrow(/just taken \(next is PRJ-7\)/);
@@ -158,6 +158,18 @@ describe('MapEngine', () => {
     // The id of an undone task is not handed out again; "add and run" also records the run request
     const ran = add('PRJ-8', true);
     expect(engine.state.events.filter(e => e.changeId === ran.changeId).map(e => [e.type, e.delivery?.state])).toEqual([['create', 'copied'], ['run', 'copied']]);
+  });
+
+  it('adds a task to the project without a session, which no session hears about', () => {
+    const { engine } = setup();
+    const add = (projectKey: string, sessionId: string | null) => engine.execute({
+      type: 'createTask', taskId: 'PRJ-7', projectKey, sessionId, parentId: null, title: 'Later', description: '', taskType: null,
+      owner: 'me', ask: 'action', run: false, notify: true,
+    });
+    expect(() => add('NOPE', null)).toThrow(/Unknown project NOPE/);
+    add('PRJ', null);
+    expect(engine.task('PRJ-7')).toMatchObject({ projectKey: 'PRJ', sessionIds: [], owner: 'me', parentId: null });
+    expect(engine.state.events.at(-1)).toMatchObject({ type: 'create', delivery: { state: 'none', sessionIds: [] } });
   });
 
   it('edits title, description and criteria, keeping the commit line, and refuses an edit that changes nothing', () => {

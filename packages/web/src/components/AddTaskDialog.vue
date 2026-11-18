@@ -6,8 +6,9 @@ import { useTaskActions } from '../composables/useTaskActions.ts';
 import AppModal from './AppModal.vue';
 import TaskName from './TaskName.vue';
 
-// A new task in the session being viewed, under a parent or at the top level. "Add and run" is only for Claude's tasks.
-const props = defineProps<{ session: Session; parent: Task | null }>();
+// A new task in the session being viewed, under a parent or at the top level, or in the project without a session
+// (from the project page). "Add and run" is only for Claude's tasks in a session.
+const props = defineProps<{ projectKey: string; session: Session | null; parent: Task | null }>();
 const emit = defineEmits<{ close: [] }>();
 const actions = useTaskActions();
 const id = useId();
@@ -25,7 +26,7 @@ function add(start: boolean) {
   void actions.createTask({
     title: title.value, description: description.value.trim(), type: type.value || null,
     owner: owner.value, ask: owner.value === 'me' ? ask.value : null,
-  }, props.session, props.parent, start);
+  }, props.projectKey, props.session, props.parent, start);
 }
 </script>
 
@@ -33,7 +34,8 @@ function add(start: boolean) {
   <AppModal :title="parent ? $t('create.dialogUnder', { id: parent.id }) : $t('create.dialog')" :width="560" @close="emit('close')">
     <p class="where">
       <TaskName v-if="parent" :task="parent" />
-      <template v-else>{{ $t('create.topLevel', { session: session.title }) }}</template>
+      <template v-else-if="session">{{ $t('create.topLevel', { session: session.title }) }}</template>
+      <template v-else>{{ $t('create.noSession') }}</template>
     </p>
     <label class="field" :for="`${id}-title`">{{ $t('create.titleLabel') }}
       <input :id="`${id}-title`" v-model="title" class="input" type="text" maxlength="200" autocomplete="off" autofocus @keydown.enter.prevent="add(false)">
@@ -59,13 +61,13 @@ function add(start: boolean) {
       </fieldset>
     </div>
     <template #footer>
-      <p class="help">{{ owner === 'claude' ? $t('create.help') : $t('create.helpMine') }}</p>
+      <p class="help">{{ !session ? $t('create.helpNoSession') : owner === 'claude' ? $t('create.help') : $t('create.helpMine') }}</p>
       <div class="actions">
         <button type="button" class="btn" @click="emit('close')">{{ $t('dialog.cancel') }}</button>
-        <button type="button" class="btn" :class="{ 'primary primary-action': owner === 'me' }" :disabled="!valid" @click="add(false)">
+        <button type="button" class="btn" :class="{ 'primary primary-action': owner === 'me' || !session }" :disabled="!valid" @click="add(false)">
           <Plus :size="14" aria-hidden="true" /> {{ $t('create.add') }}
         </button>
-        <button v-if="owner === 'claude'" type="button" class="btn claude primary-action" :disabled="!valid" @click="add(true)">
+        <button v-if="owner === 'claude' && session" type="button" class="btn claude primary-action" :disabled="!valid" @click="add(true)">
           <Play :size="14" aria-hidden="true" /> {{ $t('create.addRun') }}
         </button>
       </div>

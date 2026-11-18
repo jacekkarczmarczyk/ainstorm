@@ -135,11 +135,12 @@ export const enGB = {
     dialogTitle: 'Change the commit message of {id}', saved: 'Commit message of {id} saved',
   },
   create: {
-    dialog: 'Add a task', dialogUnder: 'Add a subtask under {id}', topLevel: 'At the top level of „{session}”',
+    dialog: 'Add a task', dialogUnder: 'Add a subtask under {id}', topLevel: 'At the top level of „{session}”', noSession: 'In the project, without a session',
     titleLabel: 'Title', description: 'Description (optional)', type: 'Type', owner: 'For', ask: 'What is asked of you',
     add: 'Add', addRun: 'Add and run',
     help: '“Add” only tells the session about the task. “Add and run” also copies a prompt that asks it to start the task.',
     helpMine: 'A task of yours: the session learns about it with your next message.',
+    helpNoSession: 'No session works on it yet: it waits among the tasks without a session, where you can add it to one.',
     title: 'Add {id}?', runTitle: 'Add {id} and ask Claude to start it?', done: '{id} added.',
     runDone: '{id} added. The prompt that starts it is copied: paste it into the session.',
   },

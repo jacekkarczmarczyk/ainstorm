@@ -59,11 +59,12 @@ export const UserCommand = z.discriminatedUnion('type', [
   /** Run several tasks in order with one pasted prompt (ticked in the tree); only recorded, one change for all */
   z.object({ type: z.literal('requestRunMany'), taskIds: z.array(TaskId).min(1).max(20), sessionId: SessionId.nullable() }),
   /**
-   * A task the user adds to a session. The UI proposes the next free id (its prompt names it before the change is
-   * made); a stale id is a conflict. With run, the session is also asked to start it (a prompt to paste).
+   * A task the user adds to a session of the project, or to none (from the project page). The UI proposes the next free
+   * id (its prompt names it before the change is made); a stale id is a conflict. With run, the session is also asked
+   * to start it (a prompt to paste).
    */
   z.object({
-    type: z.literal('createTask'), taskId: TaskId, sessionId: SessionId, parentId: TaskId.nullable(),
+    type: z.literal('createTask'), taskId: TaskId, projectKey: ProjectKey, sessionId: SessionId.nullable(), parentId: TaskId.nullable(),
     title: z.string().trim().min(1).max(200), description: z.string().max(20000), taskType: TaskType.nullable(),
     owner: Owner, ask: Ask.nullable(), run: z.boolean(), notify: z.boolean(),
   }),
@@ -410,24 +411,28 @@ export class MapEngine {
         });
       }
       case 'createTask': {
-        const s = this.session(command.sessionId);
+        const s = command.sessionId === null ? null : this.session(command.sessionId);
+        const projectKey = command.projectKey;
+        if (!this.state.projects.some(p => p.key === projectKey)) throw new EngineError(`Unknown project ${projectKey}`, 'not_found');
+        if (s && s.projectKey !== projectKey) throw new EngineError(`Session „${s.title}” belongs to another project`, 'invalid');
         if (!command.title.trim()) throw new EngineError('A task needs a title', 'invalid');
         const parent = command.parentId === null ? null : this.task(command.parentId);
-        if (parent && parent.projectKey !== s.projectKey) throw new EngineError(`${parent.id} belongs to another project`, 'invalid');
-        const expected = nextTaskId(this.state.tasks, s.projectKey);
+        if (parent && parent.projectKey !== projectKey) throw new EngineError(`${parent.id} belongs to another project`, 'invalid');
+        const expected = nextTaskId(this.state.tasks, projectKey);
         if (command.taskId !== expected) throw new EngineError(`${command.taskId} was just taken (next is ${expected}); add the task again`, 'conflict');
         return this.change(id, actor, [], [], null, log => {
           const now = this.now();
           const t: Task = {
-            id: command.taskId, projectKey: s.projectKey, title: command.title.trim(), description: command.description, status: 'todo',
+            id: command.taskId, projectKey, title: command.title.trim(), description: command.description, status: 'todo',
             type: command.taskType, areas: [], owner: command.owner, ask: command.ask, parentId: command.parentId, fromId: null, deps: [],
             planPath: null, planRef: null, branch: null, issue: null, pr: null, deferReason: null, criteria: [], decisions: [], commits: [],
-            sessionIds: [s.id], questions: [], archivedAt: null, createdAt: now, updatedAt: now, version: 0,
+            sessionIds: s ? [s.id] : [], questions: [], archivedAt: null, createdAt: now, updatedAt: now, version: 0,
           };
           this.state.tasks.push(t);
-          // Add and run: the prompt to paste asks the session to start it, like Run
-          log({ taskId: t.id, type: 'create', text: t.title, delivery: command.run ? { state: 'copied', sessionIds: [s.id] } : this.delivery(t, command.notify) });
-          if (command.run) log({ taskId: t.id, type: 'run', text: 'run', delivery: { state: 'copied', sessionIds: [s.id] } });
+          // Add and run: the prompt to paste asks the session (or a new one) to start it, like Run
+          const runIn = { state: 'copied' as const, sessionIds: s ? [s.id] : [] };
+          log({ taskId: t.id, type: 'create', text: t.title, delivery: command.run ? runIn : this.delivery(t, command.notify) });
+          if (command.run) log({ taskId: t.id, type: 'run', text: 'run', delivery: runIn });
         }, [command.taskId]);
       }
       case 'editTask': {

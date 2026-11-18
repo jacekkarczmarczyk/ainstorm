@@ -293,7 +293,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
     <EditTaskDialog v-if="editing" :task="t" @close="editing = false" />
     <IssueDialog v-if="issuePreview && repoUrl" :task="t" :repo-url="repoUrl" @close="issuePreview = false" />
     <CriteriaDialog v-if="markingCriteria" :task="t" @close="markingCriteria = false" />
-    <AddTaskDialog v-if="addingSubtask && session" :session="session" :parent="t" @close="addingSubtask = false" />
+    <AddTaskDialog v-if="addingSubtask && session" :project-key="session.projectKey" :session="session" :parent="t" @close="addingSubtask = false" />
     <AppModal v-if="clearingFocus" :title="$t('detail.clearFocusTitle')" :width="440" @close="clearingFocus = false">
       <p class="confirm-text">{{ $t('detail.clearFocusText', { id: t.id, project: projectName }) }}</p>
       <template #footer>

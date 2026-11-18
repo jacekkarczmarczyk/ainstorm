@@ -415,23 +415,23 @@ export function useTaskActions() {
   }
 
   /**
-   * A task the user adds to a session (under a parent or at the top level). "Add" tells the session about it;
-   * "Add and run" also asks the session to start it, as a prompt to paste like Run.
+   * A task the user adds to a session (under a parent or at the top level), or to the project without a session.
+   * "Add" tells the session about it; "Add and run" also asks the session to start it, as a prompt to paste like Run.
    */
-  function createTask(fields: NewTaskFields, session: Session, parent: Task | null, start: boolean) {
+  function createTask(fields: NewTaskFields, projectKey: string, session: Session | null, parent: Task | null, start: boolean) {
     // The prompt names the task before it exists: the next free id, which the daemon checks
     const now = new Date().toISOString();
     const task: Task = {
-      id: nextTaskId(map.snapshot.tasks, session.projectKey), projectKey: session.projectKey, title: fields.title.trim(), description: fields.description,
+      id: nextTaskId(map.snapshot.tasks, projectKey), projectKey, title: fields.title.trim(), description: fields.description,
       status: 'todo', type: fields.type, areas: [], owner: fields.owner, ask: fields.ask, parentId: parent?.id ?? null, fromId: null, deps: [],
       planPath: null, planRef: null, branch: null, issue: null, pr: null, deferReason: null, criteria: [], decisions: [], commits: [],
-      sessionIds: [session.id], questions: [], archivedAt: null, createdAt: now, updatedAt: now, version: 0,
+      sessionIds: session ? [session.id] : [], questions: [], archivedAt: null, createdAt: now, updatedAt: now, version: 0,
     };
-    const target = isSessionOpen(session) ? session : null;
+    const target = session && isSessionOpen(session) ? session : null;
     return perform({
       action: start ? 'run' : 'create', task, prompt: { kind: 'create', task, parent, run: start },
       command: notify => ({
-        type: 'createTask', taskId: task.id, sessionId: session.id, parentId: task.parentId, title: task.title, description: task.description,
+        type: 'createTask', taskId: task.id, projectKey, sessionId: session?.id ?? null, parentId: task.parentId, title: task.title, description: task.description,
         taskType: task.type, owner: task.owner, ask: task.ask, run: start, notify,
       }),
       title: t(start ? 'create.runTitle' : 'create.title', { id: task.id }), confirmLabel: t(start ? 'dialog.copyAndRecord' : 'create.add'),
