@@ -22,6 +22,7 @@ import CriteriaDialog from './CriteriaDialog.vue';
 import EditTaskDialog from './EditTaskDialog.vue';
 import IssueDialog from './IssueDialog.vue';
 import IssueText from './IssueText.vue';
+import MarkdownText from './MarkdownText.vue';
 import MoveTaskDialog from './MoveTaskDialog.vue';
 import OwnerBadge from './OwnerBadge.vue';
 import QueuedTag from './QueuedTag.vue';
@@ -133,7 +134,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
     </section>
 
     <template v-if="desc.text">
-      <p class="desc" :class="{ clamp: desc.text.length > DESC_CLAMP && !descOpen }"><IssueText :text="desc.text" :repo-url="repoUrl" /></p>
+      <MarkdownText class="desc" :class="{ clamp: desc.text.length > DESC_CLAMP && !descOpen }" :text="desc.text" :repo-url="repoUrl" />
       <button v-if="desc.text.length > DESC_CLAMP" type="button" class="link accent" @click="descOpen = !descOpen">{{ descOpen ? $t('detail.showLess') : $t('detail.showMore') }}</button>
     </template>
     <CommitMessageField v-if="!isClosed(t.status) || desc.message" :key="t.id" :task="t" />
@@ -330,8 +331,9 @@ h2 { font-size: var(--fs-xl); line-height: 1.3; margin: 6px 0 2px; text-wrap: ba
 .block > h3 { margin: 0; display: flex; gap: 8px; align-items: center; }
 .row-head .grow { flex: 1; }
 .open { font-weight: 700; color: var(--you); text-transform: none; letter-spacing: 0; }
-.desc { margin: 12px 0 0; white-space: pre-line; }
-.desc.clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.desc { margin: 12px 0 0; }
+/* A long description shows its start, fading out, until "Show more" */
+.desc.clamp { max-height: 6.5em; overflow: hidden; mask-image: linear-gradient(to bottom, #000 60%, transparent); }
 .kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 5px 12px; margin: 14px 0 0; font-size: var(--fs-m); }
 .kv dt { color: var(--muted); font-size: var(--fs-s); }
 .kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
