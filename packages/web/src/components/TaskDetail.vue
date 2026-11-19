@@ -161,7 +161,6 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
         <dd>
           <CopyText :value="plan.value" :label="$t('detail.copyPathOf', { path: plan.value })"><code>{{ fileName(plan.value) }}</code></CopyText>
           <span v-if="t.planRef" class="badge">§ {{ t.planRef }}</span>
-          <span class="muted">· {{ $t('detail.planMarker', { id: t.id }) }}</span>
         </dd>
       </template>
       <!-- A new issue is first previewed, then opened on GitHub prefilled or created by Claude; Claude closes them -->

@@ -53,7 +53,7 @@ export const enGB = {
     setFocus: 'Set as project focus', isFocus: 'Project focus', clearFocus: 'Clear project focus',
     clearFocusTitle: 'Clear the project focus?', clearFocusText: '{id} stops being the focus of {project}. The project will have no focus until you set one.', showMore: 'Show full description', showLess: 'Show less',
     owner: 'Owner', ownerMe: 'You ({ask})', ownerMeNoAsk: 'You', ownerClaude: 'Claude', ownerClaudeProposal: 'Claude, proposal first (then your decision)', project: 'Project', areas: 'Areas', branch: 'Branch', plan: 'Plan',
-    planMarker: 'marked [{id}] in the plan', issue: 'Issue', pr: 'PR', from: 'from',
+    issue: 'Issue', pr: 'PR', from: 'from',
     whyDeferred: 'Why deferred', doneWhen: 'Done when', allMet: 'All met', next: 'Next: {text}', decisions: 'Decisions', latest: 'Latest: {text}',
     subtasks: 'Subtasks', dependencies: 'Dependencies', waitsFor: 'Waits for', waitedFor: 'Waited for (done)', blocks: 'Blocks', origin: 'Origin', foundDuring: 'From',
     foundHere: 'Found while working on this', commits: 'Commits', earlier: 'Earlier versions ({n}): squashed, amended or removed',
