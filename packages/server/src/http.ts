@@ -1,11 +1,13 @@
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { extname, join, normalize, sep } from 'node:path';
-import { defaultSessionTitle, EMPTY_FILTER, filterToQuery, suggestProject, toggleQuickFilter } from '@ainstorm/core';
+import { homedir } from 'node:os';
+import { extname, isAbsolute, join, normalize, sep } from 'node:path';
+import { buildTaskIndex, defaultSessionTitle, EMPTY_FILTER, filterToQuery, inherited, suggestProject, toggleQuickFilter } from '@ainstorm/core';
 import { z, ZodError } from 'zod';
 import { BackupError } from './backup.ts';
 import { EngineError, type Daemon } from './daemon.ts';
 import { callTool, toolDefinitions } from './mcpTools.ts';
+import { openWithDefaultApp } from './openFile.ts';
 import { allowedHost, allowedOrigin, bearer, COOKIE, readCookie, sameSecret, SECURITY_HEADERS, UiSessions } from './security.ts';
 
 export interface HttpOptions {
@@ -16,6 +18,8 @@ export interface HttpOptions {
   sessions?: UiSessions;
   /** Data directory for the temporary copies of backup and restore; without it both are unavailable */
   dataDir?: string | null;
+  /** Opens a plan file in the default app; tests pass a stub */
+  openFile?: (path: string) => void | Promise<void>;
 }
 
 const MAX_BODY = 1024 * 1024;
@@ -52,7 +56,8 @@ function sendHtml(res: ServerResponse, status: number, html: string) {
 }
 
 const ChangeBody = z.object({ command: z.unknown(), changeId: z.number().int().positive().optional() });
-const PromptBody = z.object({ prompt: z.string().max(200_000), cwd: z.string().max(1000).optional() });
+const OpenPlanBody = z.object({ taskId: z.string().min(1).max(100) });
+const PromptBody =z.object({ prompt: z.string().max(200_000), cwd: z.string().max(1000).optional() });
 // The tree of the session opens with the "Open" quick filter on: only tasks still to be done
 const OPEN_TASKS = new URLSearchParams(
   Object.entries(filterToQuery(toggleQuickFilter(EMPTY_FILTER, 'open'))).flatMap(([key, v]) => (Array.isArray(v) ? v : [v]).map(x => [key, x])),
@@ -262,6 +267,22 @@ export function createHttpServer(options: HttpOptions): Server {
         const password = RestorePassword.parse(req.headers['x-ainstorm-password']);
         const before = options.daemon.restore(await readBinary(req, MAX_BACKUP), password, dir);
         return send(res, 200, { before });
+      }
+      // The task's plan file (its own or inherited) in the default app of the machine the daemon runs on: the web UI only,
+      // and only a .md file that exists, so a plan path can never start a program
+      if (pathname === '/api/open-plan') {
+        if (caller !== 'ui') throw new HttpError(403, 'Only the web UI can do this');
+        const { taskId } = OpenPlanBody.parse(await readJson(req));
+        const index = buildTaskIndex(options.daemon.snapshot().tasks);
+        if (!index.byId.has(taskId)) throw new HttpError(404, 'No such task');
+        const stored = inherited(index, taskId, 'planPath')?.value;
+        if (stored === undefined) throw new HttpError(404, 'The task has no plan');
+        // Sessions often write the plan as ~/.claude/plans/…
+        const plan = /^~[\\/]/.test(stored) ? join(homedir(), stored.slice(2)) : stored;
+        if (!isAbsolute(plan) || extname(plan).toLowerCase() !== '.md') throw new HttpError(400, 'The plan is not a Markdown file');
+        if (!existsSync(plan) || !statSync(plan).isFile()) throw new HttpError(404, `The plan file does not exist: ${plan}`);
+        await (options.openFile ?? openWithDefaultApp)(plan);
+        return send(res, 200, {});
       }
       if (pathname === '/api/reserve') return send(res, 200, { changeId: options.daemon.reserveChangeId() });
       if (pathname === '/api/commands') {

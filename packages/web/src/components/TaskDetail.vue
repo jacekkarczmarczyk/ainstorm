@@ -2,8 +2,11 @@
 import {
   canRun, effectiveAreas, inherited, isClosed, issueNumber, issueUrl, isWorking, openQuestions, pathTo, progress, splitCommit, type Task,
 } from '@ainstorm/core';
-import { Ban, Crosshair, FolderTree, GitBranch, Hourglass, ListChecks, Pause, Pencil, Play, Plus, Trash2, X } from '@lucide/vue';
+import { Ban, Crosshair, FileText, FolderTree, GitBranch, Hourglass, ListChecks, LoaderCircle, Pause, Pencil, Play, Plus, Trash2, X } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useMapApi } from '../api/inject.ts';
+import { useToastStore } from '../stores/toasts.ts';
 import { useFormat } from '../composables/useFormat.ts';
 import { useScopedIndex } from '../composables/useScopedIndex.ts';
 import { useSelection } from '../composables/useSelection.ts';
@@ -38,6 +41,9 @@ import TaskLink from './TaskLink.vue';
 import TypeChip from './TypeChip.vue';
 
 const props = defineProps<{ task: Task; mobile: boolean }>();
+const api = useMapApi();
+const toasts = useToastStore();
+const i18n = useI18n();
 const map = useMapStore();
 const ui = useUiStore();
 const actions = useTaskActions();
@@ -86,6 +92,18 @@ const runningSession = computed(() => (mark.value ? map.session(mark.value.sessi
 const criteriaMet = computed(() => t.value.criteria.filter(c => c.done).length);
 const nextCriterion = computed(() => t.value.criteria.find(c => !c.done));
 const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
+// The daemon answers once the app's window is in front (about a second), so the icon turns into a spinner meanwhile
+const openingPlan = ref(false);
+async function openPlan() {
+  openingPlan.value = true;
+  try {
+    await api.openPlan?.(t.value.id);
+  } catch (error) {
+    toasts.show(i18n.t('detail.openPlanFailed', { error: error instanceof Error ? error.message : String(error) }), [], 8000);
+  } finally {
+    openingPlan.value = false;
+  }
+}
 </script>
 
 <template>
@@ -159,7 +177,11 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
       <template v-if="plan">
         <dt>{{ $t('detail.plan') }}</dt>
         <dd>
-          <CopyText :value="plan.value" :label="$t('detail.copyPathOf', { path: plan.value })"><code>{{ fileName(plan.value) }}</code></CopyText>
+          <button v-if="api.openPlan" type="button" class="open-plan" :title="$t('detail.openPlan', { path: plan.value })" :aria-busy="openingPlan" :disabled="openingPlan" @click="openPlan">
+            <LoaderCircle v-if="openingPlan" :size="14" aria-hidden="true" class="icon spinning" /><FileText v-else :size="14" aria-hidden="true" class="icon" />
+            <span class="name">{{ fileName(plan.value) }}</span>
+          </button>
+          <CopyText v-else :value="plan.value" :label="$t('detail.copyPathOf', { path: plan.value })"><code>{{ fileName(plan.value) }}</code></CopyText>
           <span v-if="t.planRef" class="badge">§ {{ t.planRef }}</span>
         </dd>
       </template>
@@ -331,6 +353,18 @@ h2 { font-size: var(--fs-xl); line-height: 1.3; margin: 6px 0 2px; text-wrap: ba
 .row-head .grow { flex: 1; }
 .open { font-weight: 700; color: var(--you); text-transform: none; letter-spacing: 0; }
 .desc { margin: 12px 0 0; }
+/* The plan's file name opens it, as a link on one line cut with an ellipsis; the full path is in its title */
+.open-plan {
+  display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; padding: 0; color: var(--accent); font: inherit;
+  font-family: var(--f-mono); cursor: pointer; text-align: left; min-width: 0; max-width: 100%; white-space: nowrap;
+}
+.open-plan .icon { flex: none; }
+.open-plan .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; text-decoration: underline; text-underline-offset: 2px; }
+.open-plan:hover .name { text-decoration-thickness: 2px; }
+.open-plan:disabled { cursor: progress; }
+.spinning { animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinning { animation-duration: 2.5s; } }
 /* A long description shows its start, fading out, until "Show more" */
 .desc.clamp { max-height: 6.5em; overflow: hidden; mask-image: linear-gradient(to bottom, #000 60%, transparent); }
 .kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 5px 12px; margin: 14px 0 0; font-size: var(--fs-m); }

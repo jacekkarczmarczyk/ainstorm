@@ -31,6 +31,8 @@ export interface MapApi {
   backup?(password: string): Promise<{ file: Blob; name: string }>;
   /** Replace the whole map by a backup archive (the daemon only); returns the file the map as it was is kept in */
   restore?(file: Blob, password: string): Promise<{ before: string }>;
+  /** Open the task's plan file in the default app of the daemon's machine (the daemon only) */
+  openPlan?(taskId: string): Promise<void>;
 }
 
 /** live: updates arrive; reconnecting: the daemon does not answer, the map may be out of date; auth: signed out */

@@ -107,6 +107,9 @@ export function createHttpApi(): MapApi {
     onConnection(listener) {
       connection.add(listener);
     },
+    async openPlan(taskId) {
+      await call('/api/open-plan', { taskId });
+    },
     async backup(password) {
       const response = await checked(await fetch('/api/backup', {
         method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }),

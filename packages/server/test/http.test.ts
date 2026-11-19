@@ -1,5 +1,5 @@
 import type { MapSnapshot } from '@ainstorm/core';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import type { Server } from 'node:http';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -179,6 +179,42 @@ describe('daemon over HTTP', () => {
   it('does not let the UI issue links', async () => {
     const cookie = await uiCookie();
     expect((await call('/api/open-link', { method: 'POST', headers: { Cookie: cookie, Origin: `http://127.0.0.1:${port}` } })).status).toBe(403);
+  });
+});
+
+describe('opening a plan file', () => {
+  it('opens an existing .md plan for the UI only, and refuses other files', async () => {
+    const opened: string[] = [];
+    const plan = join(dataDir, 'plan.md');
+    writeFileSync(plan, '# plan');
+    const snapshot = fixture();
+    const [withPlan, other] = snapshot.tasks;
+    withPlan!.planPath = plan;
+    other!.planPath = join(dataDir, 'tool.exe');
+    writeFileSync(other!.planPath, '');
+    const db = openDatabase(':memory:');
+    saveSnapshot(db, snapshot);
+    const own = createHttpServer({ daemon: new Daemon(db), token: TOKEN, staticDir: null, openFile: path => { opened.push(path); } });
+    const ownPort = await listenLoopback(own, 0);
+    try {
+      const link = JSON.parse((await callPort(ownPort, '/api/open-link', { method: 'POST', headers: auth })).body) as { url: string };
+      const code = new URL(link.url).searchParams.get('code')!;
+      const origin = `http://127.0.0.1:${ownPort}`;
+      const cookie = String((await callPort(ownPort, '/open', { method: 'POST', form: `code=${code}`, headers: { Origin: origin } })).headers['set-cookie']).split(';')[0]!;
+      const ui = { Cookie: cookie, Origin: origin };
+      const open = (taskId: string, headers: Record<string, string> = ui) => callPort(ownPort, '/api/open-plan', { method: 'POST', headers, body: { taskId } });
+
+      expect((await open(withPlan!.id)).status).toBe(200);
+      expect(opened).toEqual([plan]);
+      expect((await open(other!.id)).status).toBe(400);
+      expect((await open('NOPE-1')).status).toBe(404);
+      expect((await open(withPlan!.id, auth)).status).toBe(403);
+      rmSync(plan);
+      expect((await open(withPlan!.id)).status).toBe(404);
+      expect(opened).toEqual([plan]);
+    } finally {
+      await new Promise<void>(resolve => { own.closeAllConnections(); own.close(() => resolve()); });
+    }
   });
 });
 

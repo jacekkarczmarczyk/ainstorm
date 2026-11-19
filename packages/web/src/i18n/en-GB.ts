@@ -59,6 +59,7 @@ export const enGB = {
     foundHere: 'Found while working on this', commits: 'Commits', earlier: 'Earlier versions ({n}): squashed, amended or removed',
     otherSessions: 'Also in other sessions', history: 'History', noEvents: 'No events yet.', inApp: 'in the app',
     drop: 'Drop…', delete: 'Delete…', edit: 'Edit…', addSubtask: 'Add subtask', moreActions: 'More actions', questions: 'Questions from Claude', open: '{n} open', copyId: 'Copy {id}', copyPathOf: 'Copy the path {path}',
+    openPlan: 'Open {path}', openPlanFailed: 'Could not open the plan: {error}',
   },
   question: {
     asked: 'Asked {when} ·', pickOne: 'Pick one, or write your own.', pickAny: 'Pick any that apply.',
