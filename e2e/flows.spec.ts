@@ -384,7 +384,8 @@ test('#1234 links to the project\'s GitHub issue; Create issue sends Claude a re
   const preview = page.getByRole('dialog', { name: 'Issue for PRJ-45' });
   await preview.getByLabel('Title').fill('Docs: install guide');
   await preview.getByRole('tab', { name: 'Preview' }).click();
-  await expect(preview.getByRole('heading', { name: 'Docs: install guide' })).toBeVisible();
+  await expect(preview.getByLabel('Preview')).toBeVisible();
+  await expect(preview.getByLabel('Description')).toBeHidden();
 
   // Open on GitHub: the prefilled form in a new tab (window.open is caught here: the tests make no outside requests)
   await page.evaluate(() => { window.open = (url?: string | URL) => { (window as unknown as { opened: string }).opened = String(url); return null; }; });
