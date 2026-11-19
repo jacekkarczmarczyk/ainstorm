@@ -141,7 +141,7 @@ const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
     <dl class="kv">
       <dt>{{ $t('detail.owner') }}</dt>
-      <dd>{{ t.owner === 'me' ? $t('detail.ownerMe', { ask: t.ask ? $t(`ask.${t.ask}`) : '' }) : $t(t.ask === 'proposal' ? 'detail.ownerClaudeProposal' : 'detail.ownerClaude') }}</dd>
+      <dd>{{ t.owner === 'me' ? (t.ask ? $t('detail.ownerMe', { ask: $t(`ask.${t.ask}`) }) : $t('detail.ownerMeNoAsk')) : $t(t.ask === 'proposal' ? 'detail.ownerClaudeProposal' : 'detail.ownerClaude') }}</dd>
       <dt>{{ $t('detail.project') }}</dt><dd><code>{{ map.project(t.projectKey)?.name ?? t.projectKey }}</code></dd>
       <template v-if="areas.length">
         <dt>{{ $t('detail.areas') }}</dt>
